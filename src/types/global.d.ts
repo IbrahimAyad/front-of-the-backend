@@ -18,6 +18,8 @@ declare module '@fastify/jwt' {
 
 // Vite environment variables
 interface ImportMetaEnv {
+  readonly PROD: boolean;
+  readonly DEV: boolean;
   readonly VITE_FRONTEND_URL?: string;
   readonly VITE_BACKEND_URL?: string;
   readonly VITE_WEBSOCKET_URL?: string;
