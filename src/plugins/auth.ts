@@ -1,6 +1,6 @@
 import { FastifyPluginAsync } from 'fastify';
 import fp from 'fastify-plugin';
-import bcrypt from 'bcryptjs';
+const bcrypt = require('bcryptjs');
 import jwt from 'jsonwebtoken';
 import { SERVER_CONFIG } from '../config/server';
 
