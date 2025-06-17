@@ -2,4 +2,4 @@
 builder = "nixpacks"
 
 [deploy]
-startCommand = "npm run deploy && npm start" 
+startCommand = "npm start" 
