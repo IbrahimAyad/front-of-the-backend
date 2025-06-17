@@ -180,6 +180,76 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
     });
   });
 
+  // Refresh token
+  fastify.post('/refresh', async (request, reply) => {
+    try {
+      const { error, value } = refreshTokenSchema.validate(request.body);
+      if (error) {
+        return reply.code(400).send({
+          success: false,
+          error: 'Validation Error',
+          details: error.details,
+        });
+      }
+
+      const { refreshToken } = value;
+
+      // Verify refresh token
+      let decoded: any;
+      try {
+        decoded = jwt.verify(refreshToken, SERVER_CONFIG.JWT_REFRESH_SECRET);
+      } catch (jwtError) {
+        return reply.code(401).send({
+          success: false,
+          error: 'Invalid refresh token',
+        });
+      }
+
+      // Find user and verify refresh token
+      const user = await fastify.prisma.user.findUnique({
+        where: { 
+          id: decoded.userId,
+          refreshToken: refreshToken,
+        },
+      });
+
+      if (!user) {
+        return reply.code(401).send({
+          success: false,
+          error: 'Invalid refresh token',
+        });
+      }
+
+      // Generate new tokens
+      const tokens = fastify.generateTokens(user.id);
+
+      // Update refresh token in database
+      await fastify.prisma.user.update({
+        where: { id: user.id },
+        data: { refreshToken: tokens.refreshToken },
+      });
+
+      reply.send({
+        success: true,
+        data: {
+          user: {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+          },
+          ...tokens,
+        },
+      });
+    } catch (error) {
+      fastify.log.error(error);
+      reply.code(500).send({
+        success: false,
+        error: 'Internal Server Error',
+      });
+    }
+  });
+
   // Logout
   fastify.post('/logout', {
     preHandler: fastify.authenticate,
