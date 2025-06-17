@@ -82,7 +82,7 @@ async function start() {
     await fastify.register(measurementsRoutes, { prefix: '/api/measurements' });
     await fastify.register(analyticsRoutes, { prefix: '/api/analytics' });
     await fastify.register(mcpRoutes); // ✅ Mount MCP decision engine routes
-    await fastify.register(askRoute);
+    await fastify.register(askRoute); // ✅ Mount AI agents routes (includes /api/agents/* endpoints)
 
     // Health checks
     fastify.get('/health', async () => ({

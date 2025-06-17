@@ -1,4 +1,4 @@
-// import { frontendConfig } from '../utils/config'; // TODO: Move to frontend or use proper config
+import { CLIENT_CONFIG } from '../config/client';
 
 class WebSocketService {
   private ws: WebSocket | null = null;
@@ -21,7 +21,7 @@ class WebSocketService {
       this.reconnectTimeoutId = null;
     }
 
-    const baseUrl = 'ws://localhost:8000/ws'; // Hardcoded for now, should use proper config
+    const baseUrl = CLIENT_CONFIG.WS_BASE_URL || 'wss://front-of-the-backend-production.up.railway.app/ws';
     const url = this.token ? `${baseUrl}?token=${this.token}` : baseUrl;
     
     try {

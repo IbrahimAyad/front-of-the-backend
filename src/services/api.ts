@@ -19,12 +19,10 @@ import type {
   MeasurementFormData,
   AppointmentFormData,
 } from '../types';
+import { CLIENT_CONFIG } from '../config/client';
 
-// Dynamically set API base URL for local dev
-const API_BASE_URL =
-  window?.location?.hostname === 'localhost' || window?.location?.hostname === '127.0.0.1'
-    ? `http://${window.location.hostname}:8000`
-    : 'http://localhost:8000';
+// Use production-ready API base URL
+const API_BASE_URL = CLIENT_CONFIG.BACKEND_URL || 'https://front-of-the-backend-production.up.railway.app/api';
 
 // Create axios instance
 const api = axios.create({

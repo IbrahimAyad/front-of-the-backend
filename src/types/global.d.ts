@@ -22,6 +22,11 @@ interface ImportMetaEnv {
   readonly VITE_BACKEND_URL?: string;
   readonly VITE_WEBSOCKET_URL?: string;
   readonly VITE_USE_MOCK_DATA?: string;
+  readonly VITE_API_BASE_URL?: string;
+  readonly VITE_WS_BASE_URL?: string;
+  readonly VITE_NODE_ENV?: string;
+  readonly VITE_ADMIN_EMAIL?: string;
+  readonly VITE_ADMIN_PASSWORD?: string;
 }
 
 interface ImportMeta {
