@@ -1,0 +1,46 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true
+  },
+  "include": [
+    "src/server.ts",
+    "src/routes/**/*",
+    "src/plugins/**/*",
+    "src/services/**/*",
+    "src/schemas/**/*",
+    "src/types/auth.ts",
+    "src/types/global.d.ts",
+    "src/utils/config.ts",
+    "src/utils/jwt.ts",
+    "src/lib/agentRouter.ts",
+    "src/lib/aiDecisionEngine.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/components/**/*",
+    "src/pages/**/*",
+    "src/hooks/**/*",
+    "src/contexts/**/*",
+    "src/utils/queryClient.ts",
+    "src/utils/mobileDetection.ts",
+    "src/main.tsx",
+    "src/App.tsx",
+    "src/websocket.ts",
+    "prisma/**/*"
+  ]
+}

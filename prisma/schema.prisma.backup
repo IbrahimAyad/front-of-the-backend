@@ -1,0 +1,229 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  STAFF
+  TAILOR
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  IN_PROGRESS
+  READY_FOR_FITTING
+  COMPLETED
+  CANCELLED
+  ON_HOLD
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum AppointmentType {
+  CONSULTATION
+  MEASUREMENT
+  FITTING
+  DELIVERY
+  FOLLOW_UP
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  CONVERTED
+  LOST
+}
+
+enum LeadSource {
+  WEBSITE
+  REFERRAL
+  SOCIAL_MEDIA
+  ADVERTISING
+  WALK_IN
+  OTHER
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  password     String
+  firstName    String
+  lastName     String
+  name         String?
+  role         UserRole  @default(STAFF)
+  refreshToken String?
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  createdCustomers Customer[] @relation("CreatedBy")
+  createdOrders    Order[]    @relation("CreatedBy")
+  appointments     Appointment[]
+
+  @@map("users")
+}
+
+model Customer {
+  id          String   @id @default(cuid())
+  firstName   String
+  lastName    String
+  email       String   @unique
+  phone       String?
+  address     String?
+  city        String?
+  state       String?
+  zipCode     String?
+  country     String?
+  dateOfBirth DateTime?
+  notes       String?
+  preferences String?
+  tags        String[]
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy   User   @relation("CreatedBy", fields: [createdById], references: [id])
+  createdById String
+
+  orders       Order[]
+  appointments Appointment[]
+  leads        Lead[]
+  measurements Measurement[]
+
+  @@map("customers")
+}
+
+model Product {
+  id          String      @id @default(cuid())
+  name        String
+  description String?
+  category    String
+  subcategory String?
+  basePrice   Decimal
+  currency    String      @default("USD")
+  sku         String      @unique
+  isActive    Boolean     @default(true)
+  images      String[]
+  tags        String[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  orderItems OrderItem[]
+
+  @@map("products")
+}
+
+model Order {
+  id           String      @id @default(cuid())
+  orderNumber  String      @unique
+  status       OrderStatus @default(PENDING)
+  totalAmount  Decimal
+  currency     String      @default("USD")
+  notes        String?
+  dueDate      DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  customer   Customer @relation(fields: [customerId], references: [id])
+  customerId String
+
+  createdBy   User   @relation("CreatedBy", fields: [createdById], references: [id])
+  createdById String
+
+  orderItems   OrderItem[]
+  appointments Appointment[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id          String  @id @default(cuid())
+  quantity    Int
+  unitPrice   Decimal
+  totalPrice  Decimal
+  notes       String?
+  
+  order     Order   @relation(fields: [orderId], references: [id])
+  orderId   String
+  
+  product   Product @relation(fields: [productId], references: [id])
+  productId String
+
+  @@map("order_items")
+}
+
+model Appointment {
+  id          String            @id @default(cuid())
+  title       String
+  description String?
+  startTime   DateTime
+  endTime     DateTime
+  status      AppointmentStatus @default(SCHEDULED)
+  type        AppointmentType
+  notes       String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  customer   Customer @relation(fields: [customerId], references: [id])
+  customerId String
+
+  assignedTo   User   @relation(fields: [assignedToId], references: [id])
+  assignedToId String
+
+  order   Order?  @relation(fields: [orderId], references: [id])
+  orderId String?
+
+  @@map("appointments")
+}
+
+model Lead {
+  id          String     @id @default(cuid())
+  firstName   String
+  lastName    String
+  email       String
+  phone       String?
+  source      LeadSource
+  status      LeadStatus @default(NEW)
+  notes       String?
+  tags        String[]
+  convertedAt DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  customer   Customer? @relation(fields: [customerId], references: [id])
+  customerId String?
+
+  @@map("leads")
+}
+
+model Measurement {
+  id          String   @id @default(cuid())
+  type        String
+  value       Decimal
+  unit        String
+  notes       String?
+  takenAt     DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  customer   Customer @relation(fields: [customerId], references: [id])
+  customerId String
+
+  @@map("measurements")
+} 
