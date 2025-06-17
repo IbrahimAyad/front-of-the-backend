@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "Luxury menswear tailoring business management system backend",
   "main": "dist/server.js",
-  "type": "module",
   "scripts": {
     "dev": "nodemon --exec tsx src/server.ts",
     "dev:frontend": "vite --port 3001",
