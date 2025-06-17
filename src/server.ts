@@ -72,6 +72,8 @@ async function start() {
         'http://localhost:3003',
         'http://localhost:3000',
         'http://localhost:4173',
+        'http://localhost:5173',
+        'https://kct-menswear-frontend.vercel.app',
         'https://kct-menswear-frontend-b0j1t22z6-ibrahimayads-projects.vercel.app',
         /\.vercel\.app$/,
         /\.railway\.app$/
