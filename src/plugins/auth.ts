@@ -2,7 +2,7 @@ import { FastifyPluginAsync } from 'fastify';
 import fp from 'fastify-plugin';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { backendConfig } from '../utils/config';
+import { SERVER_CONFIG } from '../config/server';
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -22,7 +22,7 @@ const authPlugin: FastifyPluginAsync = async (fastify) => {
         return;
       }
 
-      const decoded = jwt.verify(token, backendConfig.JWT_SECRET) as any;
+      const decoded = jwt.verify(token, SERVER_CONFIG.JWT_SECRET) as any;
       const user = await fastify.prisma.user.findUnique({
         where: { id: decoded.userId },
         select: { id: true, email: true, name: true, role: true },
@@ -60,8 +60,8 @@ const authPlugin: FastifyPluginAsync = async (fastify) => {
   });
 
   fastify.decorate('generateTokens', (userId: string) => {
-    const accessToken = jwt.sign({ userId }, backendConfig.JWT_SECRET, { expiresIn: '15m' });
-    const refreshToken = jwt.sign({ userId }, backendConfig.JWT_REFRESH_SECRET, { expiresIn: '7d' });
+    const accessToken = jwt.sign({ userId }, SERVER_CONFIG.JWT_SECRET, { expiresIn: '15m' });
+    const refreshToken = jwt.sign({ userId }, SERVER_CONFIG.JWT_REFRESH_SECRET, { expiresIn: '7d' });
     return { accessToken, refreshToken };
   });
 };

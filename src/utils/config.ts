@@ -6,9 +6,12 @@ const isViteEnvironment = typeof globalThis !== 'undefined' &&
 // Frontend config (Vite) - only available in browser/Vite context
 export const frontendConfig = {
   USE_MOCK_DATA: false, // Frontend will use environment variables directly
-  FRONTEND_URL: 'http://localhost:3001',
-  BACKEND_URL: 'http://localhost:8000',
-  WEBSOCKET_URL: 'ws://localhost:8000/ws',
+  FRONTEND_URL: import.meta.env.VITE_FRONTEND_URL || 'http://localhost:3001',
+  BACKEND_URL: import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000',
+  WEBSOCKET_URL: import.meta.env.VITE_WEBSOCKET_URL || 'ws://localhost:8000/ws',
+  // Railway production URLs
+  RAILWAY_BACKEND_URL: 'https://front-of-the-backend-production.up.railway.app',
+  RAILWAY_WEBSOCKET_URL: 'wss://front-of-the-backend-production.up.railway.app/ws',
 };
 
 // Backend config (Node.js) - only available in Node.js context

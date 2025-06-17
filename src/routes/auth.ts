@@ -1,7 +1,7 @@
 import { FastifyPluginAsync } from 'fastify';
 import jwt from 'jsonwebtoken';
 import { registerSchema, loginSchema, refreshTokenSchema, updateProfileSchema } from '../schemas/auth';
-import { backendConfig } from '../utils/config';
+import { SERVER_CONFIG } from '../config/server';
 
 const authRoutes: FastifyPluginAsync = async (fastify) => {
   // Register

@@ -6,7 +6,7 @@ import multipart from '@fastify/multipart';
 import rateLimit from '@fastify/rate-limit';
 import dotenv from 'dotenv';
 
-import { backendConfig } from './utils/config';
+import { SERVER_CONFIG } from './config/server';
 import { databasePlugin } from './plugins/database';
 import { authPlugin } from './plugins/auth';
 import { websocketPlugin } from './plugins/websocket';
@@ -34,9 +34,13 @@ async function start() {
   try {
     await fastify.register(cors, {
       origin: [
-        backendConfig.FRONTEND_URL,
+        SERVER_CONFIG.FRONTEND_URL,
         'http://localhost:3001',
+        'http://localhost:3002',
+        'http://localhost:3003',
         'http://localhost:3000',
+        'http://localhost:4173',
+        'https://kct-menswear-frontend-b0j1t22z6-ibrahimayads-projects.vercel.app',
         /\.vercel\.app$/,
         /\.railway\.app$/
       ],
@@ -51,12 +55,12 @@ async function start() {
     });
 
     await fastify.register(jwt, {
-      secret: backendConfig.JWT_SECRET,
+      secret: SERVER_CONFIG.JWT_SECRET,
     });
 
     await fastify.register(multipart, {
       limits: {
-        fileSize: backendConfig.UPLOAD_MAX_SIZE,
+        fileSize: SERVER_CONFIG.UPLOAD_MAX_SIZE,
       },
     });
 
@@ -141,11 +145,11 @@ async function start() {
     });
 
     await fastify.listen({
-      port: backendConfig.PORT || 8000,
+      port: SERVER_CONFIG.PORT || 8000,
       host: '0.0.0.0',
     });
 
-    console.log(`🚀 Fastify server running on http://localhost:${backendConfig.PORT || 8000}`);
+    console.log(`🚀 Fastify server running on http://localhost:${SERVER_CONFIG.PORT || 8000}`);
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);

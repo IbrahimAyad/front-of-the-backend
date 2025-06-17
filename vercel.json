@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/assets/(.*)",
+      "headers": {
+        "cache-control": "max-age=31536000, immutable"
+      }
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ],
+  "env": {
+    "VITE_BACKEND_URL": "https://front-of-the-backend-production.up.railway.app",
+    "VITE_WEBSOCKET_URL": "wss://front-of-the-backend-production.up.railway.app/ws",
+    "VITE_FRONTEND_URL": "https://kct-menswear-frontend.vercel.app",
+    "VITE_USE_MOCK_DATA": "false"
+  },
+  "build": {
+    "env": {
+      "VITE_BACKEND_URL": "https://front-of-the-backend-production.up.railway.app",
+      "VITE_WEBSOCKET_URL": "wss://front-of-the-backend-production.up.railway.app/ws",
+      "VITE_FRONTEND_URL": "https://kct-menswear-frontend.vercel.app",
+      "VITE_USE_MOCK_DATA": "false"
+    }
+  }
+} 
