@@ -25,7 +25,7 @@
     "src/schemas/**/*",
     "src/types/auth.ts",
     "src/types/global.d.ts",
-    "src/utils/config.ts",
+    "src/config/server.ts",
     "src/utils/jwt.ts",
     "src/lib/agentRouter.ts",
     "src/lib/aiDecisionEngine.ts"
@@ -37,6 +37,9 @@
     "src/pages/**/*",
     "src/hooks/**/*",
     "src/contexts/**/*",
+    "src/config/client.ts",
+    "src/services/api.ts",
+    "src/services/websocket.ts",
     "src/utils/queryClient.ts",
     "src/utils/mobileDetection.ts",
     "src/main.tsx",
