@@ -46,7 +46,7 @@ import CustomerJourney from '../../components/CRM/CustomerJourney';
 import CustomerLoyalty from '../../components/CRM/CustomerLoyalty';
 import FollowUpSystem from '../../components/CRM/FollowUpSystem';
 import LoadingSpinner from '../../components/Loading/LoadingSpinner';
-import { frontendConfig } from '../../utils/config';
+import { CLIENT_CONFIG } from '../../config/client';
 
 interface Customer {
   id: string | number;
@@ -130,7 +130,7 @@ const CRMDashboard: React.FC = () => {
   ];
 
   // Feature flag logic for mock/real data
-  const crmStats = frontendConfig.USE_MOCK_DATA ? mockCRMStats : {
+  const crmStats = CLIENT_CONFIG.USE_MOCK_DATA ? mockCRMStats : {
     totalCustomers: customersData?.data?.pagination?.total ?? 0,
     activeLeads: 0, // TODO: Replace with real data
     loyaltyMembers: 0, // TODO: Replace with real data
@@ -140,7 +140,7 @@ const CRMDashboard: React.FC = () => {
     npsScore: 0, // TODO: Replace with real data
     conversionRate: 0, // TODO: Replace with real data
   };
-  const topCustomers = frontendConfig.USE_MOCK_DATA ? mockTopCustomers : [];
+  const topCustomers = CLIENT_CONFIG.USE_MOCK_DATA ? mockTopCustomers : [];
 
   const handleCustomerSelect = (customer: Customer) => {
     setSelectedCustomer(customer);

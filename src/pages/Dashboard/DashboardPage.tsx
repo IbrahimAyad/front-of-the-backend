@@ -38,7 +38,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { dashboardAPI, analyticsAPI } from '../../services/api';
-import { frontendConfig } from '../../utils/config';
+import { CLIENT_CONFIG } from '../../config/client';
 
 // Types for mock data (for UI only)
 type DashboardStats = {
@@ -98,9 +98,9 @@ const DashboardPage: React.FC = () => {
   });
 
   // Feature flag logic for mock/real data
-  const stats = frontendConfig.USE_MOCK_DATA ? mockStats : statsData?.data;
-  const salesAnalytics = frontendConfig.USE_MOCK_DATA ? mockSalesAnalytics : salesData?.data;
-  const leadsAnalytics = frontendConfig.USE_MOCK_DATA ? mockLeadsAnalytics : leadsData?.data;
+  const stats = CLIENT_CONFIG.USE_MOCK_DATA ? mockStats : statsData?.data;
+  const salesAnalytics = CLIENT_CONFIG.USE_MOCK_DATA ? mockSalesAnalytics : salesData?.data;
+  const leadsAnalytics = CLIENT_CONFIG.USE_MOCK_DATA ? mockLeadsAnalytics : leadsData?.data;
 
   // Calculate metrics
   const totalRevenue = salesAnalytics?.totalSales || 0;

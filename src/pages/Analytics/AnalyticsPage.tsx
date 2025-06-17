@@ -26,7 +26,7 @@ import CustomerIntelligence from '../../components/Customers/CustomerIntelligenc
 import PredictiveAnalyticsDashboard from '../../components/Analytics/PredictiveAnalyticsDashboard';
 import WorkflowAutomationDashboard from '../../components/Automation/WorkflowAutomationDashboard';
 import { dashboardAPI } from '../../services/api';
-import { frontendConfig } from '../../utils/config';
+import { CLIENT_CONFIG } from '../../config/client';
 import { DashboardStats } from '../../types';
 
 // Type for stats
@@ -55,7 +55,7 @@ const AnalyticsPage: React.FC = () => {
   useEffect(() => {
     setLoading(true);
     setError(null);
-    if (frontendConfig.USE_MOCK_DATA) {
+    if (CLIENT_CONFIG.USE_MOCK_DATA) {
       setStats(mockStats);
       setLoading(false);
     } else {

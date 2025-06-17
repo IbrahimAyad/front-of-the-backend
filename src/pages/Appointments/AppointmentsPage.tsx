@@ -49,7 +49,7 @@ import toast from 'react-hot-toast';
 import { format, addDays, startOfWeek, isSameDay, parseISO } from 'date-fns';
 import { appointmentAPI, customerAPI } from '../../services/api';
 import type { AppointmentFormData } from '../../types';
-import { frontendConfig } from '../../utils/config';
+import { CLIENT_CONFIG } from '../../config/client';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -162,8 +162,8 @@ const AppointmentsPage: React.FC = () => {
   });
 
   // Feature flag logic for mock/real data
-  const appointments = frontendConfig.USE_MOCK_DATA ? mockAppointments : appointmentsData?.data?.appointments || [];
-  const customers = frontendConfig.USE_MOCK_DATA ? mockCustomers : customersData?.data?.customers || [];
+  const appointments = CLIENT_CONFIG.USE_MOCK_DATA ? mockAppointments : appointmentsData?.data?.appointments || [];
+  const customers = CLIENT_CONFIG.USE_MOCK_DATA ? mockCustomers : customersData?.data?.customers || [];
 
   const handleAddAppointment = (data: AppointmentFormData) => {
     createAppointmentMutation.mutate(data);

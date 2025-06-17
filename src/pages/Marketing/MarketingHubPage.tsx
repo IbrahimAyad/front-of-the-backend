@@ -79,7 +79,7 @@ import {
   Favorite,
 } from '@mui/icons-material';
 import TinderStyleSwipe from '../../components/Marketing/TinderStyleSwipe';
-import { frontendConfig } from '../../utils/config';
+import { CLIENT_CONFIG } from '../../config/client';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -152,11 +152,11 @@ const realLeadMagnets: UILeadMagnet[] = [];
 const realBacklinkOpportunities: UIBacklink[] = [];
 
 // Use feature flag to select data
-const campaigns = frontendConfig.USE_MOCK_DATA ? mockCampaigns : realCampaigns;
-const contentIdeas = frontendConfig.USE_MOCK_DATA ? mockContentIdeas : realContentIdeas;
-const seoKeywords = frontendConfig.USE_MOCK_DATA ? mockSEOKeywords : realSEOKeywords;
-const leadMagnetsData = frontendConfig.USE_MOCK_DATA ? mockLeadMagnets : realLeadMagnets;
-const backlinkOpportunities = frontendConfig.USE_MOCK_DATA ? mockBacklinkOpportunities : realBacklinkOpportunities;
+const campaigns = CLIENT_CONFIG.USE_MOCK_DATA ? mockCampaigns : realCampaigns;
+const contentIdeas = CLIENT_CONFIG.USE_MOCK_DATA ? mockContentIdeas : realContentIdeas;
+const seoKeywords = CLIENT_CONFIG.USE_MOCK_DATA ? mockSEOKeywords : realSEOKeywords;
+const leadMagnetsData = CLIENT_CONFIG.USE_MOCK_DATA ? mockLeadMagnets : realLeadMagnets;
+const backlinkOpportunities = CLIENT_CONFIG.USE_MOCK_DATA ? mockBacklinkOpportunities : realBacklinkOpportunities;
 
 // Palette color keys for StatCard
 export type PaletteColorKey = 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info';

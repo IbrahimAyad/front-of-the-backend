@@ -35,7 +35,7 @@ import {
   Star,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { frontendConfig } from '../../utils/config';
+import { CLIENT_CONFIG } from '../../config/client';
 import { useCustomers } from '../../hooks/useCustomers';
 import { Customer } from '../../types';
 
