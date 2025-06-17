@@ -30,8 +30,40 @@ const fastify = Fastify({
   logger: true,
 });
 
+// Port detection utility
+async function findAvailablePort(startPort: number): Promise<number> {
+  const net = await import('net');
+  
+  return new Promise((resolve, reject) => {
+    const server = net.createServer();
+    
+    server.listen(startPort, () => {
+      const port = (server.address() as any)?.port;
+      server.close(() => {
+        resolve(port);
+      });
+    });
+    
+    server.on('error', (err: any) => {
+      if (err.code === 'EADDRINUSE') {
+        // Port is in use, try next port
+        findAvailablePort(startPort + 1).then(resolve).catch(reject);
+      } else {
+        reject(err);
+      }
+    });
+  });
+}
+
 async function start() {
   try {
+    // Find available port starting from SERVER_CONFIG.PORT
+    const availablePort = await findAvailablePort(SERVER_CONFIG.PORT || 8000);
+    
+    if (availablePort !== (SERVER_CONFIG.PORT || 8000)) {
+      console.log(`⚠️  Port ${SERVER_CONFIG.PORT || 8000} is in use, using port ${availablePort} instead`);
+    }
+
     await fastify.register(cors, {
       origin: [
         SERVER_CONFIG.FRONTEND_URL,
@@ -145,11 +177,11 @@ async function start() {
     });
 
     await fastify.listen({
-      port: SERVER_CONFIG.PORT || 8000,
+      port: availablePort,
       host: '0.0.0.0',
     });
 
-    console.log(`🚀 Fastify server running on http://localhost:${SERVER_CONFIG.PORT || 8000}`);
+    console.log(`🚀 Fastify server running on http://localhost:${availablePort}`);
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);
