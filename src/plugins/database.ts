@@ -47,45 +47,48 @@ const databasePlugin: FastifyPluginAsync = async (fastify) => {
   // Connect with retry logic
   await connectWithRetry(prisma);
 
-  // Check if database tables exist and run migrations if needed
-  try {
-    // Test if users table exists
-    await prisma.user.findFirst();
-  } catch (error: any) {
-    if (error.message.includes('does not exist') || error.code === 'P2021') {
-      fastify.log.info('🔧 Database tables missing, running migrations...');
+  // Decorate fastify instance immediately after connection
+  fastify.decorate('prisma', prisma);
+
+  // Run migrations and seeding asynchronously after the plugin loads
+  setImmediate(async () => {
+    // Check if database tables exist and run migrations if needed
+    try {
+      // Test if users table exists
+      await prisma.user.findFirst();
+      fastify.log.info('✅ Database tables exist, skipping migrations');
+    } catch (error: any) {
+      if (error.message.includes('does not exist') || error.code === 'P2021') {
+        fastify.log.info('🔧 Database tables missing, running migrations...');
+        try {
+          await execAsync('npx prisma migrate deploy');
+          fastify.log.info('✅ Database migrations completed');
+        } catch (migrationError: any) {
+          fastify.log.error('❌ Database migration failed:', migrationError.message);
+        }
+      }
+    }
+
+    // Run database migrations in production (async)
+    if (process.env.NODE_ENV === 'production') {
       try {
+        fastify.log.info('🔧 Running database migrations...');
         await execAsync('npx prisma migrate deploy');
         fastify.log.info('✅ Database migrations completed');
-      } catch (migrationError: any) {
-        fastify.log.error('❌ Database migration failed:', migrationError.message);
-        throw migrationError;
+        
+        // Try to seed the database (ignore errors if already seeded)
+        try {
+          fastify.log.info('🌱 Seeding database...');
+          await execAsync('npx prisma db seed');
+          fastify.log.info('✅ Database seeding completed');
+        } catch (seedError: any) {
+          fastify.log.warn('⚠️ Database seeding skipped (may already be seeded):', seedError.message);
+        }
+      } catch (error: any) {
+        fastify.log.error('❌ Database migration failed:', error.message);
       }
     }
-  }
-
-  // Run database migrations in production
-  if (process.env.NODE_ENV === 'production') {
-    try {
-      fastify.log.info('🔧 Running database migrations...');
-      await execAsync('npx prisma migrate deploy');
-      fastify.log.info('✅ Database migrations completed');
-      
-      // Try to seed the database (ignore errors if already seeded)
-      try {
-        fastify.log.info('🌱 Seeding database...');
-        await execAsync('npx prisma db seed');
-        fastify.log.info('✅ Database seeding completed');
-      } catch (seedError: any) {
-        fastify.log.warn('⚠️ Database seeding skipped (may already be seeded):', seedError.message);
-      }
-    } catch (error: any) {
-      fastify.log.error('❌ Database migration failed:', error.message);
-      throw error;
-    }
-  }
-
-  fastify.decorate('prisma', prisma);
+  });
 
   fastify.addHook('onClose', async (instance) => {
     await instance.prisma.$disconnect();

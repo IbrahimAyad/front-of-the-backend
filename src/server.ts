@@ -29,6 +29,7 @@ dotenv.config();
 
 const fastify = Fastify({
   logger: true,
+  pluginTimeout: 30000, // 30 seconds timeout for plugins
 });
 
 // Port detection utility
