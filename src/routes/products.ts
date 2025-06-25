@@ -692,6 +692,117 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
       });
     }
   });
+
+  // External dashboard endpoint - optimized for product dashboard
+  fastify.get('/external/dashboard-feed', {
+    preHandler: fastify.authenticate,
+  }, async (request: any, reply) => {
+    try {
+      // Get essential data for external product dashboard
+      const [
+        criticalAlerts,
+        lowStockItems,
+        recentInventoryMovements,
+        topSellingProducts,
+        supplierPerformance
+      ] = await Promise.all([
+        // Critical stock alerts
+        fastify.prisma.stockAlert.findMany({
+          where: { 
+            isResolved: false,
+            priority: { in: ['CRITICAL', 'HIGH'] }
+          },
+          orderBy: { createdAt: 'desc' },
+          take: 10
+        }),
+        
+        // Low stock products
+        fastify.prisma.product.findMany({
+          where: {
+            availableStock: { lte: 10 },
+            status: 'ACTIVE'
+          },
+          select: {
+            id: true,
+            name: true,
+            sku: true,
+            availableStock: true,
+            minimumStock: true,
+            price: true,
+            category: true
+          },
+          orderBy: { availableStock: 'asc' },
+          take: 20
+        }),
+
+        // Recent inventory movements
+        fastify.prisma.inventoryLog.findMany({
+          where: {
+            createdAt: {
+              gte: new Date(Date.now() - 24 * 60 * 60 * 1000) // Last 24 hours
+            }
+          },
+          include: {
+            product: {
+              select: { name: true, sku: true }
+            }
+          },
+          orderBy: { createdAt: 'desc' },
+          take: 50
+        }),
+
+        // Top selling products (mock for now - would need order data)
+        fastify.prisma.product.findMany({
+          where: { status: 'ACTIVE' },
+          select: {
+            id: true,
+            name: true,
+            sku: true,
+            price: true,
+            availableStock: true,
+            category: true
+          },
+          orderBy: { createdAt: 'desc' },
+          take: 10
+        }),
+
+        // Supplier performance (basic)
+        fastify.prisma.supplier.findMany({
+          select: {
+            id: true,
+            name: true,
+            rating: true
+          },
+          orderBy: { rating: 'desc' },
+          take: 5
+        })
+      ]);
+
+      reply.send({
+        success: true,
+        data: {
+          alerts: {
+            critical: criticalAlerts.length,
+            items: criticalAlerts
+          },
+          inventory: {
+            lowStock: lowStockItems.length,
+            items: lowStockItems
+          },
+          recentActivity: recentInventoryMovements,
+          topProducts: topSellingProducts,
+          suppliers: supplierPerformance,
+          lastUpdated: new Date().toISOString()
+        }
+      });
+    } catch (error) {
+      fastify.log.error(error);
+      reply.code(500).send({
+        success: false,
+        error: 'Internal Server Error',
+      });
+    }
+  });
 };
 
 export default productsRoutes;
