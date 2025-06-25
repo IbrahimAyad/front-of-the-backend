@@ -1,12 +1,33 @@
-// Environment detection for server-side builds
-const isProduction = process.env.NODE_ENV === 'production';
+// Environment detection that works in both browser and server
+const isServer = typeof window === 'undefined';
+const isBrowser = typeof window !== 'undefined';
+
+// Production detection for both environments
+const isProduction = isServer 
+  ? process.env.NODE_ENV === 'production'
+  : (window.location?.hostname?.includes('vercel.app') || window.location?.hostname?.includes('railway.app'));
 
 const getEnv = (key: string, fallback: string = '') => {
-  return process.env[key] || fallback;
+  // Server-side: use process.env
+  if (isServer) {
+    return process.env[key] || fallback;
+  }
+  // Browser-side: use import.meta.env (Vite environment)
+  if (isBrowser) {
+    try {
+      // @ts-ignore - import.meta.env is available in browser builds
+      return import.meta.env?.[key] || fallback;
+    } catch {
+      return fallback;
+    }
+  }
+  return fallback;
 };
 
 console.log('🔧 Environment Detection:', {
-  'NODE_ENV': process.env.NODE_ENV,
+  'isServer': isServer,
+  'isBrowser': isBrowser,
+  'hostname': isBrowser ? window.location?.hostname : 'server',
   'isProduction': isProduction,
 });
 
