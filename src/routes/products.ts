@@ -192,7 +192,7 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
       reply.code(500).send({
         success: false,
         error: 'Internal Server Error',
-        details: error.message,
+        details: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   });
@@ -298,7 +298,7 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
           newStock: value.totalStock || 0,
           reason: 'Initial stock creation',
           reference: `PRODUCT_CREATE_${product.id}`,
-          userId: request.user?.id
+          userId: request.user?.id?.toString()
         }
       });
 
@@ -446,7 +446,7 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
           newStock: value.stock || 0,
           reason: 'Variant creation',
           reference: `VARIANT_CREATE_${variant.id}`,
-          userId: request.user?.id
+          userId: request.user?.id?.toString()
         }
       });
 
@@ -525,7 +525,7 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
           newStock,
           reason: value.reason,
           reference: value.reference,
-          userId: request.user?.id
+          userId: request.user?.id?.toString()
         }
       });
 

@@ -17,8 +17,8 @@ import type {
 console.log('🔧 Suits API Configuration:', {
   SUITS_API_URL: CLIENT_CONFIG.SUITS_API_URL,
   NODE_ENV: CLIENT_CONFIG.NODE_ENV,
-  PROD: import.meta.env.PROD,
-  DEV: import.meta.env.DEV,
+  PROD: process.env.NODE_ENV === 'production',
+  DEV: process.env.NODE_ENV === 'development',
 });
 
 // Create axios instance for suits API
