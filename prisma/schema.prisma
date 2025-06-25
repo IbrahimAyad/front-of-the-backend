@@ -102,21 +102,272 @@ model Customer {
 }
 
 model Product {
+  id            String     @id @default(cuid())
+  name          String
+  description   String?
+  longDescription String?
+  category      String
+  subcategory   String?
+  price         Decimal
+  compareAtPrice Decimal?   // Original price for showing discounts
+  costPrice     Decimal?    // Cost for profit calculations
+  sku           String     @unique
+  barcode       String?
+  slug          String?    @unique // SEO-friendly URL slug
+  brand         String?
+  fabric        String?
+  pattern       String?
+  season        String?    // Spring/Summer, Fall/Winter
+  occasions     String[]   // Wedding, Business, Casual, etc.
+  styleAttributes String[] // Classic, Modern, Slim, etc.
+  care          String?    // Care instructions
+  
+  // Inventory Management
+  trackStock    Boolean    @default(true)
+  totalStock    Int        @default(0)
+  availableStock Int       @default(0)
+  reservedStock Int        @default(0)
+  minimumStock  Int        @default(5)
+  maximumStock  Int?       // Maximum stock level
+  reorderPoint  Int        @default(10)
+  reorderQuantity Int      @default(50)
+  
+  // Status & Visibility
+  status        String     @default("ACTIVE") // ACTIVE, INACTIVE, DISCONTINUED
+  isPublished   Boolean    @default(false)
+  isFeatured    Boolean    @default(false)
+  isOnSale      Boolean    @default(false)
+  
+  // SEO & Marketing
+  metaTitle     String?
+  metaDescription String?
+  tags          String[]   // For search and filtering
+  weight        Decimal?   // For shipping calculations
+  dimensions    String?    // Length x Width x Height
+  
+  // Supplier Information
+  supplierId    String?
+  supplierSku   String?
+  leadTime      Int?       // Days to restock
+  
+  // Timestamps
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  publishedAt   DateTime?
+  discontinuedAt DateTime?
+
+  // Relations
+  variants      ProductVariant[]
+  images        ProductImage[]
+  orderItems    OrderItem[]
+  inventoryLogs InventoryLog[]
+  supplier      Supplier?        @relation(fields: [supplierId], references: [id])
+  reviews       ProductReview[]
+
+  @@map("products")
+}
+
+model ProductVariant {
   id          String   @id @default(cuid())
-  name        String
-  description String?
-  category    String
-  price       Decimal
+  productId   String
+  name        String   // e.g., "Navy Blue - 42R"
   sku         String   @unique
-  inStock     Boolean  @default(true)
-  imageUrl    String?
+  barcode     String?
+  
+  // Variant Attributes
+  size        String?  // 38R, 40L, XL, etc.
+  color       String?  // Navy, Black, Charcoal
+  material    String?  // Wool, Cotton, Silk
+  fit         String?  // Slim, Regular, Classic
+  
+  // Pricing
+  price       Decimal?
+  compareAtPrice Decimal?
+  costPrice   Decimal?
+  
+  // Inventory
+  stock       Int      @default(0)
+  reservedStock Int    @default(0)
+  minimumStock Int     @default(2)
+  reorderPoint Int     @default(5)
+  weight      Decimal?
+  
+  // Status
+  isActive    Boolean  @default(true)
+  position    Int      @default(0) // For ordering variants
+  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   // Relations
-  orderItems OrderItem[]
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orderItems  OrderItem[]
+  inventoryLogs InventoryLog[]
 
-  @@map("products")
+  @@map("product_variants")
+}
+
+model ProductImage {
+  id          String   @id @default(cuid())
+  productId   String
+  url         String
+  altText     String?
+  caption     String?
+  isPrimary   Boolean  @default(false)
+  position    Int      @default(0)
+  width       Int?
+  height      Int?
+  size        Int?     // File size in bytes
+  createdAt   DateTime @default(now())
+
+  // Relations
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_images")
+}
+
+model Supplier {
+  id            String   @id @default(cuid())
+  name          String
+  contactName   String?
+  email         String?
+  phone         String?
+  address       String?
+  city          String?
+  state         String?
+  country       String?
+  zipCode       String?
+  website       String?
+  
+  // Business Details
+  taxId         String?
+  terms         String?  // Payment terms
+  leadTime      Int?     // Default lead time in days
+  minimumOrder  Decimal? // Minimum order amount
+  
+  // Performance Metrics
+  rating        Decimal? // Supplier rating 1-5
+  onTimeDelivery Decimal? // Percentage
+  qualityRating Decimal? // Quality rating 1-5
+  
+  // Status
+  isActive      Boolean  @default(true)
+  isPreferred   Boolean  @default(false)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  products      Product[]
+  purchaseOrders PurchaseOrder[]
+
+  @@map("suppliers")
+}
+
+model PurchaseOrder {
+  id            String   @id @default(cuid())
+  supplierId    String
+  orderNumber   String   @unique
+  status        String   @default("PENDING") // PENDING, CONFIRMED, SHIPPED, RECEIVED, CANCELLED
+  totalAmount   Decimal
+  currency      String   @default("USD")
+  
+  // Dates
+  orderDate     DateTime @default(now())
+  expectedDate  DateTime?
+  receivedDate  DateTime?
+  
+  // Additional Info
+  notes         String?
+  shippingCost  Decimal?
+  taxAmount     Decimal?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  supplier      Supplier @relation(fields: [supplierId], references: [id])
+  items         PurchaseOrderItem[]
+
+  @@map("purchase_orders")
+}
+
+model PurchaseOrderItem {
+  id              String   @id @default(cuid())
+  purchaseOrderId String
+  productId       String?
+  variantId       String?
+  description     String
+  quantity        Int
+  unitCost        Decimal
+  totalCost       Decimal
+  quantityReceived Int     @default(0)
+  
+  createdAt       DateTime @default(now())
+
+  // Relations
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+
+  @@map("purchase_order_items")
+}
+
+model InventoryLog {
+  id          String   @id @default(cuid())
+  productId   String?
+  variantId   String?
+  type        String   // SALE, PURCHASE, ADJUSTMENT, RETURN, DAMAGE, TRANSFER
+  quantity    Int      // Positive for additions, negative for reductions
+  previousStock Int
+  newStock    Int
+  reason      String?
+  reference   String?  // Order ID, PO ID, etc.
+  userId      String?  // Who made the change
+  
+  createdAt   DateTime @default(now())
+
+  // Relations
+  product     Product?        @relation(fields: [productId], references: [id])
+  variant     ProductVariant? @relation(fields: [variantId], references: [id])
+
+  @@map("inventory_logs")
+}
+
+model StockAlert {
+  id          String   @id @default(cuid())
+  productId   String?
+  variantId   String?
+  type        String   // LOW_STOCK, OUT_OF_STOCK, OVERSTOCK, REORDER
+  message     String
+  isRead      Boolean  @default(false)
+  isResolved  Boolean  @default(false)
+  priority    String   @default("MEDIUM") // LOW, MEDIUM, HIGH, CRITICAL
+  
+  createdAt   DateTime @default(now())
+  resolvedAt  DateTime?
+
+  @@map("stock_alerts")
+}
+
+model ProductReview {
+  id          String   @id @default(cuid())
+  productId   String
+  customerId  String?
+  customerName String? // For guest reviews
+  email       String?
+  rating      Int      // 1-5 stars
+  title       String?
+  content     String?
+  isVerified  Boolean  @default(false) // Verified purchase
+  isPublished Boolean  @default(false)
+  isHelpful   Int      @default(0) // Helpful votes
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_reviews")
 }
 
 model Order {
@@ -141,14 +392,16 @@ model Order {
 model OrderItem {
   id             String  @id @default(cuid())
   orderId        String
-  productId      String
+  productId      String?
+  variantId      String?
   quantity       Int
   price          Decimal
   customizations String?
 
   // Relations
-  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id])
+  order   Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product?        @relation(fields: [productId], references: [id])
+  variant ProductVariant? @relation(fields: [variantId], references: [id])
 
   @@map("order_items")
 }

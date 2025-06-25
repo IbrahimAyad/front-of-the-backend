@@ -19,6 +19,7 @@ import customersRoutes from './routes/customers';
 import ordersRoutes from './routes/orders';
 import appointmentsRoutes from './routes/appointments';
 import productsRoutes from './routes/products';
+import suppliersRoutes from './routes/suppliers';
 import measurementsRoutes from './routes/measurements';
 import analyticsRoutes from './routes/analytics';
 import mcpRoutes from './routes/mcp';
@@ -111,6 +112,7 @@ async function start() {
     await fastify.register(ordersRoutes, { prefix: '/api/orders' });
     await fastify.register(appointmentsRoutes, { prefix: '/api/appointments' });
     await fastify.register(productsRoutes, { prefix: '/api/products' });
+    await fastify.register(suppliersRoutes, { prefix: '/api/suppliers' });
     await fastify.register(measurementsRoutes, { prefix: '/api/measurements' });
     await fastify.register(analyticsRoutes, { prefix: '/api/analytics' });
     await fastify.register(mcpRoutes); // ✅ Mount MCP decision engine routes
@@ -149,6 +151,7 @@ async function start() {
         leads: '/api/leads/*',
         orders: '/api/orders/*',
         products: '/api/products/*',
+        suppliers: '/api/suppliers/*',
         measurements: '/api/measurements/*',
         appointments: '/api/appointments/*',
         analytics: '/api/analytics/*',

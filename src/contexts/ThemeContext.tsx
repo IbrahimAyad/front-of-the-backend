@@ -43,16 +43,16 @@ export const CustomThemeProvider: React.FC<CustomThemeProviderProps> = ({ childr
     palette: {
       mode: 'light',
       primary: {
-        main: '#1976d2',
-        light: '#42a5f5',
-        dark: '#1565c0',
+        main: '#8B1538', // KCT Burgundy/Wine Red
+        light: '#B91C3C', // Lighter burgundy
+        dark: '#6B1121', // Darker burgundy
         contrastText: '#ffffff',
       },
       secondary: {
-        main: '#dc004e',
-        light: '#ff5983',
-        dark: '#9a0036',
-        contrastText: '#ffffff',
+        main: '#D4AF37', // Gold accent (like your website buttons)
+        light: '#F4D03F',
+        dark: '#B7950B',
+        contrastText: '#000000',
       },
       success: {
         main: '#2e7d32',
@@ -75,7 +75,7 @@ export const CustomThemeProvider: React.FC<CustomThemeProviderProps> = ({ childr
         dark: '#01579b',
       },
       background: {
-        default: '#fafafa',
+        default: '#f8f7f6', // Warm off-white
         paper: '#ffffff',
       },
       text: {
@@ -152,15 +152,15 @@ export const CustomThemeProvider: React.FC<CustomThemeProviderProps> = ({ childr
     palette: {
       mode: 'dark',
       primary: {
-        main: '#90caf9',
-        light: '#e3f2fd',
-        dark: '#42a5f5',
-        contrastText: '#000000',
+        main: '#B91C3C', // Lighter burgundy for dark mode
+        light: '#DC2626',
+        dark: '#8B1538',
+        contrastText: '#ffffff',
       },
       secondary: {
-        main: '#f48fb1',
-        light: '#fce4ec',
-        dark: '#e91e63',
+        main: '#D4AF37', // Gold accent
+        light: '#F4D03F',
+        dark: '#B7950B',
         contrastText: '#000000',
       },
       success: {

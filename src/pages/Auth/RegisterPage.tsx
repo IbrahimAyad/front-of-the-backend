@@ -57,7 +57,7 @@ const RegisterPage: React.FC = () => {
         width: '100%',
         maxWidth: '400px'
       }}>
-        <h1 style={{ textAlign: 'center', marginBottom: '2rem', color: '#1976d2' }}>
+        <h1 style={{ textAlign: 'center', marginBottom: '2rem', color: '#8B1538' }}>
           Join KCT Menswear
         </h1>
         
@@ -171,7 +171,7 @@ const RegisterPage: React.FC = () => {
             style={{
               width: '100%',
               padding: '0.75rem',
-              backgroundColor: loading ? '#ccc' : '#1976d2',
+              backgroundColor: loading ? '#ccc' : '#8B1538',
               color: 'white',
               border: 'none',
               borderRadius: '4px',
@@ -185,7 +185,7 @@ const RegisterPage: React.FC = () => {
         
         <div style={{ textAlign: 'center', marginTop: '1rem' }}>
           <span style={{ color: '#666' }}>Already have an account? </span>
-          <Link to="/login" style={{ color: '#1976d2', textDecoration: 'none' }}>
+          <Link to="/login" style={{ color: '#8B1538', textDecoration: 'none' }}>
             Sign In
           </Link>
         </div>

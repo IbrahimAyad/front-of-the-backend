@@ -224,11 +224,11 @@ const CustomerManagementPage: React.FC = () => {
     </Card>
   );
 
-  // In the component logic, use frontendConfig.USE_MOCK_DATA to determine data source
-  const customers = frontendConfig.USE_MOCK_DATA ? mockCustomers : realCustomers;
-  const leads = frontendConfig.USE_MOCK_DATA ? mockLeads : realLeads;
-  const appointments = frontendConfig.USE_MOCK_DATA ? mockAppointments : realAppointments;
-  const measurements = frontendConfig.USE_MOCK_DATA ? mockMeasurements : realMeasurements;
+  // In the component logic, use CLIENT_CONFIG.USE_MOCK_DATA to determine data source
+  const customers = CLIENT_CONFIG.USE_MOCK_DATA ? mockCustomers : realCustomers;
+  const leads = CLIENT_CONFIG.USE_MOCK_DATA ? mockLeads : realLeads;
+  const appointments = CLIENT_CONFIG.USE_MOCK_DATA ? mockAppointments : realAppointments;
+  const measurements = CLIENT_CONFIG.USE_MOCK_DATA ? mockMeasurements : realMeasurements;
 
   return (
     <Box sx={{ p: 3 }}>

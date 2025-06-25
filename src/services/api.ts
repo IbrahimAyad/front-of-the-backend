@@ -18,6 +18,15 @@ import type {
   OrderFormData,
   MeasurementFormData,
   AppointmentFormData,
+  ProductFilters,
+  CreateProductRequest,
+  CreateVariantRequest,
+  StockAdjustmentRequest,
+  ProductDashboardStats,
+  ProductImage,
+  CreateSupplierRequest,
+  CreatePurchaseOrderRequest,
+  SupplierPerformance,
 } from '../types';
 import { CLIENT_CONFIG } from '../config/client';
 
@@ -180,37 +189,343 @@ export const leadAPI = {
   },
 };
 
-// Product API
+// Enhanced Product API with Inventory Management
 export const productAPI = {
-  getProducts: async (params?: {
-    page?: number;
-    limit?: number;
-    category?: string;
-    status?: string;
-    search?: string;
-    lowStock?: boolean;
-  }): Promise<PaginatedResponse<Product>> => {
-    const response = await api.get('/products', { params });
+  // Get products with comprehensive filtering
+  getProducts: async (filters: ProductFilters = {}) => {
+    const queryParams = new URLSearchParams();
+    
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        queryParams.append(key, value.toString());
+      }
+    });
+
+    const response = await api.get(`/products?${queryParams.toString()}`);
     return response.data;
   },
 
-  getProduct: async (id: string): Promise<ApiResponse<Product>> => {
+  // Get single product with full details
+  getProduct: async (id: string) => {
     const response = await api.get(`/products/${id}`);
     return response.data;
   },
 
-  createProduct: async (data: ProductFormData): Promise<ApiResponse<Product>> => {
-    const response = await api.post('/products', data);
+  // Create new product
+  createProduct: async (productData: CreateProductRequest) => {
+    const response = await api.post('/products', productData);
     return response.data;
   },
 
-  updateProduct: async (id: string, data: Partial<ProductFormData>): Promise<ApiResponse<Product>> => {
-    const response = await api.put(`/products/${id}`, data);
+  // Update product
+  updateProduct: async (id: string, productData: Partial<CreateProductRequest>) => {
+    const response = await api.put(`/products/${id}`, productData);
     return response.data;
   },
 
-  deleteProduct: async (id: string): Promise<ApiResponse<{ message: string }>> => {
+  // Delete product (Admin only)
+  deleteProduct: async (id: string) => {
     const response = await api.delete(`/products/${id}`);
+    return response.data;
+  },
+
+  // Product Variants
+  getVariants: async (productId: string) => {
+    const response = await api.get(`/products/${productId}/variants`);
+    return response.data;
+  },
+
+  createVariant: async (productId: string, variantData: CreateVariantRequest) => {
+    const response = await api.post(`/products/${productId}/variants`, variantData);
+    return response.data;
+  },
+
+  updateVariant: async (productId: string, variantId: string, variantData: Partial<CreateVariantRequest>) => {
+    const response = await api.put(`/products/${productId}/variants/${variantId}`, variantData);
+    return response.data;
+  },
+
+  deleteVariant: async (productId: string, variantId: string) => {
+    const response = await api.delete(`/products/${productId}/variants/${variantId}`);
+    return response.data;
+  },
+
+  // Stock Management
+  adjustStock: async (productId: string, adjustment: StockAdjustmentRequest) => {
+    const response = await api.post(`/products/${productId}/stock/adjust`, adjustment);
+    return response.data;
+  },
+
+  adjustVariantStock: async (productId: string, variantId: string, adjustment: StockAdjustmentRequest) => {
+    const response = await api.post(`/products/${productId}/variants/${variantId}/stock/adjust`, adjustment);
+    return response.data;
+  },
+
+  // Inventory Logs
+  getInventoryLogs: async (productId: string, page = 1, limit = 50) => {
+    const response = await api.get(`/products/${productId}/inventory-logs?page=${page}&limit=${limit}`);
+    return response.data;
+  },
+
+  // Stock Alerts
+  getStockAlerts: async (filters: { resolved?: boolean; priority?: string } = {}) => {
+    const queryParams = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined) {
+        queryParams.append(key, value.toString());
+      }
+    });
+
+    const response = await api.get(`/products/alerts/stock?${queryParams.toString()}`);
+    return response.data;
+  },
+
+  markAlertResolved: async (alertId: string) => {
+    const response = await api.put(`/products/alerts/${alertId}/resolve`);
+    return response.data;
+  },
+
+  // Dashboard Statistics
+  getDashboardStats: async (): Promise<ApiResponse<ProductDashboardStats>> => {
+    const response = await api.get('/products/stats/dashboard');
+    return response.data;
+  },
+
+  // Product Images
+  uploadImage: async (productId: string, imageFile: File, metadata: Partial<ProductImage> = {}) => {
+    const formData = new FormData();
+    formData.append('image', imageFile);
+    formData.append('metadata', JSON.stringify(metadata));
+
+    const response = await api.post(`/products/${productId}/images`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  updateImageOrder: async (productId: string, imageIds: string[]) => {
+    const response = await api.put(`/products/${productId}/images/reorder`, { imageIds });
+    return response.data;
+  },
+
+  deleteImage: async (productId: string, imageId: string) => {
+    const response = await api.delete(`/products/${productId}/images/${imageId}`);
+    return response.data;
+  },
+
+  // Bulk Operations
+  bulkUpdateProducts: async (updates: Array<{ id: string; data: Partial<CreateProductRequest> }>) => {
+    const response = await api.put('/products/bulk', { updates });
+    return response.data;
+  },
+
+  bulkStockAdjustment: async (adjustments: Array<{ productId: string; variantId?: string; adjustment: StockAdjustmentRequest }>) => {
+    const response = await api.post('/products/bulk/stock-adjust', { adjustments });
+    return response.data;
+  },
+
+  // Export/Import
+  exportProducts: async (filters: ProductFilters = {}) => {
+    const queryParams = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        queryParams.append(key, value.toString());
+      }
+    });
+
+    const response = await api.get(`/products/export?${queryParams.toString()}`, {
+      responseType: 'blob',
+    });
+    return response.data;
+  },
+
+  importProducts: async (csvFile: File) => {
+    const formData = new FormData();
+    formData.append('file', csvFile);
+
+    const response = await api.post('/products/import', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+};
+
+// Supplier Management API
+export const supplierAPI = {
+  // Get all suppliers
+  getSuppliers: async (filters: { 
+    page?: number; 
+    limit?: number; 
+    search?: string; 
+    isActive?: boolean; 
+    isPreferred?: boolean;
+    sortBy?: string;
+    sortOrder?: string;
+  } = {}) => {
+    const queryParams = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        queryParams.append(key, value.toString());
+      }
+    });
+
+    const response = await api.get(`/suppliers?${queryParams.toString()}`);
+    return response.data;
+  },
+
+  // Get single supplier
+  getSupplier: async (id: string) => {
+    const response = await api.get(`/suppliers/${id}`);
+    return response.data;
+  },
+
+  // Create supplier
+  createSupplier: async (supplierData: CreateSupplierRequest) => {
+    const response = await api.post('/suppliers', supplierData);
+    return response.data;
+  },
+
+  // Update supplier
+  updateSupplier: async (id: string, supplierData: Partial<CreateSupplierRequest>) => {
+    const response = await api.put(`/suppliers/${id}`, supplierData);
+    return response.data;
+  },
+
+  // Delete supplier
+  deleteSupplier: async (id: string) => {
+    const response = await api.delete(`/suppliers/${id}`);
+    return response.data;
+  },
+
+  // Purchase Orders
+  getPurchaseOrders: async (supplierId: string, filters: { page?: number; limit?: number; status?: string } = {}) => {
+    const queryParams = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined) {
+        queryParams.append(key, value.toString());
+      }
+    });
+
+    const response = await api.get(`/suppliers/${supplierId}/purchase-orders?${queryParams.toString()}`);
+    return response.data;
+  },
+
+  createPurchaseOrder: async (orderData: CreatePurchaseOrderRequest) => {
+    const response = await api.post('/suppliers/purchase-orders', orderData);
+    return response.data;
+  },
+
+  updatePurchaseOrder: async (orderId: string, orderData: Partial<CreatePurchaseOrderRequest>) => {
+    const response = await api.put(`/suppliers/purchase-orders/${orderId}`, orderData);
+    return response.data;
+  },
+
+  receivePurchaseOrder: async (orderId: string, items: Array<{ id: string; quantityReceived: number }>, partialReceive = false) => {
+    const response = await api.post(`/suppliers/purchase-orders/${orderId}/receive`, {
+      items,
+      partialReceive,
+    });
+    return response.data;
+  },
+
+  // Supplier Analytics
+  getSupplierAnalytics: async (supplierId: string, dateRange?: { startDate: string; endDate: string }): Promise<ApiResponse<SupplierPerformance>> => {
+    const queryParams = new URLSearchParams();
+    if (dateRange) {
+      queryParams.append('startDate', dateRange.startDate);
+      queryParams.append('endDate', dateRange.endDate);
+    }
+
+    const response = await api.get(`/suppliers/${supplierId}/analytics?${queryParams.toString()}`);
+    return response.data;
+  },
+
+  // Rate supplier
+  rateSupplier: async (supplierId: string, rating: { 
+    overallRating?: number; 
+    qualityRating?: number; 
+    deliveryRating?: number; 
+    notes?: string; 
+  }) => {
+    const response = await api.post(`/suppliers/${supplierId}/rate`, rating);
+    return response.data;
+  },
+};
+
+// Enhanced Inventory Management API
+export const inventoryAPI = {
+  // Low stock alerts
+  getLowStockItems: async (threshold = 10) => {
+    const response = await api.get(`/inventory/low-stock?threshold=${threshold}`);
+    return response.data;
+  },
+
+  // Stock movements
+  getStockMovements: async (filters: {
+    productId?: string;
+    variantId?: string;
+    type?: string;
+    startDate?: string;
+    endDate?: string;
+    page?: number;
+    limit?: number;
+  } = {}) => {
+    const queryParams = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined) {
+        queryParams.append(key, value.toString());
+      }
+    });
+
+    const response = await api.get(`/inventory/movements?${queryParams.toString()}`);
+    return response.data;
+  },
+
+  // Inventory valuation
+  getInventoryValuation: async (method: 'FIFO' | 'LIFO' | 'AVERAGE' = 'AVERAGE') => {
+    const response = await api.get(`/inventory/valuation?method=${method}`);
+    return response.data;
+  },
+
+  // Stock take / Physical inventory
+  startStockTake: async (locations?: string[]) => {
+    const response = await api.post('/inventory/stock-take/start', { locations });
+    return response.data;
+  },
+
+  recordStockCount: async (stockTakeId: string, counts: Array<{
+    productId?: string;
+    variantId?: string;
+    countedQuantity: number;
+    notes?: string;
+  }>) => {
+    const response = await api.post(`/inventory/stock-take/${stockTakeId}/count`, { counts });
+    return response.data;
+  },
+
+  completeStockTake: async (stockTakeId: string) => {
+    const response = await api.post(`/inventory/stock-take/${stockTakeId}/complete`);
+    return response.data;
+  },
+
+  // Reorder suggestions
+  getReorderSuggestions: async () => {
+    const response = await api.get('/inventory/reorder-suggestions');
+    return response.data;
+  },
+
+  // Create automatic reorder
+  createReorderFromSuggestions: async (suggestions: Array<{
+    productId?: string;
+    variantId?: string;
+    supplierId: string;
+    quantity: number;
+  }>) => {
+    const response = await api.post('/inventory/auto-reorder', { suggestions });
     return response.data;
   },
 };

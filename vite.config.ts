@@ -15,6 +15,12 @@ export default defineConfig({
         target: 'ws://localhost:8000',
         ws: true,
       },
+      // Proxy for suits API to bypass CORS
+      '/suits-api': {
+        target: 'https://kct-suits-services-production.up.railway.app',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/suits-api/, ''),
+      },
     },
   },
 }) 

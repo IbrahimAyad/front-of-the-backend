@@ -29,6 +29,12 @@ interface ImportMetaEnv {
   readonly VITE_NODE_ENV?: string;
   readonly VITE_ADMIN_EMAIL?: string;
   readonly VITE_ADMIN_PASSWORD?: string;
+  
+  // Product Service APIs
+  readonly VITE_SUITS_API_URL?: string;
+  readonly VITE_TIES_API_URL?: string;
+  readonly VITE_VENDOR_API_URL?: string;
+  readonly VITE_IMAGES_BASE_URL?: string;
 }
 
 interface ImportMeta {

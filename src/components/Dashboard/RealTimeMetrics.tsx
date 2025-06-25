@@ -226,7 +226,7 @@ const RealTimeMetrics: React.FC = () => {
           previousValue={metrics.revenue.previous}
           prefix="$"
           icon={<TrendingUpIcon />}
-          color="#1976d2"
+                        color="#8B1538"
           isLive
         />
         <MetricCard

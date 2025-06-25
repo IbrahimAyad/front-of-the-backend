@@ -118,7 +118,9 @@ async function main() {
           category: 'Suits',
           price: 2500.00,
           sku: 'SUIT-3PC-001',
-          inStock: true,
+          totalStock: 10,
+          availableStock: 8,
+          isPublished: true,
         },
       }),
       prisma.product.create({
@@ -128,7 +130,9 @@ async function main() {
           category: 'Formal Wear',
           price: 1800.00,
           sku: 'TUX-WED-001',
-          inStock: true,
+          totalStock: 15,
+          availableStock: 12,
+          isPublished: true,
         },
       }),
       prisma.product.create({
@@ -138,7 +142,9 @@ async function main() {
           category: 'Business',
           price: 1200.00,
           sku: 'SUIT-BUS-001',
-          inStock: true,
+          totalStock: 20,
+          availableStock: 18,
+          isPublished: true,
         },
       }),
       prisma.product.create({
@@ -148,7 +154,9 @@ async function main() {
           category: 'Casual',
           price: 800.00,
           sku: 'BLZR-CAS-001',
-          inStock: true,
+          totalStock: 25,
+          availableStock: 22,
+          isPublished: true,
         },
       }),
     ]);
