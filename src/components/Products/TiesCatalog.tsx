@@ -344,6 +344,96 @@ const TiesCatalog: React.FC = () => {
         ))}
       </Grid>
 
+      {/* Advanced Features Section */}
+      <Box 
+        sx={{ 
+          backgroundColor: 'background.paper', 
+          borderRadius: 3, 
+          p: 4, 
+          border: '1px solid',
+          borderColor: 'divider',
+          mt: 6
+        }}
+      >
+        <Typography variant="h4" gutterBottom sx={{ fontWeight: 600, textAlign: 'center', mb: 4 }}>
+          🚀 Advanced Features
+        </Typography>
+        
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={4}>
+            <Card sx={{ height: '100%', textAlign: 'center' }}>
+              <CardContent sx={{ p: 3 }}>
+                <Avatar sx={{ width: 60, height: 60, mx: 'auto', mb: 2, bgcolor: 'primary.main' }}>
+                  💒
+                </Avatar>
+                <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+                  Wedding Bundle Builder
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Coordinate your entire wedding party with our intelligent bundle builder. 
+                  Automatic discounts and color coordination.
+                </Typography>
+                <Button 
+                  variant="contained" 
+                  fullWidth 
+                  onClick={() => navigate('/wedding-bundle')}
+                >
+                  Build Wedding Bundle
+                </Button>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid item xs={12} md={4}>
+            <Card sx={{ height: '100%', textAlign: 'center' }}>
+              <CardContent sx={{ p: 3 }}>
+                <Avatar sx={{ width: 60, height: 60, mx: 'auto', mb: 2, bgcolor: 'secondary.main' }}>
+                  🎯
+                </Avatar>
+                <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+                  Event Recommendations
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Get expert recommendations based on your specific event. 
+                  From business meetings to formal galas.
+                </Typography>
+                <Button 
+                  variant="contained" 
+                  fullWidth 
+                  onClick={() => navigate('/event-recommendations')}
+                >
+                  Get Recommendations
+                </Button>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid item xs={12} md={4}>
+            <Card sx={{ height: '100%', textAlign: 'center' }}>
+              <CardContent sx={{ p: 3 }}>
+                <Avatar sx={{ width: 60, height: 60, mx: 'auto', mb: 2, bgcolor: 'success.main' }}>
+                  🎨
+                </Avatar>
+                <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+                  Color Family Explorer
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Explore our 9 curated color families with 63 wedding collection colors. 
+                  Revolutionary color selection experience.
+                </Typography>
+                <Button 
+                  variant="contained" 
+                  fullWidth 
+                  onClick={() => navigate('/collections/blues')}
+                >
+                  Explore Colors
+                </Button>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+      </Box>
+
       {/* Call to Action */}
       <Box textAlign="center" mt={6}>
         <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
@@ -353,14 +443,24 @@ const TiesCatalog: React.FC = () => {
           Each tie style features our revolutionary color family system with 63 curated wedding collection colors.
           Click any product above to explore the beautiful color options and find your perfect match.
         </Typography>
-        <Button 
-          variant="outlined" 
-          size="large" 
-          startIcon={<ShoppingCart />}
-          onClick={() => navigate('/products')}
-        >
-          View All Products
-        </Button>
+        <Box display="flex" justifyContent="center" gap={2}>
+          <Button 
+            variant="contained" 
+            size="large" 
+            onClick={() => navigate('/collections/blues')}
+            startIcon={<Palette />}
+          >
+            Explore Colors
+          </Button>
+          <Button 
+            variant="outlined" 
+            size="large" 
+            startIcon={<ShoppingCart />}
+            onClick={() => navigate('/products')}
+          >
+            View All Products
+          </Button>
+        </Box>
       </Box>
     </Container>
   );
