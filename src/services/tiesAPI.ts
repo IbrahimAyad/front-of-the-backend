@@ -609,7 +609,7 @@ class TiesApiService {
         productName = productSlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
       }
 
-      const colorData = this.generateColorData(productId, productName, productSlug);
+      const colorData = this.generateColorData(productId, productName, productSlug || '');
       
       return colorData;
     } catch (error: any) {
@@ -640,11 +640,11 @@ class TiesApiService {
             const colorData = await this.getProductColors(product.id, product.slug);
             return {
               ...product,
-              colors: colorData.colorFamilies || [],
-              totalColors: colorData.totalColors || 0,
-              totalVariants: colorData.totalVariants || 0,
-              availableWidths: colorData.availableWidths || [],
-              revolutionaryUI: colorData.revolutionaryUI || {}
+              colors: 'colorFamilies' in colorData ? colorData.colorFamilies : [],
+              totalColors: 'totalColors' in colorData ? colorData.totalColors : 0,
+              totalVariants: 'totalVariants' in colorData ? colorData.totalVariants : 0,
+              availableWidths: 'availableWidths' in colorData ? colorData.availableWidths : [],
+              revolutionaryUI: 'revolutionaryUI' in colorData ? colorData.revolutionaryUI : {}
             };
           } catch (colorError: any) {
             console.warn(`[TiesAPI] Failed to fetch colors for ${product.slug}:`, colorError.message);
