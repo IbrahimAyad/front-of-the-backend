@@ -39,6 +39,8 @@ import UnifiedDashboardHub from './components/Dashboard/UnifiedDashboardHub';
 import CustomerManagementPage from './pages/CustomerManagement/CustomerManagementPage';
 import MarketingHubPage from './pages/Marketing/MarketingHubPage';
 import ProductManagementDashboard from './components/Products/ProductManagementDashboard';
+import TiesProductPage from './components/Products/TiesProductPage';
+import TiesCatalog from './components/Products/TiesCatalog';
 
 // Import configured query client
 import { queryClient } from './utils/queryClient';
@@ -95,6 +97,8 @@ function App() {
                       
                       {/* Product routes */}
                       <Route path="products/*" element={<ProductsPage />} />
+                      <Route path="ties" element={<TiesCatalog />} />
+                      <Route path="ties/:slug" element={<TiesProductPage />} />
                       <Route path="inventory" element={<ProductManagementDashboard />} />
                       
                       {/* Measurement routes */}
