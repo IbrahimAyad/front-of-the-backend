@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Grid, Card, CardContent, Typography, Chip, Tooltip, IconButton, Fade, Zoom } from '@mui/material';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Box, Grid, Card, CardContent, Typography, Chip, Tooltip, IconButton, Fade, Zoom, Button } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { Palette, Info, ArrowForward } from '@mui/icons-material';
+import { Palette, Info, ArrowForward, ViewList } from '@mui/icons-material';
 import tiesAPI from '../../services/tiesAPI';
 
 // Types for color families
@@ -135,6 +136,8 @@ const ColorFamilyGrid: React.FC<ColorFamilyGridProps> = ({
   selectedFamily,
   compact = false
 }) => {
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [colorFamilies, setColorFamilies] = useState<ColorFamily[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedFamily, setExpandedFamily] = useState<string | null>(null);
@@ -168,6 +171,17 @@ const ColorFamilyGrid: React.FC<ColorFamilyGridProps> = ({
   const handleColorClick = (color: string, family: ColorFamily, event: React.MouseEvent) => {
     event.stopPropagation();
     onColorSelect?.(color, family);
+    
+    // Update URL with color selection
+    const newSearchParams = new URLSearchParams(searchParams);
+    newSearchParams.set('color', color.toLowerCase().replace(/\s+/g, '-'));
+    newSearchParams.set('family', family.slug);
+    setSearchParams(newSearchParams);
+  };
+
+  const handleViewAllFamily = (family: ColorFamily, event: React.MouseEvent) => {
+    event.stopPropagation();
+    navigate(`/collections/${family.slug}`);
   };
 
   if (loading) {
@@ -252,9 +266,20 @@ const ColorFamilyGrid: React.FC<ColorFamilyGridProps> = ({
               <Fade in={isExpanded} timeout={300}>
                 <Box mt={2} sx={{ display: isExpanded ? 'block' : 'none' }}>
                   <Card sx={{ p: 2, backgroundColor: 'background.paper', borderRadius: 2 }}>
-                    <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-                      {family.name} Collection
-                    </Typography>
+                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                      <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        {family.name} Collection
+                      </Typography>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<ViewList />}
+                        onClick={(e) => handleViewAllFamily(family, e)}
+                        sx={{ textTransform: 'none' }}
+                      >
+                        View All {family.name}
+                      </Button>
+                    </Box>
                     <Grid container spacing={1}>
                       {family.colors.map((color, colorIndex) => (
                         <Grid item key={colorIndex}>

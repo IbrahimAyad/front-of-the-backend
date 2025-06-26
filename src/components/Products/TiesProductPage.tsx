@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import {
   Box,
   Container,
@@ -119,6 +119,7 @@ const FeatureCard = styled(Card)({
 
 const TiesProductPage: React.FC<TiesProductPageProps> = () => {
   const { slug } = useParams<{ slug: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
   const productSlug = slug || 'classic-width-tie';
   const [product, setProduct] = useState<TieProduct | null>(null);
   const [selectedColor, setSelectedColor] = useState<string>('');
@@ -128,7 +129,23 @@ const TiesProductPage: React.FC<TiesProductPageProps> = () => {
 
   useEffect(() => {
     loadProduct();
-  }, [productSlug]);
+    
+    // Load color and family from URL parameters
+    const colorParam = searchParams.get('color');
+    const familyParam = searchParams.get('family');
+    
+    if (colorParam) {
+      // Convert URL format back to display format
+      const displayColor = colorParam.split('-').map(word => 
+        word.charAt(0).toUpperCase() + word.slice(1)
+      ).join(' ');
+      setSelectedColor(displayColor);
+    }
+    
+    if (familyParam) {
+      setSelectedFamily(familyParam);
+    }
+  }, [productSlug, searchParams]);
 
   const loadProduct = async () => {
     try {
@@ -212,8 +229,14 @@ const TiesProductPage: React.FC<TiesProductPageProps> = () => {
   const handleColorSelect = (color: string, family: ColorFamily) => {
     setSelectedColor(color);
     setSelectedFamily(family.slug);
+    
+    // Update URL with color selection
+    const newSearchParams = new URLSearchParams(searchParams);
+    newSearchParams.set('color', color.toLowerCase().replace(/\s+/g, '-'));
+    newSearchParams.set('family', family.slug);
+    setSearchParams(newSearchParams);
+    
     console.log('Selected color:', color, 'from family:', family.name);
-    // Here you would typically update the product image and other UI elements
   };
 
   const handleAddToCart = () => {

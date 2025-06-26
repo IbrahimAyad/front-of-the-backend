@@ -41,6 +41,7 @@ import MarketingHubPage from './pages/Marketing/MarketingHubPage';
 import ProductManagementDashboard from './components/Products/ProductManagementDashboard';
 import TiesProductPage from './components/Products/TiesProductPage';
 import TiesCatalog from './components/Products/TiesCatalog';
+import ColorFamilyCollection from './components/Products/ColorFamilyCollection';
 
 // Import configured query client
 import { queryClient } from './utils/queryClient';
@@ -99,6 +100,7 @@ function App() {
                       <Route path="products/*" element={<ProductsPage />} />
                       <Route path="ties" element={<TiesCatalog />} />
                       <Route path="ties/:slug" element={<TiesProductPage />} />
+                      <Route path="collections/:family" element={<ColorFamilyCollection />} />
                       <Route path="inventory" element={<ProductManagementDashboard />} />
                       
                       {/* Measurement routes */}
