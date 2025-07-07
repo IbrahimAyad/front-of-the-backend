@@ -1,4 +1,9 @@
 {
+  "version": 2,
+  "buildCommand": "npm run build:frontend",
+  "outputDirectory": "dist",
+  "installCommand": "npm install --production=false",
+  "framework": "vite",
   "rewrites": [
     {
       "source": "/(.*)",
@@ -15,5 +20,7 @@
         }
       ]
     }
-  ]
+  ],
+  "functions": {},
+  "routes": []
 } 
