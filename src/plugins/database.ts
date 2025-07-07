@@ -39,6 +39,29 @@ async function connectWithRetry(prisma: PrismaClient, maxRetries: number = 5): P
 }
 
 const databasePlugin: FastifyPluginAsync = async (fastify) => {
+  // Check if DATABASE_URL is properly configured
+  if (!process.env.DATABASE_URL || process.env.DATABASE_URL.includes('${{')) {
+    fastify.log.warn('⚠️  DATABASE_URL not configured for local development');
+    fastify.log.info('📋 To run locally, set DATABASE_URL in your environment');
+    fastify.log.info('💡 Example: DATABASE_URL="postgresql://user:pass@localhost:5432/dbname"');
+    
+    // Create a mock prisma instance for development
+    const mockPrisma = {
+      $connect: async () => {},
+      $disconnect: async () => {},
+      $queryRaw: async () => [],
+      user: { findFirst: async () => null },
+      customer: { findMany: async () => [] },
+      order: { findMany: async () => [] },
+      lead: { findMany: async () => [] },
+      product: { findMany: async () => [] },
+    } as any;
+    
+    fastify.decorate('prisma', mockPrisma);
+    fastify.log.info('🔧 Using mock database for local development');
+    return;
+  }
+
   const prisma = new PrismaClient({
     log: ['query', 'info', 'warn', 'error'],
     errorFormat: 'pretty',

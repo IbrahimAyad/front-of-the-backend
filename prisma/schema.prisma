@@ -5,6 +5,9 @@ generator client {
 datasource db {
   provider = "postgresql"
   url = env("DATABASE_URL")
+  // For local development, you can use SQLite by changing to:
+  // provider = "sqlite"
+  // url = "file:./dev.db"
 }
 
 enum UserRole {
