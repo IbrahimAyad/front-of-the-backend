@@ -21,8 +21,11 @@ class WebSocketService {
       this.reconnectTimeoutId = null;
     }
 
-    const baseUrl = CLIENT_CONFIG.WS_BASE_URL || 'wss://front-of-the-backend-production.up.railway.app/ws';
+    const baseUrl = CLIENT_CONFIG.WS_BASE_URL || 'ws://localhost:8000/ws';
     const url = this.token ? `${baseUrl}?token=${this.token}` : baseUrl;
+    
+    // Log connection attempt
+    console.log('🔌 Attempting WebSocket connection to:', baseUrl);
     
     try {
       // Close existing connection if any
@@ -167,6 +170,8 @@ class WebSocketService {
       this.connect(this.token || undefined);
     }, 1000);
   }
+
+
 }
 
 export const websocketService = new WebSocketService();

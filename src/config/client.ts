@@ -42,7 +42,7 @@ export const CLIENT_CONFIG = {
   
   WS_BASE_URL: isProduction 
     ? 'wss://front-of-the-backend-production.up.railway.app/ws'
-    : getEnv('VITE_WS_BASE_URL', 'ws://localhost:8000/ws'),
+    : 'ws://localhost:8000/ws',
   
   // Product Service APIs
   SUITS_API_URL: isProduction

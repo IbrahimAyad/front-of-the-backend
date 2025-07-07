@@ -119,7 +119,7 @@ const mockProducts: SmartProduct[] = [
     images: [
       {
         id: '2',
-        url: 'https://images.unsplash.com/photo-1506629905607-4c8c2e45f1e1?w=500',
+        url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&h=500&fit=crop',
         altText: 'Burgundy Silk Bow Tie',
         isPrimary: true,
         order: 1,
