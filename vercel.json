@@ -21,7 +21,7 @@
       "dest": "/index.html"
     }
   ],
-  "installCommand": "npm install --omit=optional",
+  "installCommand": "VERCEL=1 npm install",
   "buildCommand": "npm run build:vercel",
   "env": {
     "VITE_API_BASE_URL": "https://front-of-the-backend-production.up.railway.app",
@@ -29,16 +29,6 @@
     "VITE_FRONTEND_URL": "https://kct-menswear-frontend.vercel.app",
     "VITE_USE_MOCK_DATA": "false",
     "VITE_NODE_ENV": "production",
-    "SKIP_ENV_VALIDATION": "true"
-  },
-  "build": {
-    "env": {
-      "VITE_API_BASE_URL": "https://front-of-the-backend-production.up.railway.app",
-      "VITE_WS_BASE_URL": "wss://front-of-the-backend-production.up.railway.app/ws",
-      "VITE_FRONTEND_URL": "https://kct-menswear-frontend.vercel.app",
-      "VITE_USE_MOCK_DATA": "false",
-      "VITE_NODE_ENV": "production",
-      "SKIP_ENV_VALIDATION": "true"
-    }
+    "VERCEL": "1"
   }
 } 
