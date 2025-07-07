@@ -53,3 +53,4 @@ npm run dev
 1. **Install dependencies:**
    ```bash
    npm install
+# Trigger Vercel redeploy - Sun Jul  6 23:11:46 EDT 2025
