@@ -26,7 +26,7 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import {
-  Wedding,
+  Favorite,
   Business,
   Event,
   School,
@@ -35,7 +35,6 @@ import {
   AutoAwesome,
   StarRate,
   TrendingUp,
-  Favorite,
   ShoppingCart,
   Info,
   CheckCircle,
@@ -135,7 +134,7 @@ const EventRecommendations: React.FC = () => {
     {
       id: 'wedding',
       event: 'Wedding',
-      icon: <Wedding />,
+      icon: <Favorite />,
       description: 'Perfect colors and styles for the most important day',
       season: 'All Seasons',
       formalityLevel: 'formal',
@@ -657,7 +656,7 @@ const EventRecommendations: React.FC = () => {
             variant="outlined" 
             size="large" 
             onClick={() => navigate('/wedding-bundle')}
-            startIcon={<Wedding />}
+                            startIcon={<Favorite />}
           >
             Build Wedding Bundle
           </Button>
