@@ -33,14 +33,14 @@ import ProfilePage from './pages/Profile/ProfilePage';
 import MobilePage from './pages/Mobile/MobilePage';
 import CRMDashboard from './pages/CRM/CRMDashboard';
 import TailoringDashboard from './components/Tailoring/TailoringDashboard';
-import WeddingDashboard from './components/Weddings/WeddingDashboard';
-import WeddingPortal from './components/Weddings/WeddingPortal';
+// import WeddingDashboard from './components/Weddings/WeddingDashboard';
+// import WeddingPortal from './components/Weddings/WeddingPortal';
 import UnifiedDashboardHub from './components/Dashboard/UnifiedDashboardHub';
 import CustomerManagementPage from './pages/CustomerManagement/CustomerManagementPage';
 import MarketingHubPage from './pages/Marketing/MarketingHubPage';
 import ProductManagementDashboard from './components/Products/ProductManagementDashboard';
-import TiesProductPage from './components/Products/TiesProductPage';
 import TiesCatalog from './components/Products/TiesCatalog';
+import TiesProductPage from './components/Products/TiesProductPage';
 import ColorFamilyCollection from './components/Products/ColorFamilyCollection';
 // import WeddingBundleBuilder from './components/Products/WeddingBundleBuilder';
 // import EventRecommendations from './components/Products/EventRecommendations';
@@ -53,119 +53,92 @@ function App() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <CustomThemeProvider>
-          <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <AuthProvider>
-              <HelmetProvider>
-                <Router
-                  future={{
-                    v7_startTransition: true,
-                    v7_relativeSplatPath: true,
-                  }}
-                >
-                  <div className="App">
+          <AuthProvider>
+            <HelmetProvider>
+              <LocalizationProvider dateAdapter={AdapterDateFns}>
+                <Router>
+                  <Toaster
+                    position="top-right"
+                    toastOptions={{
+                      duration: 4000,
+                      style: {
+                        background: '#363636',
+                        color: '#fff',
+                      },
+                    }}
+                  />
                   <Routes>
                     {/* Public routes */}
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/register" element={<RegisterPage />} />
+                    <Route path="/mobile" element={<MobilePage />} />
                     
                     {/* Wedding Portal - Public route */}
-                    <Route path="/wedding-portal" element={<WeddingPortal />} />
-                    <Route path="/wedding-portal/:code" element={<WeddingPortal />} />
-                    
-                    {/* Mobile route - outside of the main layout */}
-                    <Route path="/mobile" element={<ProtectedRoute><MobilePage /></ProtectedRoute>} />
+                    {/* <Route path="/wedding-portal" element={<WeddingPortal />} />
+                    <Route path="/wedding-portal/:code" element={<WeddingPortal />} /> */}
                     
                     {/* Protected routes */}
                     <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-                      <Route index element={<Navigate to="/dashboard-hub" replace />} />
-                      <Route path="dashboard-hub" element={<UnifiedDashboardHub />} />
+                      <Route index element={<Navigate to="/dashboard" replace />} />
                       <Route path="dashboard" element={<DashboardPage />} />
                       <Route path="enhanced-dashboard" element={<EnhancedDashboard />} />
-                      <Route path="modern-dashboard" element={<EnhancedDashboardPage />} />
+                      <Route path="enhanced-dashboard-page" element={<EnhancedDashboardPage />} />
+                      <Route path="unified-dashboard" element={<UnifiedDashboardHub />} />
                       
-                      {/* Customer Management routes */}
-                      <Route path="customer-management" element={<CustomerManagementPage />} />
-                      
-                      {/* Customer routes */}
+                      {/* Customer Management */}
                       <Route path="customers" element={<CustomersPage />} />
                       <Route path="customers/:id" element={<CustomerDetailPage />} />
+                      <Route path="customer-management" element={<CustomerManagementPage />} />
                       
-                      {/* Lead routes */}
+                      {/* Leads */}
                       <Route path="leads" element={<LeadsPage />} />
                       <Route path="leads/:id" element={<LeadDetailPage />} />
                       
-                      {/* Order routes */}
+                      {/* Orders */}
                       <Route path="orders" element={<OrdersPage />} />
                       <Route path="orders/:id" element={<OrderDetailPage />} />
                       
-                      {/* Product routes */}
-                      <Route path="products/*" element={<ProductsPage />} />
+                      {/* Products */}
+                      <Route path="products" element={<ProductsPage />} />
+                      <Route path="products/:id" element={<ProductDetailPage />} />
+                      
+                      {/* Ties Catalog */}
                       <Route path="ties" element={<TiesCatalog />} />
                       <Route path="ties/:slug" element={<TiesProductPage />} />
                       <Route path="collections/:family" element={<ColorFamilyCollection />} />
                       {/* <Route path="wedding-bundle" element={<WeddingBundleBuilder />} /> */}
-                                              {/* <Route path="event-recommendations" element={<EventRecommendations />} /> */}
+                      {/* <Route path="event-recommendations" element={<EventRecommendations />} /> */}
                       <Route path="inventory" element={<ProductManagementDashboard />} />
                       
-                      {/* Measurement routes */}
+                      {/* Measurements */}
                       <Route path="measurements" element={<MeasurementsPage />} />
                       
-                      {/* Appointment routes */}
+                      {/* Appointments */}
                       <Route path="appointments" element={<AppointmentsPage />} />
                       
-                      {/* Analytics routes */}
+                      {/* Analytics */}
                       <Route path="analytics" element={<AnalyticsPage />} />
                       
-                      {/* Marketing routes */}
-                      <Route path="marketing" element={<MarketingHubPage />} />
+                      {/* Profile */}
+                      <Route path="profile" element={<ProfilePage />} />
                       
-                      {/* CRM routes */}
+                      {/* CRM */}
                       <Route path="crm" element={<CRMDashboard />} />
                       
-                      {/* Tailoring routes */}
+                      {/* Marketing */}
+                      <Route path="marketing" element={<MarketingHubPage />} />
+                      
+                      {/* Tailoring */}
                       <Route path="tailoring" element={<TailoringDashboard />} />
                       
                       {/* Wedding routes */}
-                      <Route path="weddings" element={<WeddingDashboard />} />
-                      
-                      {/* Profile routes */}
-                      <Route path="profile" element={<ProfilePage />} />
+                      {/* <Route path="weddings" element={<WeddingDashboard />} /> */}
                     </Route>
-                    
-                    {/* 404 fallback */}
-                    <Route path="*" element={<Navigate to="/dashboard-hub" replace />} />
                   </Routes>
-                </div>
-              </Router>
-              
-              {/* Toast notifications */}
-              <Toaster
-                position="top-right"
-                toastOptions={{
-                  duration: 4000,
-                  style: {
-                    background: '#363636',
-                    color: '#fff',
-                  },
-                  success: {
-                    duration: 3000,
-                    iconTheme: {
-                      primary: '#4caf50',
-                      secondary: '#fff',
-                    },
-                  },
-                  error: {
-                    duration: 5000,
-                    iconTheme: {
-                      primary: '#f44336',
-                      secondary: '#fff',
-                    },
-                  },
-                }}
-              />
-              </HelmetProvider>
-            </AuthProvider>
-          </LocalizationProvider>
+                </Router>
+              </LocalizationProvider>
+            </HelmetProvider>
+          </AuthProvider>
         </CustomThemeProvider>
       </QueryClientProvider>
     </ErrorBoundary>
