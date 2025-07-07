@@ -42,8 +42,8 @@ import ProductManagementDashboard from './components/Products/ProductManagementD
 import TiesProductPage from './components/Products/TiesProductPage';
 import TiesCatalog from './components/Products/TiesCatalog';
 import ColorFamilyCollection from './components/Products/ColorFamilyCollection';
-import WeddingBundleBuilder from './components/Products/WeddingBundleBuilder';
-import EventRecommendations from './components/Products/EventRecommendations';
+// import WeddingBundleBuilder from './components/Products/WeddingBundleBuilder';
+// import EventRecommendations from './components/Products/EventRecommendations';
 
 // Import configured query client
 import { queryClient } from './utils/queryClient';
@@ -103,8 +103,8 @@ function App() {
                       <Route path="ties" element={<TiesCatalog />} />
                       <Route path="ties/:slug" element={<TiesProductPage />} />
                       <Route path="collections/:family" element={<ColorFamilyCollection />} />
-                      <Route path="wedding-bundle" element={<WeddingBundleBuilder />} />
-                      <Route path="event-recommendations" element={<EventRecommendations />} />
+                      {/* <Route path="wedding-bundle" element={<WeddingBundleBuilder />} /> */}
+                                              {/* <Route path="event-recommendations" element={<EventRecommendations />} /> */}
                       <Route path="inventory" element={<ProductManagementDashboard />} />
                       
                       {/* Measurement routes */}

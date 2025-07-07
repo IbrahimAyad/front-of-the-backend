@@ -51,7 +51,7 @@ import {
   AttachMoney,
   Group,
   Person,
-  Wedding
+  Favorite
 } from '@mui/icons-material';
 import tiesAPI from '../../services/tiesAPI';
 
@@ -275,7 +275,7 @@ const WeddingBundleBuilder: React.FC = () => {
 
   const getRoleIcon = (role: WeddingPartyMember['role']) => {
     switch (role) {
-      case 'groom': return <Wedding />;
+      case 'groom': return <Favorite />;
       case 'groomsman': return <Group />;
       default: return <Person />;
     }
@@ -373,7 +373,7 @@ const WeddingBundleBuilder: React.FC = () => {
                 Add Wedding Party Members
               </Typography>
               <Box display="flex" gap={1}>
-                <Button variant="outlined" onClick={() => addPartyMember('groom')} startIcon={<Wedding />}>
+                <Button variant="outlined" onClick={() => addPartyMember('groom')} startIcon={<Favorite />}>
                   Add Groom
                 </Button>
                 <Button variant="outlined" onClick={() => addPartyMember('groomsman')} startIcon={<Group />}>
