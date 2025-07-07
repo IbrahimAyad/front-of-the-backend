@@ -16,8 +16,6 @@ import ErrorBoundary from './components/ErrorBoundary/ErrorBoundary';
 import LoginPage from './pages/Auth/LoginPage';
 import RegisterPage from './pages/Auth/RegisterPage';
 import DashboardPage from './pages/Dashboard/DashboardPage';
-import EnhancedDashboard from './pages/Dashboard/EnhancedDashboard';
-import EnhancedDashboardPage from './pages/Dashboard/EnhancedDashboardPage';
 import CustomersPage from './pages/Customers/CustomersPage';
 import CustomerDetailPage from './pages/Customers/CustomerDetailPage';
 import LeadsPage from './pages/Leads/LeadsPage';
@@ -35,7 +33,7 @@ import CRMDashboard from './pages/CRM/CRMDashboard';
 import TailoringDashboard from './components/Tailoring/TailoringDashboard';
 import WeddingDashboard from './components/Weddings/WeddingDashboard';
 // import WeddingPortal from './components/Weddings/WeddingPortal';
-import UnifiedDashboardHub from './components/Dashboard/UnifiedDashboardHub';
+
 import CustomerManagementPage from './pages/CustomerManagement/CustomerManagementPage';
 import MarketingHubPage from './pages/Marketing/MarketingHubPage';
 import ProductManagementDashboard from './components/Products/ProductManagementDashboard';
@@ -81,9 +79,6 @@ function App() {
                     <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
                       <Route index element={<Navigate to="/dashboard" replace />} />
                       <Route path="dashboard" element={<DashboardPage />} />
-                      <Route path="enhanced-dashboard" element={<EnhancedDashboard />} />
-                      <Route path="enhanced-dashboard-page" element={<EnhancedDashboardPage />} />
-                      <Route path="unified-dashboard" element={<UnifiedDashboardHub />} />
                       
                       {/* Customer Management */}
                       <Route path="customers" element={<CustomersPage />} />

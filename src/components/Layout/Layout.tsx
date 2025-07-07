@@ -46,7 +46,7 @@ import MobileDrawer from './MobileDrawer';
 const drawerWidth = 240;
 
 const menuItems = [
-  { path: '/dashboard-hub', label: 'Dashboard Hub', icon: <Dashboard /> },
+  { path: '/dashboard', label: 'Dashboard', icon: <Dashboard /> },
   { path: '/tailoring', label: 'Tailoring Journey', icon: <ContentCut /> },
   { path: '/weddings', label: 'Wedding Services', icon: <Favorite /> },
   { path: '/customer-management', label: 'Customer Management', icon: <ManageAccounts /> },
