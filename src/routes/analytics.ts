@@ -291,6 +291,126 @@ const analyticsRoutes: FastifyPluginAsync = async (fastify, opts) => {
       });
     }
   });
+
+  // Sales Analytics - Required by Dashboard
+  fastify.get('/sales', {
+    preHandler: fastify.authenticate,
+  }, async (request: any, reply) => {
+    try {
+      const { period = '30d' } = request.query;
+      
+      // Calculate date range
+      const days = period === '7d' ? 7 : period === '90d' ? 90 : period === '1y' ? 365 : 30;
+      const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+      // Get orders for the period
+      const orders = await fastify.prisma.order.findMany({
+        where: {
+          createdAt: { gte: startDate },
+          status: { not: 'CANCELLED' }
+        },
+        select: {
+          id: true,
+          total: true,
+          createdAt: true,
+          status: true
+        }
+      });
+
+      // Calculate sales metrics
+      const totalSales = orders.reduce((sum, order) => sum + (Number(order.total) || 0), 0);
+      const totalOrders = orders.length;
+      const avgOrderValue = totalOrders > 0 ? totalSales / totalOrders : 0;
+
+      // Group by status
+      const ordersByStatus = orders.reduce((acc, order) => {
+        acc[order.status] = (acc[order.status] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      reply.send({
+        success: true,
+        data: {
+          totalSales,
+          totalOrders,
+          avgOrderValue,
+          ordersByStatus,
+          period,
+          startDate: startDate.toISOString(),
+          endDate: new Date().toISOString()
+        }
+      });
+    } catch (error) {
+      fastify.log.error(error);
+      reply.code(500).send({
+        success: false,
+        error: 'Internal Server Error'
+      });
+    }
+  });
+
+  // Lead Analytics - Required by Dashboard
+  fastify.get('/leads', {
+    preHandler: fastify.authenticate,
+  }, async (request: any, reply) => {
+    try {
+      const { period = '30d' } = request.query;
+      
+      // Calculate date range
+      const days = period === '7d' ? 7 : period === '90d' ? 90 : period === '1y' ? 365 : 30;
+      const startDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+      // Get leads for the period
+      const leads = await fastify.prisma.lead.findMany({
+        where: {
+          createdAt: { gte: startDate }
+        },
+        select: {
+          id: true,
+          status: true,
+          createdAt: true,
+          source: true
+        }
+      });
+
+      // Group by status
+      const leadsByStatus = leads.reduce((acc, lead) => {
+        const status = lead.status?.toLowerCase() || 'unknown';
+        const existing = acc.find(item => item.status === status);
+        if (existing) {
+          existing._count += 1;
+        } else {
+          acc.push({ status, _count: 1 });
+        }
+        return acc;
+      }, [] as Array<{ status: string; _count: number }>);
+
+      // Group by source
+      const leadsBySource = leads.reduce((acc, lead) => {
+        const source = lead.source || 'unknown';
+        acc[source] = (acc[source] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      reply.send({
+        success: true,
+        data: {
+          totalLeads: leads.length,
+          leadsByStatus,
+          leadsBySource,
+          period,
+          startDate: startDate.toISOString(),
+          endDate: new Date().toISOString()
+        }
+      });
+    } catch (error) {
+      fastify.log.error(error);
+      reply.code(500).send({
+        success: false,
+        error: 'Internal Server Error'
+      });
+    }
+  });
 };
 
 export default analyticsRoutes;

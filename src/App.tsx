@@ -33,7 +33,7 @@ import ProfilePage from './pages/Profile/ProfilePage';
 import MobilePage from './pages/Mobile/MobilePage';
 import CRMDashboard from './pages/CRM/CRMDashboard';
 import TailoringDashboard from './components/Tailoring/TailoringDashboard';
-// import WeddingDashboard from './components/Weddings/WeddingDashboard';
+import WeddingDashboard from './components/Weddings/WeddingDashboard';
 // import WeddingPortal from './components/Weddings/WeddingPortal';
 import UnifiedDashboardHub from './components/Dashboard/UnifiedDashboardHub';
 import CustomerManagementPage from './pages/CustomerManagement/CustomerManagementPage';
@@ -132,7 +132,7 @@ function App() {
                       <Route path="tailoring" element={<TailoringDashboard />} />
                       
                       {/* Wedding routes */}
-                      {/* <Route path="weddings" element={<WeddingDashboard />} /> */}
+                      <Route path="weddings" element={<WeddingDashboard />} />
                     </Route>
                   </Routes>
                 </Router>
