@@ -9,18 +9,13 @@
     "build": "prisma generate && tsc --project tsconfig.server.json",
     "build:backend": "prisma generate && tsc --project tsconfig.server.json",
     "build:frontend": "vite build",
-    "build:frontend-only": "vite build",
-    "build:vercel": "vite build",
-    "build:production": "vite build --mode production",
     "start": "node dist/server.js",
     "start:dev": "tsx src/server.ts",
     "preview": "vite preview",
-    "postinstall": "if [ \"$VERCEL\" = \"1\" ]; then echo 'Skipping Prisma for Vercel'; else npx prisma generate; fi",
+    "postinstall": "npx prisma generate || echo 'Skipping Prisma generation'",
     "deploy": "prisma migrate deploy && prisma db seed",
     "deploy:vercel": "vercel --prod",
-    "deploy:netlify": "netlify deploy --prod --dir=dist",
-    "db:migrate:deploy": "prisma migrate deploy",
-    "db:seed": "tsx prisma/seed.ts"
+    "deploy:netlify": "netlify deploy --prod --dir=dist"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
