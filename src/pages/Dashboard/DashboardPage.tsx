@@ -362,19 +362,19 @@ const DashboardPage: React.FC = () => {
               <Typography variant="h6" gutterBottom>
                 Lead Sources
               </Typography>
-              {leadsAnalytics?.leadsBySource?.map((item: any, index: number) => (
+              {leadsAnalytics?.leadsBySource && Object.entries(leadsAnalytics.leadsBySource).map(([source, count], index) => (
                 <Box key={index} mb={2}>
                   <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
                     <Typography variant="body2" sx={{ textTransform: 'capitalize' }}>
-                      {item.source.replace('_', ' ')}
+                      {source.replace('_', ' ')}
                     </Typography>
                     <Typography variant="body2" fontWeight="bold">
-                      {item._count} leads
+                      {count} leads
                     </Typography>
                   </Box>
                   <LinearProgress
                     variant="determinate"
-                    value={(item._count / totalLeads) * 100}
+                    value={(Number(count) / totalLeads) * 100}
                     color="primary"
                     sx={{ height: 8, borderRadius: 4 }}
                   />
