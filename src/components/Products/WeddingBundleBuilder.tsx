@@ -50,8 +50,7 @@ import {
   Event,
   AttachMoney,
   Group,
-  Person,
-  Favorite
+  Person
 } from '@mui/icons-material';
 import tiesAPI from '../../services/tiesAPI';
 
