@@ -618,8 +618,8 @@ const ProductBuilderPage: React.FC = () => {
               {filteredProducts.map((product) => (
                 <ListItem
                   key={product.id}
-                  button
                   onClick={() => addProductToBundle(product, 'JACKET')}
+                  sx={{ cursor: 'pointer', '&:hover': { backgroundColor: 'action.hover' } }}
                 >
                   <ListItemAvatar>
                     <Avatar src={product.images?.[0]?.url} variant="rounded">
