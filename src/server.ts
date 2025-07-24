@@ -121,6 +121,11 @@ async function start() {
     await fastify.register(analyticsRoutes, { prefix: '/api/analytics' });
     await fastify.register(mcpRoutes); // ✅ Mount MCP decision engine routes
     await fastify.register(askRoute); // ✅ Mount AI agents routes (includes /api/agents/* endpoints)
+    
+    // Import and register restore routes
+    const restoreRoutes = await import('./routes/restore');
+    await fastify.register(restoreRoutes.default, { prefix: '/api/restore' });
+    
     // await fastify.register(syncRoutes, { prefix: '/api/sync' }); // Temporarily disabled
     // await fastify.register(webhooksRoutes, { prefix: '/api/webhooks' }); // Temporarily disabled
     // await fastify.register(outfitsRoutes, { prefix: '/api/outfits' }); // Temporarily disabled
