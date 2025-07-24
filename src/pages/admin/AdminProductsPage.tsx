@@ -41,7 +41,7 @@ const AdminProductsPage: React.FC = () => {
 
   const fetchProducts = async () => {
     try {
-      const response = await api.get('/products');
+      const response = await api.get('/products?limit=100');
       const formattedProducts = response.data.data.products.map((product: any) => ({
         ...product,
         price: Number(product.price),
