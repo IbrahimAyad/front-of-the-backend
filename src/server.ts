@@ -134,6 +134,10 @@ async function start() {
     const cloudflareRoutes = await import('./routes/cloudflare');
     await fastify.register(cloudflareRoutes.default, { prefix: '/api/cloudflare' });
     
+    // Import and register cleanup routes
+    const cleanupRoutes = await import('./routes/cleanup');
+    await fastify.register(cleanupRoutes.default, { prefix: '/api/cleanup' });
+    
     // await fastify.register(syncRoutes, { prefix: '/api/sync' }); // Temporarily disabled
     // await fastify.register(webhooksRoutes, { prefix: '/api/webhooks' }); // Temporarily disabled
     // await fastify.register(outfitsRoutes, { prefix: '/api/outfits' }); // Temporarily disabled

@@ -5,10 +5,10 @@ import fetch from 'node-fetch';
 const cloudflareRoutes: FastifyPluginAsync = async (fastify) => {
   // Get Cloudflare config from environment
   const CLOUDFLARE_CONFIG = {
-    ACCOUNT_ID: process.env.VITE_CLOUDFLARE_ACCOUNT_ID || 'ea644c4a47a499ad4721449cbac587f4',
-    IMAGES_API_KEY: process.env.VITE_CLOUDFLARE_IMAGES_API_KEY || 'ea644c4a47a499ad4721449cbac587f4',
-    ACCOUNT_HASH: process.env.VITE_CLOUDFLARE_IMAGES_ACCOUNT_HASH || 'QI-O2U_ayTU_H_Ilcb4c6Q',
-    DELIVERY_URL: process.env.VITE_CLOUDFLARE_IMAGE_DELIVERY_URL || 'https://imagedelivery.net/QI-O2U_ayTU_H_Ilcb4c6Q',
+    ACCOUNT_ID: process.env.CLOUDFLARE_ACCOUNT_ID || 'ea644c4a47a499ad4721449cbac587f4',
+    IMAGES_API_KEY: process.env.CLOUDFLARE_API_TOKEN || 'feda0b5504010de502b702700c9e403680105',
+    ACCOUNT_HASH: 'QI-O2U_ayTU_H_Ilcb4c6Q',
+    DELIVERY_URL: 'https://imagedelivery.net/QI-O2U_ayTU_H_Ilcb4c6Q',
   };
 
   // Upload image to Cloudflare Images
