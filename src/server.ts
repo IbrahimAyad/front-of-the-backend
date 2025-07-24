@@ -2,7 +2,7 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import jwt from '@fastify/jwt';
 import websocket from '@fastify/websocket';
-import multipart from '@fastify/multipart';
+
 import rateLimit from '@fastify/rate-limit';
 import dotenv from 'dotenv';
 
@@ -94,11 +94,7 @@ async function start() {
       secret: SERVER_CONFIG.JWT_SECRET,
     });
 
-    await fastify.register(multipart, {
-      limits: {
-        fileSize: SERVER_CONFIG.UPLOAD_MAX_SIZE,
-      },
-    });
+    // File upload plugin moved to Cloudflare section to avoid duplicate registration
 
     await fastify.register(websocket);
 
