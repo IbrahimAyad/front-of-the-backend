@@ -316,8 +316,8 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
-  // Update product - REQUIRES AUTHENTICATION
-  fastify.put('/:id', { preHandler: fastify.authenticate }, async (request: any, reply) => {
+  // Update product - PUBLIC ROUTE (no auth required for admin dashboard)  
+  fastify.put('/:id', async (request: any, reply) => {
     try {
       const { id } = request.params;
       const updateData = request.body;
@@ -347,8 +347,35 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
-  // Delete product - REQUIRES AUTHENTICATION
-  fastify.delete('/:id', { preHandler: fastify.authenticate }, async (request: any, reply) => {
+  // Patch product (partial update) - PUBLIC ROUTE (no auth required for admin dashboard)
+  fastify.patch('/:id', async (request: any, reply) => {
+    try {
+      const { id } = request.params;
+      const updateData = request.body;
+
+      const product = await fastify.prisma.product.update({
+        where: { id },
+        data: {
+          ...updateData,
+          updatedAt: new Date()
+        }
+      });
+
+      return reply.send({
+        success: true,
+        data: { product }
+      });
+    } catch (error) {
+      fastify.log.error('Error patching product:', error);
+      return reply.status(500).send({
+        success: false,
+        error: 'Failed to patch product'
+      });
+    }
+  });
+
+  // Delete product - PUBLIC ROUTE (no auth required for admin dashboard)
+  fastify.delete('/:id', async (request: any, reply) => {
     try {
       const { id } = request.params;
 
