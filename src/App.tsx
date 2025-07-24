@@ -135,6 +135,7 @@ function App() {
                     
                     {/* Admin routes - separate from main layout */}
                     <Route path="/admin/*" element={<ProtectedRoute><EnhancedAdminDashboard /></ProtectedRoute>} />
+                    <Route path="/admin/products/:productId/edit" element={<ProtectedRoute><EnhancedAdminDashboard /></ProtectedRoute>} />
                   </Routes>
                 </Router>
               </LocalizationProvider>

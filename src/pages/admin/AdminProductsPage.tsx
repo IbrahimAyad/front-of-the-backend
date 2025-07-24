@@ -64,7 +64,7 @@ const AdminProductsPage: React.FC = () => {
     if (product.id) {
       navigate(`/admin/products/${product.id}/edit`);
     } else {
-      navigate('/admin/products/new');
+      navigate('/admin/products/new/edit');
     }
   };
 

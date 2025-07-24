@@ -51,6 +51,7 @@ import AdminCategoriesPage from './AdminCategoriesPage';
 import AdminStockAlertsPage from './AdminStockAlertsPage';
 import AdminDashboardOverview from './AdminDashboardOverview';
 import AdminSettingsPage from './AdminSettingsPage';
+import ProductEditPage from './ProductEditPage';
 import OutfitBuilderSection from '../../components/Admin/OutfitBuilderSection';
 
 const drawerWidth = 280;
@@ -76,7 +77,9 @@ const EnhancedAdminDashboard: React.FC = () => {
   // Handle URL-based routing
   useEffect(() => {
     const path = location.pathname;
-    if (path.includes('/admin/products')) {
+    if (path.includes('/admin/products') && path.includes('/edit')) {
+      setCurrentView('product-edit');
+    } else if (path.includes('/admin/products')) {
       setCurrentView('products');
     } else if (path.includes('/admin/dashboard')) {
       setCurrentView('dashboard');
@@ -253,6 +256,8 @@ const EnhancedAdminDashboard: React.FC = () => {
         return <AdminDashboardOverview />;
       case 'products':
         return <AdminProductsPage />;
+      case 'product-edit':
+        return <ProductEditPage />;
       case 'categories':
         return <AdminCategoriesPage />;
       case 'stock-alerts':
