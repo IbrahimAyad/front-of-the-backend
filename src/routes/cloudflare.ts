@@ -14,10 +14,39 @@ const cloudflareRoutes: FastifyPluginAsync = async (fastify) => {
   // Upload image to Cloudflare Images
   fastify.post('/upload', async (request: any, reply) => {
     try {
-      // Handle multipart form data
-      const data = await request.file();
-      
-      if (!data) {
+      const parts = request.parts();
+      let fileBuffer: Buffer | null = null;
+      let filename = '';
+      let mimetype = '';
+      let metadata: any = {};
+
+      // Process all parts
+      for await (const part of parts) {
+        if (part.type === 'file') {
+          console.log('📁 File part received:', {
+            filename: part.filename,
+            mimetype: part.mimetype,
+            fieldname: part.fieldname,
+          });
+
+          filename = part.filename || 'upload.jpg';
+          mimetype = part.mimetype || 'image/jpeg';
+
+          // Convert stream to buffer
+          const chunks = [];
+          for await (const chunk of part.file) {
+            chunks.push(chunk);
+          }
+          fileBuffer = Buffer.concat(chunks);
+          console.log('📊 File buffer size:', fileBuffer.length);
+
+        } else if (part.fieldname === 'metadata') {
+          metadata = JSON.parse(part.value as string);
+          console.log('📝 Metadata received:', metadata);
+        }
+      }
+
+      if (!fileBuffer) {
         return reply.status(400).send({
           success: false,
           error: 'No file provided'
@@ -26,14 +55,14 @@ const cloudflareRoutes: FastifyPluginAsync = async (fastify) => {
 
       // Create FormData for Cloudflare API
       const formData = new FormData();
-      formData.append('file', data.file, {
-        filename: data.filename,
-        contentType: data.mimetype,
+      formData.append('file', fileBuffer, {
+        filename: filename,
+        contentType: mimetype,
       });
 
       // Add metadata if provided
-      if (request.body?.metadata) {
-        formData.append('metadata', JSON.stringify(request.body.metadata));
+      if (Object.keys(metadata).length > 0) {
+        formData.append('metadata', JSON.stringify(metadata));
       }
 
       // Upload to Cloudflare

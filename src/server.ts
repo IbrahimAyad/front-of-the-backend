@@ -126,6 +126,14 @@ async function start() {
     const restoreRoutes = await import('./routes/restore');
     await fastify.register(restoreRoutes.default, { prefix: '/api/restore' });
     
+    // Register multipart support for file uploads
+    await fastify.register(import('@fastify/multipart'), {
+      limits: {
+        files: 10,
+        fileSize: 10 * 1024 * 1024, // 10MB
+      }
+    });
+
     // Import and register Cloudflare routes
     const cloudflareRoutes = await import('./routes/cloudflare');
     await fastify.register(cloudflareRoutes.default, { prefix: '/api/cloudflare' });
