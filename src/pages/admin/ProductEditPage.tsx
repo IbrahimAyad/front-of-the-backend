@@ -24,7 +24,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import api from '../../services/api';
+import api, { productAPI } from '../../services/api';
 
 interface ProductFormData {
   name: string;
@@ -67,16 +67,43 @@ const ProductEditPage: React.FC = () => {
   const categories = ['Suits', 'Shirts', 'Ties', 'Vests', 'Pants', 'Accessories'];
   
   useEffect(() => {
+    console.log('ProductEditPage - productId:', productId);
+    console.log('ProductEditPage - isEdit:', isEdit);
     if (isEdit) {
       fetchProduct();
     }
-  }, [productId]);
+  }, [productId, isEdit]);
   
   const fetchProduct = async () => {
     setLoading(true);
     try {
-      const response = await api.get(`/products/${productId}`);
-      const product = response.data.data;
+      const response = await productAPI.getProduct(productId!);
+      console.log('API Response:', response);
+      console.log('Response structure:', {
+        hasData: !!response.data,
+        hasSuccess: !!response.success,
+        directProduct: !!(response.id || response.name),
+        keys: Object.keys(response)
+      });
+      
+      // Handle different response structures
+      let product;
+      if (response.data) {
+        // If response has a data property, use it
+        product = response.data;
+      } else if (response.success && response.product) {
+        // If response has success flag and product property
+        product = response.product;
+      } else if (response.id || response.name || response.sku) {
+        // If response is the product directly
+        product = response;
+      } else {
+        // Fallback - try to find the product in the response
+        console.error('Unexpected response structure:', response);
+        throw new Error('Invalid response structure');
+      }
+      
+      console.log('Product data:', product);
       
       setFormData({
         name: product.name || '',
@@ -86,14 +113,15 @@ const ProductEditPage: React.FC = () => {
         price: Number(product.price) || 0,
         compareAtPrice: Number(product.compareAtPrice) || 0,
         sku: product.sku || '',
-        totalStock: product.totalStock || 0,
-        minimumStock: product.minimumStock || 5,
+        totalStock: Number(product.totalStock) || 0,
+        minimumStock: Number(product.minimumStock) || 5,
         status: product.status || 'ACTIVE',
-        isPublished: product.isPublished || false,
-        isFeatured: product.isFeatured || false,
+        isPublished: Boolean(product.isPublished),
+        isFeatured: Boolean(product.isFeatured),
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching product:', error);
+      console.error('Error response:', error.response);
       toast.error('Failed to load product');
     } finally {
       setLoading(false);
@@ -117,12 +145,19 @@ const ProductEditPage: React.FC = () => {
       };
       
       if (isEdit) {
-        await api.put(`/products/${productId}`, payload);
+        await productAPI.updateProduct(productId!, payload);
         toast.success('Product updated successfully');
       } else {
-        const response = await api.post('/products', payload);
+        const response = await productAPI.createProduct(payload);
+        console.log('Create product response:', response);
         toast.success('Product created successfully');
-        navigate(`/admin/products/${response.data.data.id}/edit`);
+        // Handle different response structures for the created product
+        const productId = response.data?.id || response.id;
+        if (productId) {
+          navigate(`/admin/products/${productId}/edit`);
+        } else {
+          navigate('/admin/products');
+        }
       }
     } catch (error) {
       console.error('Error saving product:', error);

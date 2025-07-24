@@ -46,7 +46,7 @@ import {
 } from '@mui/icons-material';
 
 // Import admin components
-import AdminProductsPage from './AdminProductsPage';
+import AdminProductsPageWithDialog from './AdminProductsPageWithDialog';
 import AdminCategoriesPage from './AdminCategoriesPage';
 // import AdminStockAlertsPage from './AdminStockAlertsPage'; // Temporarily disabled - Grid component issues
 // import AdminDashboardOverview from './AdminDashboardOverview'; // Temporarily disabled - Grid component issues
@@ -278,7 +278,7 @@ const EnhancedAdminDashboard: React.FC = () => {
       case 'dashboard':
         return <div>Dashboard temporarily disabled - Grid component compatibility issues</div>;
       case 'products':
-        return <AdminProductsPage />;
+        return <AdminProductsPageWithDialog />;
       case 'product-edit':
         return <ProductEditPage />;
       case 'categories':
