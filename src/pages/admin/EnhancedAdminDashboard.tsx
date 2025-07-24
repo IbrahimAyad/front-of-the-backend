@@ -51,7 +51,7 @@ import AdminCategoriesPage from './AdminCategoriesPage';
 import AdminStockAlertsPage from './AdminStockAlertsPage';
 import AdminDashboardOverview from './AdminDashboardOverview';
 import AdminSettingsPage from './AdminSettingsPage';
-import ProductEditPage from './ProductEditPage';
+// import ProductEditPage from './ProductEditPage'; // Temporarily disabled
 import OutfitBuilderSection from '../../components/Admin/OutfitBuilderSection';
 import CustomerAnalytics from './CustomerAnalytics';
 import CustomerProfiles from './CustomerProfiles';
@@ -279,7 +279,7 @@ const EnhancedAdminDashboard: React.FC = () => {
       case 'products':
         return <AdminProductsPage />;
       case 'product-edit':
-        return <ProductEditPage />;
+        return <div>Product editing temporarily disabled - use bulk actions instead</div>;
       case 'categories':
         return <AdminCategoriesPage />;
       case 'stock-alerts':
