@@ -4,7 +4,7 @@ import { Add as AddIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import ProductDataTable from '../../components/Admin/ProductDataTable';
-import { api } from '../../utils/api';
+import { api } from '../../services/api';
 
 interface Product {
   id: string;
