@@ -47,6 +47,59 @@ const CloudflareImageUpload: React.FC<CloudflareImageUploadProps> = ({
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
+  const handleUpload = useCallback(async (file: File) => {
+    setUploading(true);
+    setUploadProgress(0);
+
+    try {
+      // Show progress increment
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => Math.min(prev + 10, 90));
+      }, 200);
+
+      const metadata = {
+        productName: productName,
+        uploadedAt: new Date().toISOString(),
+        category: 'product-image',
+      };
+
+      const result = await CloudflareImagesService.uploadImage(file, metadata);
+      
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+
+      // Create new image object
+      const newImage: ProductImage = {
+        cloudflareId: result.result.id,
+        url: CloudflareImagesService.getProductCardUrl(result.result.id),
+        altText: `${productName} - Image ${images.length + 1}`,
+        isPrimary: images.length === 0, // First image is primary
+        position: images.length,
+      };
+
+      // Add to images array
+      const updatedImages = [...images, newImage];
+      onChange(updatedImages);
+
+      toast.success(`✅ Image uploaded successfully!`);
+      
+    } catch (error: any) {
+      console.error('Upload failed:', error);
+      
+      // Check if it's a CORS or backend deployment issue
+      if (error.message.includes('Load failed') || error.message.includes('CORS') || error.message.includes('404')) {
+        toast.error('🚧 Backend is deploying new features. Please try again in 1-2 minutes!', {
+          duration: 5000,
+        });
+      } else {
+        toast.error(`❌ Failed to upload ${file.name}: ${error.message}`);
+      }
+    } finally {
+      setUploading(false);
+      setUploadProgress(0);
+    }
+  }, [images, onChange, productName]);
+
   const handleFileUpload = useCallback(async (files: FileList) => {
     if (!files.length) return;
     
@@ -58,40 +111,18 @@ const CloudflareImageUpload: React.FC<CloudflareImageUploadProps> = ({
       return;
     }
 
-    setUploading(true);
-    setUploadProgress(0);
-
-    try {
-      const uploadResults = await CloudflareImagesService.uploadMultipleImages(
-        fileArray,
-        (uploaded, total) => {
-          setUploadProgress((uploaded / total) * 100);
-        }
-      );
-
-      const newImages: ProductImage[] = uploadResults.map((result, index) => ({
-        cloudflareId: result.result.id,
-        url: CloudflareImagesService.getProductDetailUrl(result.result.id),
-        altText: `${productName} - Image ${images.length + index + 1}`,
-        isPrimary: images.length === 0 && index === 0, // First image is primary if no images exist
-        position: images.length + index,
-      }));
-
-      onChange([...images, ...newImages]);
-      toast.success(`${uploadResults.length} image(s) uploaded successfully`);
-    } catch (error) {
-      console.error('Upload failed:', error);
-      toast.error('Failed to upload images');
-    } finally {
-      setUploading(false);
-      setUploadProgress(0);
+    // Upload files one by one
+    for (const file of fileArray) {
+      await handleUpload(file);
     }
-  }, [images, onChange, maxImages, productName]);
+  }, [images, maxImages, handleUpload]);
 
   const handleDrop = useCallback((event: React.DragEvent) => {
     event.preventDefault();
     const files = event.dataTransfer.files;
-    handleFileUpload(files);
+    if (files.length > 0) {
+      handleFileUpload(files);
+    }
   }, [handleFileUpload]);
 
   const handleDragOver = useCallback((event: React.DragEvent) => {
