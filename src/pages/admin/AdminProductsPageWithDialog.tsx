@@ -9,7 +9,6 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  Grid,
   FormControl,
   InputLabel,
   Select,
@@ -318,145 +317,151 @@ const AdminProductsPageWithDialog: React.FC = () => {
           {editingProduct ? 'Edit Product' : 'Add New Product'}
         </DialogTitle>
         <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Product Name"
-                required
-                value={productForm.name || ''}
-                onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="SKU"
-                required
-                value={productForm.sku || ''}
-                onChange={(e) => setProductForm({ ...productForm, sku: e.target.value })}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth required>
-                <InputLabel>Category</InputLabel>
-                <Select
-                  value={productForm.category || ''}
-                  onChange={(e) => setProductForm({ ...productForm, category: e.target.value })}
-                  label="Category"
-                >
-                  <MenuItem value="Suits">Suits</MenuItem>
-                  <MenuItem value="Shirts">Shirts</MenuItem>
-                  <MenuItem value="Ties">Ties</MenuItem>
-                  <MenuItem value="Accessories">Accessories</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Subcategory"
-                value={productForm.subcategory || ''}
-                onChange={(e) => setProductForm({ ...productForm, subcategory: e.target.value })}
-              />
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <TextField
-                fullWidth
-                label="Price"
-                type="number"
-                required
-                value={productForm.price || ''}
-                onChange={(e) => setProductForm({ ...productForm, price: parseFloat(e.target.value) })}
-                InputProps={{
-                  startAdornment: '$',
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <TextField
-                fullWidth
-                label="Compare At Price"
-                type="number"
-                value={productForm.compareAtPrice || ''}
-                onChange={(e) => setProductForm({ ...productForm, compareAtPrice: parseFloat(e.target.value) })}
-                InputProps={{
-                  startAdornment: '$',
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <FormControl fullWidth>
-                <InputLabel>Status</InputLabel>
-                <Select
-                  value={productForm.status || 'ACTIVE'}
-                  onChange={(e) => setProductForm({ ...productForm, status: e.target.value as any })}
-                  label="Status"
-                >
-                  <MenuItem value="ACTIVE">Active</MenuItem>
-                  <MenuItem value="INACTIVE">Inactive</MenuItem>
-                  <MenuItem value="DISCONTINUED">Discontinued</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Description"
-                multiline
-                rows={3}
-                value={productForm.description || ''}
-                onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <InputLabel>Tags</InputLabel>
-                <Select
-                  multiple
-                  value={productForm.tags || []}
-                  onChange={(e) => setProductForm({ ...productForm, tags: e.target.value as string[] })}
-                  input={<OutlinedInput label="Tags" />}
-                  renderValue={(selected) => (
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                      {selected.map((value) => (
-                        <Chip key={value} label={value} size="small" />
-                      ))}
-                    </Box>
-                  )}
-                >
-                  <MenuItem value="new">New</MenuItem>
-                  <MenuItem value="sale">Sale</MenuItem>
-                  <MenuItem value="featured">Featured</MenuItem>
-                  <MenuItem value="bestseller">Bestseller</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <InputLabel>Occasions</InputLabel>
-                <Select
-                  multiple
-                  value={productForm.occasions || []}
-                  onChange={(e) => setProductForm({ ...productForm, occasions: e.target.value as string[] })}
-                  input={<OutlinedInput label="Occasions" />}
-                  renderValue={(selected) => (
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                      {selected.map((value) => (
-                        <Chip key={value} label={value} size="small" />
-                      ))}
-                    </Box>
-                  )}
-                >
-                  <MenuItem value="wedding">Wedding</MenuItem>
-                  <MenuItem value="business">Business</MenuItem>
-                  <MenuItem value="formal">Formal</MenuItem>
-                  <MenuItem value="casual">Casual</MenuItem>
-                  <MenuItem value="prom">Prom</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={4}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+              <Box sx={{ flex: '1 1 45%', minWidth: 250 }}>
+                <TextField
+                  fullWidth
+                  label="Product Name"
+                  required
+                  value={productForm.name || ''}
+                  onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
+                />
+              </Box>
+              <Box sx={{ flex: '1 1 45%', minWidth: 250 }}>
+                <TextField
+                  fullWidth
+                  label="SKU"
+                  required
+                  value={productForm.sku || ''}
+                  onChange={(e) => setProductForm({ ...productForm, sku: e.target.value })}
+                />
+              </Box>
+            </Box>
+            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+              <Box sx={{ flex: '1 1 45%', minWidth: 250 }}>
+                <FormControl fullWidth required>
+                  <InputLabel>Category</InputLabel>
+                  <Select
+                    value={productForm.category || ''}
+                    onChange={(e) => setProductForm({ ...productForm, category: e.target.value })}
+                    label="Category"
+                  >
+                    <MenuItem value="Suits">Suits</MenuItem>
+                    <MenuItem value="Shirts">Shirts</MenuItem>
+                    <MenuItem value="Ties">Ties</MenuItem>
+                    <MenuItem value="Accessories">Accessories</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
+              <Box sx={{ flex: '1 1 45%', minWidth: 250 }}>
+                <TextField
+                  fullWidth
+                  label="Subcategory"
+                  value={productForm.subcategory || ''}
+                  onChange={(e) => setProductForm({ ...productForm, subcategory: e.target.value })}
+                />
+              </Box>
+            </Box>
+            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+              <Box sx={{ flex: '1 1 30%', minWidth: 150 }}>
+                <TextField
+                  fullWidth
+                  label="Price"
+                  type="number"
+                  required
+                  value={productForm.price || ''}
+                  onChange={(e) => setProductForm({ ...productForm, price: parseFloat(e.target.value) })}
+                  InputProps={{
+                    startAdornment: '$',
+                  }}
+                />
+              </Box>
+              <Box sx={{ flex: '1 1 30%', minWidth: 150 }}>
+                <TextField
+                  fullWidth
+                  label="Compare At Price"
+                  type="number"
+                  value={productForm.compareAtPrice || ''}
+                  onChange={(e) => setProductForm({ ...productForm, compareAtPrice: parseFloat(e.target.value) })}
+                  InputProps={{
+                    startAdornment: '$',
+                  }}
+                />
+              </Box>
+              <Box sx={{ flex: '1 1 30%', minWidth: 150 }}>
+                <FormControl fullWidth>
+                  <InputLabel>Status</InputLabel>
+                  <Select
+                    value={productForm.status || 'ACTIVE'}
+                    onChange={(e) => setProductForm({ ...productForm, status: e.target.value as any })}
+                    label="Status"
+                  >
+                    <MenuItem value="ACTIVE">Active</MenuItem>
+                    <MenuItem value="INACTIVE">Inactive</MenuItem>
+                    <MenuItem value="DISCONTINUED">Discontinued</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
+            </Box>
+            <TextField
+              fullWidth
+              label="Description"
+              multiline
+              rows={3}
+              value={productForm.description || ''}
+              onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
+            />
+            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+              <Box sx={{ flex: '1 1 45%', minWidth: 250 }}>
+                <FormControl fullWidth>
+                  <InputLabel>Tags</InputLabel>
+                  <Select
+                    multiple
+                    value={productForm.tags || []}
+                    onChange={(e) => setProductForm({ ...productForm, tags: e.target.value as string[] })}
+                    input={<OutlinedInput label="Tags" />}
+                    renderValue={(selected) => (
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {selected.map((value) => (
+                          <Chip key={value} label={value} size="small" />
+                        ))}
+                      </Box>
+                    )}
+                  >
+                    <MenuItem value="new">New</MenuItem>
+                    <MenuItem value="sale">Sale</MenuItem>
+                    <MenuItem value="featured">Featured</MenuItem>
+                    <MenuItem value="bestseller">Bestseller</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
+              <Box sx={{ flex: '1 1 45%', minWidth: 250 }}>
+                <FormControl fullWidth>
+                  <InputLabel>Occasions</InputLabel>
+                  <Select
+                    multiple
+                    value={productForm.occasions || []}
+                    onChange={(e) => setProductForm({ ...productForm, occasions: e.target.value as string[] })}
+                    input={<OutlinedInput label="Occasions" />}
+                    renderValue={(selected) => (
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {selected.map((value) => (
+                          <Chip key={value} label={value} size="small" />
+                        ))}
+                      </Box>
+                    )}
+                  >
+                    <MenuItem value="wedding">Wedding</MenuItem>
+                    <MenuItem value="business">Business</MenuItem>
+                    <MenuItem value="formal">Formal</MenuItem>
+                    <MenuItem value="casual">Casual</MenuItem>
+                    <MenuItem value="prom">Prom</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
+            </Box>
+            <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap', alignItems: 'center' }}>
               <FormControlLabel
                 control={
                   <Switch
@@ -466,8 +471,6 @@ const AdminProductsPageWithDialog: React.FC = () => {
                 }
                 label="Published"
               />
-            </Grid>
-            <Grid item xs={12} sm={4}>
               <FormControlLabel
                 control={
                   <Switch
@@ -477,8 +480,6 @@ const AdminProductsPageWithDialog: React.FC = () => {
                 }
                 label="Featured"
               />
-            </Grid>
-            <Grid item xs={12} sm={4}>
               <FormControlLabel
                 control={
                   <Switch
@@ -488,8 +489,8 @@ const AdminProductsPageWithDialog: React.FC = () => {
                 }
                 label="On Sale"
               />
-            </Grid>
-          </Grid>
+            </Box>
+          </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>Cancel</Button>
