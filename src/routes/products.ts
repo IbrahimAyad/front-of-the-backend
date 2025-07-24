@@ -1,57 +1,51 @@
 import { FastifyPluginAsync } from 'fastify';
 
 const productsRoutes: FastifyPluginAsync = async (fastify) => {
-  // Get products with basic filtering
+  // Get products with basic filtering - PUBLIC ROUTE (no auth required for admin dashboard)
   fastify.get('/', async (request: any, reply) => {
     try {
-      const { page = 1, limit = 20 } = request.query;
-      
-      // Mock products data for now - this prevents the 404 error
-      const mockProducts = [
-        {
-          id: '1',
-          name: 'Classic Navy Suit',
-          description: 'Premium navy business suit',
-          price: 599.99,
-          category: 'suits',
-          sku: 'SUIT-001',
-          availableStock: 10,
-          status: 'ACTIVE',
-          isPublished: true,
-          images: [],
-          createdAt: new Date().toISOString()
-        },
-        {
-          id: '2', 
-          name: 'Silk Tie Collection',
-          description: 'Elegant silk ties',
-          price: 49.99,
-          category: 'ties',
-          sku: 'TIE-001',
-          availableStock: 25,
-          status: 'ACTIVE',
-          isPublished: true,
-          images: [],
-          createdAt: new Date().toISOString()
-        }
-      ];
+      const { page = 1, limit = 20, status = 'ACTIVE' } = request.query;
+      const skip = (page - 1) * limit;
 
-      const total = mockProducts.length;
-      const startIndex = (page - 1) * limit;
-      const endIndex = startIndex + parseInt(limit);
-      const paginatedProducts = mockProducts.slice(startIndex, endIndex);
+      // Get products from database
+      const [products, total] = await Promise.all([
+        fastify.prisma.product.findMany({
+          where: { status },
+          skip,
+          take: parseInt(limit),
+          orderBy: { createdAt: 'desc' },
+          include: {
+            variants: {
+              select: {
+                id: true,
+                name: true,
+                sku: true,
+                size: true,
+                color: true,
+                stock: true,
+                price: true,
+                isActive: true,
+              }
+            }
+          }
+        }),
+        fastify.prisma.product.count({ where: { status } })
+      ]);
 
       reply.send({
         success: true,
         data: {
-          products: paginatedProducts,
+          products,
           pagination: {
             page: parseInt(page),
             limit: parseInt(limit),
             total,
             pages: Math.ceil(total / limit),
           },
-          filters: {}
+          filters: {
+            status,
+            priceRange: {}
+          }
         }
       });
     } catch (error) {
@@ -59,35 +53,43 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
       reply.code(500).send({
         success: false,
         error: 'Internal Server Error',
-        details: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   });
 
-  // Get single product by ID
+  // Get single product by ID - PUBLIC ROUTE
   fastify.get('/:id', async (request: any, reply) => {
     try {
       const { id } = request.params;
       
-      // Mock single product data
-      const mockProduct = {
-        id,
-        name: `Product ${id}`,
-        description: 'Mock product description',
-        price: 299.99,
-        category: 'suits',
-        sku: `PRODUCT-${id}`,
-        availableStock: 5,
-        status: 'ACTIVE',
-        isPublished: true,
-        images: [],
-        variants: [],
-        createdAt: new Date().toISOString()
-      };
+      const product = await fastify.prisma.product.findUnique({
+        where: { id },
+        include: {
+          variants: {
+            select: {
+              id: true,
+              name: true,
+              sku: true,
+              size: true,
+              color: true,
+              stock: true,
+              price: true,
+              isActive: true,
+            }
+          }
+        }
+      });
+
+      if (!product) {
+        return reply.code(404).send({
+          success: false,
+          error: 'Product not found'
+        });
+      }
 
       reply.send({
         success: true,
-        data: mockProduct
+        data: product
       });
     } catch (error) {
       fastify.log.error(error);
@@ -98,20 +100,22 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
-  // Create new product (Admin only)
+  // Create new product (Admin only) - REQUIRES AUTH
   fastify.post('/', {
     preHandler: fastify.authenticate,
   }, async (request: any, reply) => {
     try {
       const productData = request.body;
       
-      // Mock product creation
-      const newProduct = {
-        id: Math.random().toString(36).substr(2, 9),
-        ...productData,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
+      const newProduct = await fastify.prisma.product.create({
+        data: {
+          ...productData,
+          price: productData.price.toString(), // Convert to string for Prisma
+        },
+        include: {
+          variants: true
+        }
+      });
 
       reply.code(201).send({
         success: true,
@@ -127,20 +131,25 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
-  // Update product (Admin only)  
+  // Update product (Admin only) - REQUIRES AUTH
   fastify.put('/:id', {
     preHandler: fastify.authenticate,
   }, async (request: any, reply) => {
     try {
       const { id } = request.params;
       const productData = request.body;
-      
-      // Mock product update
-      const updatedProduct = {
-        id,
-        ...productData,
-        updatedAt: new Date().toISOString()
-      };
+
+      const updatedProduct = await fastify.prisma.product.update({
+        where: { id },
+        data: {
+          ...productData,
+          price: productData.price.toString(), // Convert to string for Prisma
+          updatedAt: new Date(),
+        },
+        include: {
+          variants: true
+        }
+      });
 
       reply.send({
         success: true,
@@ -156,28 +165,67 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
-  // Dashboard statistics
-  fastify.get('/stats/dashboard', async (request: any, reply) => {
+  // Delete product (Admin only) - REQUIRES AUTH
+  fastify.delete('/:id', {
+    preHandler: fastify.authenticate,
+  }, async (request: any, reply) => {
     try {
-      const stats = {
-        totalProducts: 25,
-        activeProducts: 22,
-        lowStockProducts: 3,
-        outOfStockProducts: 1,
-        totalVariants: 45,
-        featuredProducts: 8,
-        recentlyAdded: 2,
-        totalInventoryValue: 15000,
-        stockHealth: {
-          healthy: 18,
-          lowStock: 3,
-          outOfStock: 1
-        }
-      };
+      const { id } = request.params;
+
+      await fastify.prisma.product.delete({
+        where: { id }
+      });
 
       reply.send({
         success: true,
-        data: stats
+        message: 'Product deleted successfully'
+      });
+    } catch (error) {
+      fastify.log.error(error);
+      reply.code(500).send({
+        success: false,
+        error: 'Internal Server Error',
+      });
+    }
+  });
+
+  // Get product dashboard stats - PUBLIC ROUTE for admin dashboard
+  fastify.get('/stats/dashboard', async (request: any, reply) => {
+    try {
+      const [
+        totalProducts,
+        activeProducts,
+        lowStockProducts,
+        outOfStockProducts
+      ] = await Promise.all([
+        fastify.prisma.product.count(),
+        fastify.prisma.product.count({ where: { status: 'ACTIVE' } }),
+        fastify.prisma.product.count({ 
+          where: { 
+            status: 'ACTIVE',
+            availableStock: { lte: fastify.prisma.product.fields.minimumStock }
+          } 
+        }),
+        fastify.prisma.product.count({ 
+          where: { 
+            status: 'ACTIVE',
+            availableStock: 0
+          } 
+        })
+      ]);
+
+      reply.send({
+        success: true,
+        data: {
+          totalProducts,
+          activeProducts,
+          lowStockProducts,
+          outOfStockProducts,
+          categories: await fastify.prisma.product.groupBy({
+            by: ['category'],
+            _count: { category: true }
+          })
+        }
       });
     } catch (error) {
       fastify.log.error(error);
