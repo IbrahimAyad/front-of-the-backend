@@ -1,0 +1,78 @@
+// Add these extensions to your existing Product model
+
+model Product {
+  // ... existing fields ...
+  
+  // Smart Product Attributes (stored as JSON for flexibility)
+  smartAttributes   Json?    // {
+                            //   "formality_level": 1-5,
+                            //   "conservative_rating": 1-5,
+                            //   "color_temperature": "warm" | "cool" | "neutral",
+                            //   "event_suitability": ["wedding", "business", "prom"],
+                            //   "age_appropriateness": ["young", "middle", "mature"],
+                            //   "style_personality": ["classic", "modern", "trendy"]
+                            // }
+  
+  // Enhanced product fields
+  fabricMarketing   String?  // "Performance Fabric", "All-Day Comfort", etc.
+  fabricCare        String?  // "Machine washable", "Dry clean only"
+  fabricBenefits    String[] // ["wrinkle-resistant", "breathable", "stretch"]
+  
+  // Color intelligence
+  colorFamily       String?  // "Blues", "Greys", "Earth Tones"
+  hexPrimary        String?  // Primary color hex
+  hexSecondary      String?  // Accent color hex
+  
+  // Event & Occasion
+  primaryOccasion   String?  // Main use case
+  occasionTags      String[] // All suitable occasions
+  trendingFor       String[] // ["prom2025", "spring-wedding"]
+  
+  // Outfit Building Helpers
+  outfitRole        String?  // "base", "accent", "versatile"
+  pairsWellWith     String[] // ["navy-pants", "white-shirt"]
+  styleNotes        String?  // Styling tips
+  
+  // Local SEO
+  localKeywords     String[]
+  targetLocation    String?
+}
+
+// Simplified Color Reference (not a separate table)
+model ColorPalette {
+  id              String   @id @default(cuid())
+  name            String   @unique // "Navy Blue", "Charcoal"
+  slug            String   @unique
+  family          String   // "Blues", "Greys"
+  hexCode         String
+  displayOrder    Int      @default(0)
+  
+  // Quick reference for smart matching
+  formalityScore  Int      @default(3) // 1-5
+  versatilityScore Int     @default(3) // 1-5
+  seasonality     String[] // ["fall", "winter"]
+  
+  createdAt       DateTime @default(now())
+  
+  @@map("color_palettes")
+}
+
+// Event configuration for smart filtering
+model EventProfile {
+  id              String   @id @default(cuid())
+  name            String   @unique // "Wedding", "Prom", "Business"
+  slug            String   @unique
+  description     String?
+  formalityRange  Int[]    // [4, 5] for formal events
+  seasonalPeak    String[] // ["spring", "summer"]
+  typicalAge      String?  // "18-25", "25-45"
+  
+  // Smart recommendations
+  essentialItems  String[] // ["suit", "shirt", "tie"]
+  popularColors   String[] // ["navy", "charcoal"]
+  trendingStyles  String[] // ["slim-fit", "modern"]
+  
+  createdAt       DateTime @default(now())
+  
+  @@map("event_profiles")
+}

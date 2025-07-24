@@ -60,6 +60,9 @@ export const CLIENT_CONFIG = {
   // S3 Images Base URL
   IMAGES_BASE_URL: getEnv('VITE_IMAGES_BASE_URL', 'https://kct-product-images.s3.us-east-2.amazonaws.com'),
   
+  // Wedding API Integration
+  WEDDING_API_URL: getEnv('VITE_WEDDING_API_URL', ''),
+  
   NODE_ENV: getEnv('VITE_NODE_ENV', isProduction ? 'production' : 'development'),
   USE_MOCK_DATA: getEnv('VITE_USE_MOCK_DATA') === 'true',
   ADMIN_EMAIL: getEnv('VITE_ADMIN_EMAIL', 'admin@kctmenswear.com'),

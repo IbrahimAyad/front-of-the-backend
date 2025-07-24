@@ -33,6 +33,7 @@ import {
   Badge,
   LinearProgress,
   Tooltip,
+  CircularProgress,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -49,6 +50,8 @@ import {
   Upload as UploadIcon,
   Download as DownloadIcon,
   FilterList as FilterIcon,
+  Sync as SyncIcon,
+  Computer as ComputerIcon,
 } from '@mui/icons-material';
 import { productAPI, supplierAPI, inventoryAPI } from '../../services/api';
 import {
@@ -90,6 +93,8 @@ const ProductManagementDashboard: React.FC = () => {
   const [dashboardStats, setDashboardStats] = useState<ProductDashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [syncLoading, setSyncLoading] = useState(false);
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
   
   // Dialog states
   const [productDialogOpen, setProductDialogOpen] = useState(false);
@@ -178,6 +183,35 @@ const ProductManagementDashboard: React.FC = () => {
     }
   };
 
+  // Sync with MacOS Admin Panel
+  const handleSyncFromAdmin = async () => {
+    try {
+      setSyncLoading(true);
+      setSyncMessage(null);
+      
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/sync/pull-from-admin`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        setSyncMessage(`✅ Successfully synced ${result.updated} of ${result.total} products from MacOS Admin Panel`);
+        loadDashboardData(); // Refresh the data
+      } else {
+        setSyncMessage(`❌ Sync failed: ${result.message}`);
+      }
+    } catch (error: any) {
+      setSyncMessage(`❌ Sync error: ${error.message}`);
+    } finally {
+      setSyncLoading(false);
+    }
+  };
+
   const handleStockAdjustment = async (productId: string, adjustment: { type: string; quantity: number; reason?: string }) => {
     try {
       const response = await productAPI.adjustStock(productId, adjustment as any);
@@ -213,6 +247,15 @@ const ProductManagementDashboard: React.FC = () => {
         <Box sx={{ display: 'flex', gap: 2 }}>
           <Button
             variant="contained"
+            startIcon={syncLoading ? <CircularProgress size={16} color="inherit" /> : <SyncIcon />}
+            onClick={handleSyncFromAdmin}
+            disabled={syncLoading}
+            sx={{ backgroundColor: '#2E7D32', '&:hover': { backgroundColor: '#1B5E20' } }}
+          >
+            {syncLoading ? 'Syncing...' : 'Sync from MacOS Admin'}
+          </Button>
+          <Button
+            variant="contained"
             startIcon={<UploadIcon />}
             onClick={() => {/* Handle import */}}
             sx={{ backgroundColor: '#8B0000' }}
@@ -241,6 +284,17 @@ const ProductManagementDashboard: React.FC = () => {
       {error && (
         <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
           {error}
+        </Alert>
+      )}
+
+      {/* Sync Message */}
+      {syncMessage && (
+        <Alert 
+          severity={syncMessage.includes('✅') ? 'success' : 'error'} 
+          sx={{ mb: 3 }} 
+          onClose={() => setSyncMessage(null)}
+        >
+          {syncMessage}
         </Alert>
       )}
 

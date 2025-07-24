@@ -100,6 +100,8 @@ model Customer {
   appointments  Appointment[]
   measurements  Measurement[]
   leads         Lead[]
+  profile       CustomerProfile?
+  savedOutfits  SavedOutfit[]
 
   @@map("customers")
 }
@@ -124,6 +126,31 @@ model Product {
   occasions     String[]   // Wedding, Business, Casual, etc.
   styleAttributes String[] // Classic, Modern, Slim, etc.
   care          String?    // Care instructions
+  
+  // Smart Product Attributes
+  smartAttributes   Json?    // Flexible storage for formality, conservative rating, etc.
+  fabricMarketing   String?  // "Performance Fabric", "All-Day Comfort", etc.
+  fabricCare        String?  // "Machine washable", "Dry clean only"
+  fabricBenefits    String[] // ["wrinkle-resistant", "breathable", "stretch"]
+  
+  // Color Intelligence
+  colorFamily       String?  // "Blues", "Greys", "Earth Tones"
+  hexPrimary        String?  // Primary color hex
+  hexSecondary      String?  // Accent color hex
+  
+  // Event & Occasion
+  primaryOccasion   String?  // Main use case
+  occasionTags      String[] // All suitable occasions
+  trendingFor       String[] // ["prom2025", "spring-wedding"]
+  
+  // Outfit Building Helpers
+  outfitRole        String?  // "base", "accent", "versatile"
+  pairsWellWith     String[] // ["navy-pants", "white-shirt"]
+  styleNotes        String?  // Styling tips
+  
+  // Local SEO
+  localKeywords     String[]
+  targetLocation    String?
   
   // Inventory Management
   trackStock    Boolean    @default(true)
@@ -166,6 +193,7 @@ model Product {
   inventoryLogs InventoryLog[]
   supplier      Supplier?        @relation(fields: [supplierId], references: [id])
   reviews       ProductReview[]
+  outfitComponents OutfitComponent[]
 
   @@map("products")
 }
@@ -473,6 +501,196 @@ model AiAction {
   output    Json
   status    String
   createdAt DateTime @default(now())
+}
+
+// Customer Profile Extension for rich customer data
+model CustomerProfile {
+  id              String   @id @default(cuid())
+  customerId      String   @unique
+  
+  // Tier and Status
+  customerTier    String   @default("Silver") // Prospect, Silver, Gold, Platinum
+  engagementScore Int      @default(0)        // 0-100
+  vipStatus       Boolean  @default(false)
+  
+  // Size Profile
+  jacketSize      String?
+  jacketSizeConfidence Float?
+  vestSize        String?
+  vestSizeConfidence   Float?
+  shirtSize       String?
+  shirtSizeConfidence  Float?
+  shoeSize        String?
+  shoeSizeConfidence   Float?
+  pantsSize       String?
+  pantsSizeConfidence  Float?
+  sizeProfileCompleteness Float @default(0)
+  
+  // Purchase Analytics
+  totalSpent      Decimal  @default(0)
+  totalOrders     Int      @default(0)
+  averageOrderValue Decimal @default(0)
+  repeatCustomer  Boolean  @default(false)
+  highValueFirstOrder Boolean @default(false)
+  
+  // Occasions and Preferences
+  primaryOccasion String?  // wedding, prom, business, general, formal
+  preferredStyles String[] // Classic, Modern, Trendy, etc.
+  preferredColors String[]
+  
+  // Marketing
+  acceptsEmailMarketing Boolean @default(true)
+  acceptsSmsMarketing   Boolean @default(false)
+  marketingTags         String[]
+  
+  // Important Dates
+  firstPurchaseDate  DateTime?
+  lastPurchaseDate   DateTime?
+  daysSinceLastPurchase Int?
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  // Relations
+  customer         Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  purchaseHistory  PurchaseHistory[]
+  
+  @@map("customer_profiles")
+}
+
+model PurchaseHistory {
+  id              String   @id @default(cuid())
+  customerProfileId String
+  
+  orderId         String?
+  orderDate       DateTime
+  paidDate        DateTime?
+  productNames    String[]
+  orderTotal      Decimal
+  
+  // Relations
+  customerProfile CustomerProfile @relation(fields: [customerProfileId], references: [id], onDelete: Cascade)
+  
+  @@map("purchase_histories")
+}
+
+model CustomerSegment {
+  id          String   @id @default(cuid())
+  name        String   @unique // "High Value", "Frequent Buyer", "Wedding Party", etc.
+  description String?
+  criteria    Json     // Segmentation rules
+  
+  // Stats
+  customerCount Int @default(0)
+  avgOrderValue Decimal @default(0)
+  totalRevenue  Decimal @default(0)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("customer_segments")
+}
+
+// Outfit Components for custom outfit building
+model OutfitTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  category    String   // "Wedding", "Business", "Formal", "Casual"
+  season      String?  // "Spring/Summer", "Fall/Winter", "All Season"
+  
+  // Pricing
+  basePrice   Decimal  @default(0)
+  discount    Decimal? // Percentage discount for bundle
+  
+  // Visibility
+  isActive    Boolean  @default(true)
+  isFeatured  Boolean  @default(false)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  components  OutfitComponent[]
+  savedOutfits SavedOutfit[]
+  
+  @@map("outfit_templates")
+}
+
+model OutfitComponent {
+  id            String   @id @default(cuid())
+  outfitId      String
+  productId     String
+  componentType String   // "JACKET", "PANTS", "SHIRT", "TIE", "VEST", "ACCESSORY"
+  quantity      Int      @default(1)
+  isRequired    Boolean  @default(true)
+  position      Int      @default(0)
+  
+  // Relations
+  outfit        OutfitTemplate @relation(fields: [outfitId], references: [id], onDelete: Cascade)
+  product       Product        @relation(fields: [productId], references: [id])
+  
+  @@map("outfit_components")
+}
+
+model SavedOutfit {
+  id            String   @id @default(cuid())
+  customerId    String
+  templateId    String?
+  name          String
+  notes         String?
+  totalPrice    Decimal
+  
+  // Customizations
+  customizations Json?   // Store product variants, sizes, colors
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  customer      Customer        @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  template      OutfitTemplate? @relation(fields: [templateId], references: [id])
+  
+  @@map("saved_outfits")
+}
+
+// Smart color system
+model ColorPalette {
+  id              String   @id @default(cuid())
+  name            String   @unique // "Navy Blue", "Charcoal"
+  slug            String   @unique
+  family          String   // "Blues", "Greys"
+  hexCode         String
+  displayOrder    Int      @default(0)
+  
+  // Quick reference for smart matching
+  formalityScore  Int      @default(3) // 1-5
+  versatilityScore Int     @default(3) // 1-5
+  seasonality     String[] // ["fall", "winter"]
+  
+  createdAt       DateTime @default(now())
+  
+  @@map("color_palettes")
+}
+
+// Event configuration for smart filtering
+model EventProfile {
+  id              String   @id @default(cuid())
+  name            String   @unique // "Wedding", "Prom", "Business"
+  slug            String   @unique
+  description     String?
+  formalityRange  Int[]    // [4, 5] for formal events
+  seasonalPeak    String[] // ["spring", "summer"]
+  typicalAge      String?  // "18-25", "25-45"
+  
+  // Smart recommendations
+  essentialItems  String[] // ["suit", "shirt", "tie"]
+  popularColors   String[] // ["navy", "charcoal"]
+  trendingStyles  String[] // ["slim-fit", "modern"]
+  
+  createdAt       DateTime @default(now())
+  
+  @@map("event_profiles")
 }
 
 

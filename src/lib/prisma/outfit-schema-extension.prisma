@@ -1,0 +1,122 @@
+// Add these models to your schema.prisma file
+
+// Outfit-related enums
+enum OutfitCategory {
+  BUSINESS
+  WEDDING
+  CASUAL
+  FORMAL
+  SEASONAL
+}
+
+enum AvailabilityRule {
+  ALWAYS
+  CHECK_COMPONENTS
+}
+
+enum HoldType {
+  STANDING
+  TEMPORARY
+  RESERVATION
+}
+
+enum HoldStatus {
+  ACTIVE
+  EXPIRED
+  CONVERTED
+  RELEASED
+}
+
+// Outfit template model
+model OutfitTemplate {
+  id               String            @id @default(cuid())
+  sku              String            @unique
+  name             String
+  description      String?
+  category         OutfitCategory
+  availabilityRule AvailabilityRule  @default(CHECK_COMPONENTS)
+  minStock         Int               @default(0)
+  standingHoldId   String?           // Reference to MacOS Admin standing hold
+  basePrice        Decimal           @db.Decimal(10, 2)
+  bundlePrice      Decimal           @db.Decimal(10, 2)
+  savingsAmount    Decimal           @db.Decimal(10, 2)
+  isActive         Boolean           @default(true)
+  tags             String[]
+  metadata         Json?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  components       OutfitComponent[]
+  customerOutfits  CustomerOutfit[]
+  holds            OutfitHold[]
+
+  @@index([category])
+  @@index([isActive])
+}
+
+// Outfit component linking model
+model OutfitComponent {
+  id              String         @id @default(cuid())
+  outfitTemplateId String
+  productId       String
+  componentType   String         // 'suit', 'shirt', 'tie', 'shoes', 'belt'
+  quantity        Int            @default(1)
+  isRequired      Boolean        @default(true)
+  alternatives    String[]       // Array of alternative product IDs
+  sizeMapping     Json?          // Maps outfit size to component size
+  createdAt       DateTime       @default(now())
+
+  outfitTemplate  OutfitTemplate @relation(fields: [outfitTemplateId], references: [id], onDelete: Cascade)
+  product         Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([outfitTemplateId])
+  @@index([productId])
+}
+
+// Customer saved outfits
+model CustomerOutfit {
+  id             String         @id @default(cuid())
+  customerId     String
+  templateId     String
+  name           String
+  sizeSelections Json           // {"suit": "42R", "shirt": "L", "tie": null}
+  customizations Json?          // Any modifications from template
+  isFavorite     Boolean        @default(false)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  customer       Customer       @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  template       OutfitTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+  @@index([templateId])
+}
+
+// Outfit hold tracking
+model OutfitHold {
+  id               String         @id @default(cuid())
+  outfitTemplateId String
+  holdId           String         // MacOS Admin hold ID
+  holdType         HoldType
+  customerId       String?
+  sessionId        String?
+  items            Json           // Hold items details
+  expiresAt        DateTime?
+  status           HoldStatus     @default(ACTIVE)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  outfitTemplate   OutfitTemplate @relation(fields: [outfitTemplateId], references: [id], onDelete: Cascade)
+  customer         Customer?      @relation(fields: [customerId], references: [id], onDelete: SetNull)
+
+  @@index([outfitTemplateId])
+  @@index([holdId])
+  @@index([status])
+}
+
+// Add these relations to existing models:
+// In Product model, add:
+//   outfitComponents OutfitComponent[]
+// In Customer model, add:
+//   outfits         CustomerOutfit[]
+//   outfitHolds     OutfitHold[]

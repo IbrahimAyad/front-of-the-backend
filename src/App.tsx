@@ -43,6 +43,9 @@ import ColorFamilyCollection from './components/Products/ColorFamilyCollection';
 import WeddingBundleBuilder from './components/Products/WeddingBundleBuilder';
 import EventRecommendations from './components/Products/EventRecommendations';
 
+// Admin Pages
+import EnhancedAdminDashboard from './pages/admin/EnhancedAdminDashboard';
+
 // Import configured query client
 import { queryClient } from './utils/queryClient';
 
@@ -129,6 +132,10 @@ function App() {
                       {/* Wedding routes */}
                       <Route path="weddings" element={<WeddingDashboard />} />
                     </Route>
+                    
+                    {/* Admin routes - separate from main layout */}
+                    <Route path="/admin/*" element={<ProtectedRoute><EnhancedAdminDashboard /></ProtectedRoute>} />
+                    <Route path="/admin/products/:productId/edit" element={<ProtectedRoute><EnhancedAdminDashboard /></ProtectedRoute>} />
                   </Routes>
                 </Router>
               </LocalizationProvider>

@@ -765,6 +765,37 @@ export interface WeddingAnalytics {
   averagePartySize: number;
 }
 
+export interface WeddingTimelineEvent {
+  id: string;
+  weddingId: string;
+  title: string;
+  description?: string;
+  date: Date;
+  time?: string;
+  type: 'milestone' | 'appointment' | 'deadline' | 'reminder' | 'custom';
+  status: 'upcoming' | 'completed' | 'overdue' | 'cancelled';
+  assignedTo?: string; // staff member or member ID
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface WeddingMessage {
+  id: string;
+  weddingId: string;
+  senderId: string;
+  senderName: string;
+  senderRole: 'admin' | 'staff' | 'groom' | 'member';
+  content: string;
+  type: 'announcement' | 'reminder' | 'update' | 'general';
+  recipients: string[]; // member IDs, empty array means all
+  readBy: Array<{
+    memberId: string;
+    readAt: Date;
+  }>;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 // Enhanced Product System Types
 export interface Supplier {
   id: string;

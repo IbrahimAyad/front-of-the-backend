@@ -12,4 +12,6 @@ export const SERVER_CONFIG = {
   ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || 'admin123',
   UPLOAD_MAX_SIZE: parseInt(process.env.UPLOAD_MAX_SIZE || '10485760'), // 10MB default
   OPENAI_API_KEY: process.env.OPENAI_API_KEY || 'dummy-key-for-testing',
+  MACOS_ADMIN_API_KEY: process.env.MACOS_ADMIN_API_KEY || '452a711bbfd449a28a98756b69e14560',
+  BACKEND_API_KEY: process.env.BACKEND_API_KEY || '0aadbad87424e6f468ce0fdb18d1462fd03b133c1b48fd805fab14d4bac3bd75',
 };

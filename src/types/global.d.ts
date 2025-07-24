@@ -35,6 +35,7 @@ interface ImportMetaEnv {
   readonly VITE_TIES_API_URL?: string;
   readonly VITE_VENDOR_API_URL?: string;
   readonly VITE_IMAGES_BASE_URL?: string;
+  readonly VITE_WEDDING_API_URL?: string;
 }
 
 interface ImportMeta {

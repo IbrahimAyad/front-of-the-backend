@@ -58,6 +58,27 @@ EOF
 - **WebSocket**: `wss://front-of-the-backend-production.up.railway.app/ws`
 - **Admin Login**: `admin@kctmenswear.com` / `admin123`
 
+## MacOS Admin Panel Integration
+
+The backend includes sync endpoints to connect with your local MacOS Admin Panel:
+
+### Environment Variables for Railway
+Add these to your Railway backend environment variables:
+```bash
+# Backend authenticates TO MacOS Admin Panel  
+MACOS_ADMIN_API_KEY=452a711bbfd449a28a98756b69e14560
+
+# MacOS Admin Panel authenticates TO Backend
+BACKEND_API_KEY=0aadbad87424e6f468ce0fdb18d1462fd03b133c1b48fd805fab14d4bac3bd75
+```
+
+### Available Sync Endpoints
+- `GET /api/sync/pull-from-admin` - Manual sync products from MacOS Admin
+- `POST /api/webhooks/products` - Webhook receiver for push updates
+- `GET /api/sync/pull-inventory` - Sync inventory levels
+- `GET /api/sync/pull-customers` - Sync customer data
+- `GET /api/sync/pull-orders` - Sync order data
+
 ## Next Steps
 
 1. Create the appropriate `.env` file for your environment

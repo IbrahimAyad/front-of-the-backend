@@ -1,0 +1,89 @@
+// Add these to your existing schema.prisma file
+
+// Extend the Customer model with e-commerce fields
+model CustomerProfile {
+  id              String   @id @default(cuid())
+  customerId      String   @unique
+  
+  // Tier and Status
+  customerTier    String   @default("Silver") // Silver, Gold, Platinum
+  engagementScore Int      @default(0)        // 0-100
+  vipStatus       Boolean  @default(false)
+  
+  // Size Profile
+  jacketSize      String?
+  jacketSizeConfidence Float?
+  vestSize        String?
+  vestSizeConfidence   Float?
+  shirtSize       String?
+  shirtSizeConfidence  Float?
+  shoeSize        String?
+  shoeSizeConfidence   Float?
+  pantsSize       String?
+  pantsSizeConfidence  Float?
+  sizeProfileCompleteness Float @default(0)
+  
+  // Purchase Analytics
+  totalSpent      Decimal  @default(0)
+  totalOrders     Int      @default(0)
+  averageOrderValue Decimal @default(0)
+  repeatCustomer  Boolean  @default(false)
+  highValueFirstOrder Boolean @default(false)
+  
+  // Occasions and Preferences
+  primaryOccasion String?  // wedding, prom, business, general, formal
+  preferredStyles String[] // Classic, Modern, Trendy, etc.
+  preferredColors String[]
+  
+  // Marketing
+  acceptsEmailMarketing Boolean @default(true)
+  acceptsSmsMarketing   Boolean @default(false)
+  marketingTags         String[]
+  
+  // Important Dates
+  firstPurchaseDate  DateTime?
+  lastPurchaseDate   DateTime?
+  daysSinceLastPurchase Int?
+  
+  // Relationships
+  customer         Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  purchaseHistory  PurchaseHistory[]
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  @@map("customer_profiles")
+}
+
+model PurchaseHistory {
+  id              String   @id @default(cuid())
+  customerProfileId String
+  
+  orderId         String?
+  orderDate       DateTime
+  paidDate        DateTime?
+  productNames    String[]
+  orderTotal      Decimal
+  
+  // Relations
+  customerProfile CustomerProfile @relation(fields: [customerProfileId], references: [id], onDelete: Cascade)
+  
+  @@map("purchase_histories")
+}
+
+model CustomerSegment {
+  id          String   @id @default(cuid())
+  name        String   @unique // "High Value", "Frequent Buyer", "Wedding Party", etc.
+  description String?
+  criteria    Json     // Segmentation rules
+  
+  // Stats
+  customerCount Int @default(0)
+  avgOrderValue Decimal @default(0)
+  totalRevenue  Decimal @default(0)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("customer_segments")
+}
