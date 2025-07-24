@@ -50,11 +50,11 @@ const menuItems = [
   { path: '/tailoring', label: 'Tailoring Journey', icon: <ContentCut /> },
   { path: '/weddings', label: 'Wedding Services', icon: <Favorite /> },
   { path: '/customer-management', label: 'Customer Management', icon: <ManageAccounts /> },
-  { path: '/admin/products', label: 'Products Catalog', icon: <Inventory /> },
+  { path: '/admin/products', label: 'Products Catalog', icon: <Inventory />, isAdminRoute: true },
+  { path: '/admin', label: 'Inventory Management', icon: <Assignment />, isAdminRoute: true },
   { path: '/orders', label: 'Orders & Fulfillment', icon: <LocalShipping /> },
   { path: '/analytics', label: 'Analytics & Reports', icon: <Assessment /> },
   { path: '/marketing', label: 'Marketing Hub', icon: <Campaign /> },
-  { path: '/inventory', label: 'Inventory Management', icon: <Assignment /> },
 ];
 
 const Layout: React.FC = () => {

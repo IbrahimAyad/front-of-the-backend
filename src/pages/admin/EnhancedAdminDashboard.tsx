@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Box,
   Drawer,
@@ -26,25 +27,30 @@ import {
   Menu as MenuIcon,
   Dashboard as DashboardIcon,
   Inventory as InventoryIcon,
-  CheckroomOutlined as OutfitIcon,
-  People as PeopleIcon,
-  ShoppingCart as OrdersIcon,
-  Analytics as AnalyticsIcon,
+  People as CustomersIcon,
+  Assignment as OrdersIcon,
+  Assessment as AnalyticsIcon,
+  Campaign as MarketingIcon,
   Settings as SettingsIcon,
   Notifications as NotificationsIcon,
+  AccountCircle as AccountIcon,
   ExpandLess,
   ExpandMore,
   Category as CategoryIcon,
-  LocalOffer as OffersIcon,
-  Reviews as ReviewsIcon,
-  Store as StoreIcon,
-  Logout as LogoutIcon,
-  AccountCircle as AccountIcon,
-  TrendingUp as TrendingIcon,
+  Inventory2 as ProductsIcon,
   Warning as WarningIcon,
+  TrendingUp as TrendingIcon,
+  Build as BuildIcon,
+  Logout as LogoutIcon,
+  RateReview as ReviewsIcon,
 } from '@mui/icons-material';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+
+// Import admin components
 import AdminProductsPage from './AdminProductsPage';
+import AdminCategoriesPage from './AdminCategoriesPage';
+import AdminStockAlertsPage from './AdminStockAlertsPage';
+import AdminDashboardOverview from './AdminDashboardOverview';
+import AdminSettingsPage from './AdminSettingsPage';
 import OutfitBuilderSection from '../../components/Admin/OutfitBuilderSection';
 
 const drawerWidth = 280;
@@ -74,23 +80,17 @@ const EnhancedAdminDashboard: React.FC = () => {
       setCurrentView('products');
     } else if (path.includes('/admin/dashboard')) {
       setCurrentView('dashboard');
-    } else if (path.includes('/admin/inventory')) {
-      setCurrentView('inventory');
+    } else if (path.includes('/admin/categories')) {
+      setCurrentView('categories');
+    } else if (path.includes('/admin/stock-alerts')) {
+      setCurrentView('stock-alerts');
     } else if (path.includes('/admin/outfit-builder')) {
       setCurrentView('outfit-builder');
-    } else if (path.includes('/admin/orders')) {
-      setCurrentView('orders');
-    } else if (path.includes('/admin/customers')) {
-      setCurrentView('customers');
-    } else if (path.includes('/admin/analytics')) {
-      setCurrentView('analytics');
-    } else if (path.includes('/admin/marketing')) {
-      setCurrentView('marketing');
     } else if (path.includes('/admin/settings')) {
       setCurrentView('settings');
     } else {
-      // Default to products for /admin or /admin/
-      setCurrentView('products');
+      // Default to dashboard for /admin or /admin/
+      setCurrentView('dashboard');
     }
   }, [location.pathname]);
 
@@ -113,34 +113,8 @@ const EnhancedAdminDashboard: React.FC = () => {
     },
     {
       text: 'Outfit Builder',
-      icon: <OutfitIcon />,
+      icon: <BuildIcon />,
       path: '/admin/outfit-builder',
-    },
-    {
-      text: 'Orders',
-      icon: <OrdersIcon />,
-      path: '/admin/orders',
-      badge: 12,
-    },
-    {
-      text: 'Customers',
-      icon: <PeopleIcon />,
-      path: '/admin/customers',
-    },
-    {
-      text: 'Analytics',
-      icon: <AnalyticsIcon />,
-      path: '/admin/analytics',
-    },
-    {
-      text: 'Marketing',
-      icon: <TrendingIcon />,
-      path: '/admin/marketing',
-      children: [
-        { text: 'Campaigns', icon: <OffersIcon />, path: '/admin/campaigns' },
-        { text: 'Discounts', icon: <OffersIcon />, path: '/admin/discounts' },
-        { text: 'Reviews', icon: <ReviewsIcon />, path: '/admin/reviews', badge: 8 },
-      ],
     },
     {
       text: 'Store Settings',
@@ -169,8 +143,22 @@ const EnhancedAdminDashboard: React.FC = () => {
           justifyContent: 'center',
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <StoreIcon sx={{ fontSize: 32 }} />
+        <Box 
+          sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 1,
+            cursor: 'pointer',
+            '&:hover': {
+              backgroundColor: alpha(theme.palette.primary.main, 0.08),
+            },
+            borderRadius: 1,
+            p: 1,
+            mx: -1,
+          }}
+          onClick={() => navigate('/dashboard')}
+        >
+          <InventoryIcon sx={{ fontSize: 32 }} />
           <Box>
             <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 'bold' }}>
               KCT Admin
@@ -261,16 +249,20 @@ const EnhancedAdminDashboard: React.FC = () => {
 
   const renderContent = () => {
     switch (currentView) {
+      case 'dashboard':
+        return <AdminDashboardOverview />;
       case 'products':
         return <AdminProductsPage />;
+      case 'categories':
+        return <AdminCategoriesPage />;
+      case 'stock-alerts':
+        return <AdminStockAlertsPage />;
       case 'outfit-builder':
         return <OutfitBuilderSection />;
+      case 'settings':
+        return <AdminSettingsPage />;
       default:
-        return (
-          <Box sx={{ p: 3 }}>
-            <Typography variant="h4">Welcome to {currentView}</Typography>
-          </Box>
-        );
+        return <AdminDashboardOverview />;
     }
   };
 
