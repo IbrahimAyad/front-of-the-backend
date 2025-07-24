@@ -30,8 +30,15 @@ import type {
 } from '../types';
 import { CLIENT_CONFIG } from '../config/client';
 
-// Use production-ready API base URL
+// Use production-ready API base URL with debugging
 const API_BASE_URL = `${CLIENT_CONFIG.BACKEND_URL}/api` || 'https://front-of-the-backend-production.up.railway.app/api';
+
+// Debug logging for API configuration
+console.log('🔧 API Configuration:', {
+  'CLIENT_CONFIG.BACKEND_URL': CLIENT_CONFIG.BACKEND_URL,
+  'Final API_BASE_URL': API_BASE_URL,
+  'isProduction': CLIENT_CONFIG.BACKEND_URL.includes('railway.app')
+});
 
 // Create axios instance
 const api = axios.create({
@@ -39,6 +46,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 10000, // 10 second timeout
 });
 
 // Request interceptor to add auth token
@@ -50,10 +58,22 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor for token refresh
+// Response interceptor for token refresh and error handling
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
+    // Enhanced error logging
+    console.error('🚨 API Error:', {
+      'URL': error.config?.url,
+      'Method': error.config?.method?.toUpperCase(),
+      'Status': error.response?.status,
+      'Status Text': error.response?.statusText,
+      'Base URL': error.config?.baseURL,
+      'Full URL': `${error.config?.baseURL}${error.config?.url}`,
+      'Error Message': error.message,
+      'Response Data': error.response?.data
+    });
+
     const originalRequest = error.config;
 
     if (error.response?.status === 401 && !originalRequest._retry) {
@@ -72,10 +92,14 @@ api.interceptors.response.use(
           originalRequest.headers.Authorization = `Bearer ${accessToken}`;
           return api(originalRequest);
         } catch (refreshError) {
+          console.error('🚨 Token refresh failed:', refreshError);
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
           window.location.href = '/login';
         }
+      } else {
+        // No refresh token available, redirect to login
+        window.location.href = '/login';
       }
     }
 
