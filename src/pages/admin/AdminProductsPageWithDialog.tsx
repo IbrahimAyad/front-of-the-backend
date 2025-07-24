@@ -31,8 +31,15 @@ import ProductDataTable from '../../components/Admin/ProductDataTable';
 import CloudflareImageUpload, { ProductImage as CloudflareProductImage } from '../../components/Products/CloudflareImageUpload';
 import api from '../../services/api';
 
-// Use Cloudflare ProductImage interface
-type ProductImage = CloudflareProductImage;
+// Use compatible ProductImage interface
+interface ProductImage {
+  id?: string;
+  cloudflareId?: string;
+  url: string;
+  altText?: string;
+  isPrimary: boolean; // Required for compatibility
+  position?: number;
+}
 
 interface ProductVariant {
   id?: string;
@@ -61,7 +68,7 @@ interface Product {
   isPublished: boolean;
   isFeatured: boolean;
   isOnSale: boolean;
-  images: CloudflareProductImage[];
+  images: ProductImage[];
   variants: ProductVariant[];
   brand?: string;
   updatedAt: Date;
@@ -618,8 +625,11 @@ const AdminProductsPageWithDialog: React.FC = () => {
             {/* Cloudflare Images Section */}
             <Box sx={{ mt: 3 }}>
               <CloudflareImageUpload
-                images={productImages}
-                onChange={setProductImages}
+                images={productImages as CloudflareProductImage[]}
+                onChange={(images) => setProductImages(images.map(img => ({
+                  ...img,
+                  isPrimary: img.isPrimary || false // Ensure boolean
+                })))}
                 productName={productForm.name || 'Product'}
                 maxImages={10}
               />
