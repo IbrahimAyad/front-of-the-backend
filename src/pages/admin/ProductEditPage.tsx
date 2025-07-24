@@ -210,7 +210,7 @@ const ProductEditPage: React.FC = () => {
   const fetchProduct = async () => {
     setLoading(true);
     try {
-      const response = await api.get(`/api/products/${productId}`);
+      const response = await api.get(`/products/${productId}`);
       const product = response.data.data;
       
       // Map product data to form
@@ -281,10 +281,10 @@ const ProductEditPage: React.FC = () => {
       };
       
       if (isEdit) {
-        await api.put(`/api/products/${productId}`, payload);
+        await api.put(`/products/${productId}`, payload);
         toast.success('Product updated successfully');
       } else {
-        const response = await api.post('/api/products', payload);
+                  const response = await api.post('/products', payload);
         toast.success('Product created successfully');
         navigate(`/admin/products/${response.data.data.id}/edit`);
       }

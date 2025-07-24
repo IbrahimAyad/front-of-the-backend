@@ -41,7 +41,7 @@ const AdminProductsPage: React.FC = () => {
 
   const fetchProducts = async () => {
     try {
-      const response = await api.get('/api/products');
+      const response = await api.get('/products');
       const formattedProducts = response.data.data.map((product: any) => ({
         ...product,
         price: Number(product.price),
@@ -71,7 +71,7 @@ const AdminProductsPage: React.FC = () => {
   const handleDelete = async (productIds: string[]) => {
     try {
       await Promise.all(
-        productIds.map(id => api.delete(`/api/products/${id}`))
+        productIds.map(id => api.delete(`/products/${id}`))
       );
       toast.success(`${productIds.length} product(s) deleted`);
       fetchProducts();
@@ -85,25 +85,25 @@ const AdminProductsPage: React.FC = () => {
       switch (action) {
         case 'publish':
           await Promise.all(
-            productIds.map(id => api.patch(`/api/products/${id}`, { isPublished: true }))
+            productIds.map(id => api.patch(`/products/${id}`, { isPublished: true }))
           );
           toast.success(`${productIds.length} product(s) published`);
           break;
         case 'unpublish':
           await Promise.all(
-            productIds.map(id => api.patch(`/api/products/${id}`, { isPublished: false }))
+            productIds.map(id => api.patch(`/products/${id}`, { isPublished: false }))
           );
           toast.success(`${productIds.length} product(s) unpublished`);
           break;
         case 'archive':
           await Promise.all(
-            productIds.map(id => api.patch(`/api/products/${id}`, { status: 'INACTIVE' }))
+            productIds.map(id => api.patch(`/products/${id}`, { status: 'INACTIVE' }))
           );
           toast.success(`${productIds.length} product(s) archived`);
           break;
         case 'export':
           // Implement export functionality
-          toast.info('Export feature coming soon');
+          toast('Export feature coming soon');
           break;
         default:
           break;
