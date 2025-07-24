@@ -48,13 +48,13 @@ import {
 // Import admin components
 import AdminProductsPage from './AdminProductsPage';
 import AdminCategoriesPage from './AdminCategoriesPage';
-import AdminStockAlertsPage from './AdminStockAlertsPage';
+// import AdminStockAlertsPage from './AdminStockAlertsPage'; // Temporarily disabled - Grid component issues
 import AdminDashboardOverview from './AdminDashboardOverview';
 import AdminSettingsPage from './AdminSettingsPage';
-// import ProductEditPage from './ProductEditPage'; // Temporarily disabled
+import ProductEditPage from './ProductEditPage';
 import OutfitBuilderSection from '../../components/Admin/OutfitBuilderSection';
-import CustomerAnalytics from './CustomerAnalytics';
-import CustomerProfiles from './CustomerProfiles';
+// import CustomerAnalytics from './CustomerAnalytics'; // Temporarily disabled - Grid component issues
+// import CustomerProfiles from './CustomerProfiles'; // Temporarily disabled - Grid component issues
 
 const drawerWidth = 280;
 
@@ -279,17 +279,17 @@ const EnhancedAdminDashboard: React.FC = () => {
       case 'products':
         return <AdminProductsPage />;
       case 'product-edit':
-        return <div>Product editing temporarily disabled - use bulk actions instead</div>;
+        return <ProductEditPage />;
       case 'categories':
         return <AdminCategoriesPage />;
       case 'stock-alerts':
-        return <AdminStockAlertsPage />;
+        return <div>Stock alerts temporarily disabled - Grid component compatibility issues</div>;
       case 'outfit-builder':
         return <OutfitBuilderSection />;
       case 'customers':
-        return <CustomerProfiles />;
+        return <div>Customer management temporarily disabled - Grid component compatibility issues</div>;
       case 'customer-analytics':
-        return <CustomerAnalytics />;
+        return <div>Customer analytics temporarily disabled - Grid component compatibility issues</div>;
       case 'settings':
         return <AdminSettingsPage />;
       default:

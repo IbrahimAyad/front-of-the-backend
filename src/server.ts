@@ -25,9 +25,7 @@ import measurementsRoutes from './routes/measurements';
 import analyticsRoutes from './routes/analytics';
 import mcpRoutes from './routes/mcp';
 import askRoute from './routes/ask';
-import syncRoutes from './routes/sync';
-import webhooksRoutes from './routes/webhooks';
-import outfitsRoutes from './routes/api/outfits';
+
 
 dotenv.config();
 
@@ -123,9 +121,9 @@ async function start() {
     await fastify.register(analyticsRoutes, { prefix: '/api/analytics' });
     await fastify.register(mcpRoutes); // ✅ Mount MCP decision engine routes
     await fastify.register(askRoute); // ✅ Mount AI agents routes (includes /api/agents/* endpoints)
-    await fastify.register(syncRoutes, { prefix: '/api/sync' });
-    await fastify.register(webhooksRoutes, { prefix: '/api/webhooks' });
-    await fastify.register(outfitsRoutes, { prefix: '/api/outfits' });
+    // await fastify.register(syncRoutes, { prefix: '/api/sync' }); // Temporarily disabled
+    // await fastify.register(webhooksRoutes, { prefix: '/api/webhooks' }); // Temporarily disabled
+    // await fastify.register(outfitsRoutes, { prefix: '/api/outfits' }); // Temporarily disabled
 
     // Health checks
     fastify.get('/health', async () => ({
