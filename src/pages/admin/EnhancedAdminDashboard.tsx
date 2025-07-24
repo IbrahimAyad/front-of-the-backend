@@ -52,6 +52,7 @@ import AdminCategoriesPage from './AdminCategoriesPage';
 // import AdminDashboardOverview from './AdminDashboardOverview'; // Temporarily disabled - Grid component issues
 import AdminSettingsPage from './AdminSettingsPage';
 import ProductEditPage from './ProductEditPage';
+import ProductBuilderPage from './ProductBuilderPage';
 // import OutfitBuilderSection from '../../components/Admin/OutfitBuilderSection'; // Temporarily disabled - Grid component issues
 // import CustomerAnalytics from './CustomerAnalytics'; // Temporarily disabled - Grid component issues
 // import CustomerProfiles from './CustomerProfiles'; // Temporarily disabled - Grid component issues
@@ -131,7 +132,7 @@ const EnhancedAdminDashboard: React.FC = () => {
       ],
     },
     {
-      text: 'Outfit Builder',
+      text: 'Product Builder',
       icon: <BuildIcon />,
       path: '/admin/outfit-builder',
     },
@@ -285,7 +286,7 @@ const EnhancedAdminDashboard: React.FC = () => {
       case 'stock-alerts':
         return <div>Stock alerts temporarily disabled - Grid component compatibility issues</div>;
       case 'outfit-builder':
-        return <div>Outfit builder temporarily disabled - Grid component compatibility issues</div>;
+        return <ProductBuilderPage />;
       case 'customers':
         return <div>Customer management temporarily disabled - Grid component compatibility issues</div>;
       case 'customer-analytics':
