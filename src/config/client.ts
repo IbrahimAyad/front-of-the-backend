@@ -46,8 +46,9 @@ export const CLIENT_CONFIG = {
     : getEnv('VITE_FRONTEND_URL', 'http://localhost:3003'),
   
   // Always use Railway for production, force it for Vercel
-  // Temporary: Use local backend until Railway 502 is fixed
-  BACKEND_URL: 'http://localhost:8000',
+  BACKEND_URL: (isProduction || (isBrowser && window.location?.hostname?.includes('vercel.app')))
+    ? 'https://front-of-the-backend-production.up.railway.app'
+    : getEnv('VITE_API_BASE_URL', 'http://localhost:8000'),
   
   WS_BASE_URL: isProduction 
     ? 'wss://front-of-the-backend-production.up.railway.app/ws'
