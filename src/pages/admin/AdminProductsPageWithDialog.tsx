@@ -188,6 +188,9 @@ const AdminProductsPageWithDialog: React.FC = () => {
   };
 
   const handleSave = async () => {
+    // Prevent double-click
+    if (saving) return;
+    
     setSaving(true);
     try {
       // Separate main product data from variants and images

@@ -65,6 +65,13 @@ const cloudflareRoutes: FastifyPluginAsync = async (fastify) => {
         formData.append('metadata', JSON.stringify(metadata));
       }
 
+      // Log the configuration being used
+      console.log('🔧 Cloudflare Config:', {
+        ACCOUNT_ID: CLOUDFLARE_CONFIG.ACCOUNT_ID,
+        API_KEY: CLOUDFLARE_CONFIG.IMAGES_API_KEY ? '***' + CLOUDFLARE_CONFIG.IMAGES_API_KEY.slice(-4) : 'NOT SET',
+        URL: `https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_CONFIG.ACCOUNT_ID}/images/v1`
+      });
+      
       // Upload to Cloudflare
       const response = await fetch(
         `https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_CONFIG.ACCOUNT_ID}/images/v1`,
@@ -89,6 +96,19 @@ const cloudflareRoutes: FastifyPluginAsync = async (fastify) => {
       }
 
       const result = await response.json();
+      
+      // Log the full response for debugging
+      console.log('📸 Cloudflare API Response:', JSON.stringify(result, null, 2));
+      
+      // Check if the result has the expected structure
+      if (!result.success || !result.result || !result.result.id) {
+        fastify.log.error('Unexpected Cloudflare response structure:', result);
+        return reply.status(500).send({
+          success: false,
+          error: 'Invalid response from Cloudflare',
+          details: result.errors || 'No image ID returned'
+        });
+      }
       
       // Return success with image URLs
       return reply.send({
