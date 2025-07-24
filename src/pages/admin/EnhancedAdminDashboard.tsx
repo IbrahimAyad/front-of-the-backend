@@ -49,10 +49,10 @@ import {
 import AdminProductsPage from './AdminProductsPage';
 import AdminCategoriesPage from './AdminCategoriesPage';
 // import AdminStockAlertsPage from './AdminStockAlertsPage'; // Temporarily disabled - Grid component issues
-import AdminDashboardOverview from './AdminDashboardOverview';
+// import AdminDashboardOverview from './AdminDashboardOverview'; // Temporarily disabled - Grid component issues
 import AdminSettingsPage from './AdminSettingsPage';
 import ProductEditPage from './ProductEditPage';
-import OutfitBuilderSection from '../../components/Admin/OutfitBuilderSection';
+// import OutfitBuilderSection from '../../components/Admin/OutfitBuilderSection'; // Temporarily disabled - Grid component issues
 // import CustomerAnalytics from './CustomerAnalytics'; // Temporarily disabled - Grid component issues
 // import CustomerProfiles from './CustomerProfiles'; // Temporarily disabled - Grid component issues
 
@@ -275,7 +275,7 @@ const EnhancedAdminDashboard: React.FC = () => {
   const renderContent = () => {
     switch (currentView) {
       case 'dashboard':
-        return <AdminDashboardOverview />;
+        return <div>Dashboard temporarily disabled - Grid component compatibility issues</div>;
       case 'products':
         return <AdminProductsPage />;
       case 'product-edit':
@@ -285,7 +285,7 @@ const EnhancedAdminDashboard: React.FC = () => {
       case 'stock-alerts':
         return <div>Stock alerts temporarily disabled - Grid component compatibility issues</div>;
       case 'outfit-builder':
-        return <OutfitBuilderSection />;
+        return <div>Outfit builder temporarily disabled - Grid component compatibility issues</div>;
       case 'customers':
         return <div>Customer management temporarily disabled - Grid component compatibility issues</div>;
       case 'customer-analytics':
@@ -293,7 +293,7 @@ const EnhancedAdminDashboard: React.FC = () => {
       case 'settings':
         return <AdminSettingsPage />;
       default:
-        return <AdminDashboardOverview />;
+        return <div>Please select a section from the sidebar</div>;
     }
   };
 
