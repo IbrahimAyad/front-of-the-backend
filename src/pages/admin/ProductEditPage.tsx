@@ -67,7 +67,7 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { api } from '../../utils/api';
+import api from '../../services/api';
 
 interface ProductFormData {
   name: string;
