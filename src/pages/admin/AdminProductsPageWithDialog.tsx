@@ -187,23 +187,25 @@ const AdminProductsPageWithDialog: React.FC = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const dataToSave = {
+      // Separate main product data from variants and images
+      const productData = {
         ...productForm,
         price: Number(productForm.price),
         compareAtPrice: productForm.compareAtPrice ? Number(productForm.compareAtPrice) : undefined,
         costPrice: productForm.costPrice ? Number(productForm.costPrice) : undefined,
-        images: productImages,
-        variants: productVariants,
       };
 
       if (editingProduct) {
-        // Update existing product
-        await api.put(`/products/${editingProduct.id}`, dataToSave);
-        toast.success('Product updated successfully');
+        // Update existing product (main data only)
+        await api.put(`/products/${editingProduct.id}`, productData);
+        
+        // TODO: Handle variants and images separately when backend routes are available
+        // For now, we'll just update the main product data
+        toast.success('Product updated successfully (variants/images support coming soon)');
       } else {
-        // Create new product
-        await api.post('/products', dataToSave);
-        toast.success('Product created successfully');
+        // Create new product (main data only)
+        await api.post('/products', productData);
+        toast.success('Product created successfully (variants/images support coming soon)');
       }
       
       handleCloseDialog();
