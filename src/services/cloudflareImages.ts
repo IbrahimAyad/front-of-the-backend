@@ -39,10 +39,17 @@ const CLOUDFLARE_CONFIG = {
 };
 
 export class CloudflareImagesService {
-  private static readonly API_BASE = 'https://api.cloudflare.com/client/v4';
+  private static getBackendUrl(): string {
+    // Use the same backend URL as the main API
+    if (typeof window !== 'undefined') {
+      // @ts-ignore
+      return import.meta.env?.VITE_API_BASE_URL || 'https://front-of-the-backend-production.up.railway.app';
+    }
+    return process.env.VITE_API_BASE_URL || 'https://front-of-the-backend-production.up.railway.app';
+  }
 
   /**
-   * Upload an image to Cloudflare Images
+   * Upload an image to Cloudflare Images via backend proxy
    */
   static async uploadImage(file: File, metadata?: Record<string, string>): Promise<CloudflareImageUploadResponse> {
     const formData = new FormData();
@@ -52,26 +59,26 @@ export class CloudflareImagesService {
       formData.append('metadata', JSON.stringify(metadata));
     }
 
-    const response = await fetch(
-      `${this.API_BASE}/accounts/${CLOUDFLARE_CONFIG.ACCOUNT_ID}/images/v1`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${CLOUDFLARE_CONFIG.IMAGES_API_KEY}`,
-        },
-        body: formData,
-      }
-    );
+    const response = await fetch(`${this.getBackendUrl()}/api/cloudflare/upload`, {
+      method: 'POST',
+      body: formData,
+    });
 
     if (!response.ok) {
       throw new Error(`Cloudflare upload failed: ${response.statusText}`);
     }
 
-    return response.json();
+    const result = await response.json();
+    return {
+      result: result.data.result,
+      success: result.success,
+      errors: result.data.errors || [],
+      messages: result.data.messages || [],
+    };
   }
 
   /**
-   * Upload image from URL
+   * Upload image from URL via backend proxy
    */
   static async uploadFromUrl(url: string, metadata?: Record<string, string>): Promise<CloudflareImageUploadResponse> {
     const body: any = { url };
@@ -79,38 +86,34 @@ export class CloudflareImagesService {
       body.metadata = metadata;
     }
 
-    const response = await fetch(
-      `${this.API_BASE}/accounts/${CLOUDFLARE_CONFIG.ACCOUNT_ID}/images/v1`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${CLOUDFLARE_CONFIG.IMAGES_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body),
-      }
-    );
+    const response = await fetch(`${this.getBackendUrl()}/api/cloudflare/upload-url`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
 
     if (!response.ok) {
       throw new Error(`Cloudflare URL upload failed: ${response.statusText}`);
     }
 
-    return response.json();
+    const result = await response.json();
+    return {
+      result: result.data.result,
+      success: result.success,
+      errors: result.data.errors || [],
+      messages: result.data.messages || [],
+    };
   }
 
   /**
-   * Delete an image from Cloudflare Images
+   * Delete an image from Cloudflare Images via backend proxy
    */
   static async deleteImage(imageId: string): Promise<void> {
-    const response = await fetch(
-      `${this.API_BASE}/accounts/${CLOUDFLARE_CONFIG.ACCOUNT_ID}/images/v1/${imageId}`,
-      {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${CLOUDFLARE_CONFIG.IMAGES_API_KEY}`,
-        },
-      }
-    );
+    const response = await fetch(`${this.getBackendUrl()}/api/cloudflare/images/${imageId}`, {
+      method: 'DELETE',
+    });
 
     if (!response.ok) {
       throw new Error(`Failed to delete image: ${response.statusText}`);
@@ -118,17 +121,10 @@ export class CloudflareImagesService {
   }
 
   /**
-   * Get image details
+   * Get image details via backend proxy
    */
   static async getImageDetails(imageId: string) {
-    const response = await fetch(
-      `${this.API_BASE}/accounts/${CLOUDFLARE_CONFIG.ACCOUNT_ID}/images/v1/${imageId}`,
-      {
-        headers: {
-          'Authorization': `Bearer ${CLOUDFLARE_CONFIG.IMAGES_API_KEY}`,
-        },
-      }
-    );
+    const response = await fetch(`${this.getBackendUrl()}/api/cloudflare/images/${imageId}`);
 
     if (!response.ok) {
       throw new Error(`Failed to get image details: ${response.statusText}`);
@@ -179,17 +175,10 @@ export class CloudflareImagesService {
   }
 
   /**
-   * List all images (paginated)
+   * List all images (paginated) via backend proxy
    */
   static async listImages(page: number = 1, perPage: number = 25) {
-    const response = await fetch(
-      `${this.API_BASE}/accounts/${CLOUDFLARE_CONFIG.ACCOUNT_ID}/images/v1?page=${page}&per_page=${perPage}`,
-      {
-        headers: {
-          'Authorization': `Bearer ${CLOUDFLARE_CONFIG.IMAGES_API_KEY}`,
-        },
-      }
-    );
+    const response = await fetch(`${this.getBackendUrl()}/api/cloudflare/images?page=${page}&per_page=${perPage}`);
 
     if (!response.ok) {
       throw new Error(`Failed to list images: ${response.statusText}`);
