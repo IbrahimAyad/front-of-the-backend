@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, Button, CircularProgress } from '@mui/material';
-import { Add as AddIcon } from '@mui/icons-material';
+import { Add as AddIcon, Refresh as RefreshIcon, Download as DownloadIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import ProductDataTable from '../../components/Admin/ProductDataTable';
@@ -34,6 +34,18 @@ const AdminProductsPage: React.FC = () => {
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isRestoring, setIsRestoring] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      // Export functionality can be added later
+      toast.success('Export feature coming soon!');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   useEffect(() => {
     fetchProducts();
@@ -114,6 +126,32 @@ const AdminProductsPage: React.FC = () => {
     }
   };
 
+  const handleRestoreCatalog = async () => {
+    if (!confirm('This will replace ALL current products with a fresh catalog of 51+ products. Continue?')) {
+      return;
+    }
+
+    setIsRestoring(true);
+    try {
+      const response = await api.post('/restore/catalog');
+      if (response.data.success) {
+        toast.success(`✅ Catalog restored! Added ${response.data.data.totalProducts} products`);
+        await fetchProducts(); // Refresh the table
+      } else {
+        toast.error('Failed to restore catalog');
+      }
+    } catch (error: any) {
+      console.error('Error restoring catalog:', error);
+      if (error.response?.status === 404) {
+        toast.error('Restore endpoint not available yet. Railway is still deploying...');
+      } else {
+        toast.error('Failed to restore catalog');
+      }
+    } finally {
+      setIsRestoring(false);
+    }
+  };
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -124,6 +162,46 @@ const AdminProductsPage: React.FC = () => {
 
   return (
     <Box>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography variant="h4" fontWeight="bold" color="text.primary">
+          Products ({products.length})
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Button
+            variant="outlined"
+            startIcon={<RefreshIcon />}
+            onClick={handleRestoreCatalog}
+            disabled={isRestoring}
+            color="warning"
+            sx={{ 
+              borderColor: '#ff9800', 
+              color: '#ff9800',
+              '&:hover': { 
+                borderColor: '#f57c00', 
+                backgroundColor: 'rgba(255, 152, 0, 0.04)' 
+              }
+            }}
+          >
+            {isRestoring ? 'Restoring...' : 'Restore Full Catalog (51+ Products)'}
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => navigate('/admin/products/new')}
+            sx={{ bgcolor: '#d32f2f', '&:hover': { bgcolor: '#b71c1c' } }}
+          >
+            Add Product
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<DownloadIcon />}
+            onClick={handleExport}
+            disabled={exporting}
+          >
+            {exporting ? 'Exporting...' : 'Export'}
+          </Button>
+        </Box>
+      </Box>
       <ProductDataTable
         products={products}
         onEdit={handleEdit}
