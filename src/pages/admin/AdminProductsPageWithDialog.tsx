@@ -28,15 +28,11 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import ProductDataTable from '../../components/Admin/ProductDataTable';
+import CloudflareImageUpload, { ProductImage as CloudflareProductImage } from '../../components/Products/CloudflareImageUpload';
 import api from '../../services/api';
 
-interface ProductImage {
-  id?: string;
-  url: string;
-  altText?: string;
-  isPrimary: boolean;
-  position?: number;
-}
+// Use Cloudflare ProductImage interface
+type ProductImage = CloudflareProductImage;
 
 interface ProductVariant {
   id?: string;
@@ -65,7 +61,7 @@ interface Product {
   isPublished: boolean;
   isFeatured: boolean;
   isOnSale: boolean;
-  images: ProductImage[];
+  images: CloudflareProductImage[];
   variants: ProductVariant[];
   brand?: string;
   updatedAt: Date;
@@ -619,79 +615,14 @@ const AdminProductsPageWithDialog: React.FC = () => {
               </Box>
             </Box>
 
-            {/* Images Section */}
+            {/* Cloudflare Images Section */}
             <Box sx={{ mt: 3 }}>
-              <Typography variant="h6" gutterBottom>
-                Product Images
-              </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {productImages.map((image, index) => (
-                  <Box key={index} sx={{ display: 'flex', gap: 2, alignItems: 'center', p: 2, border: '1px solid #ddd', borderRadius: 1 }}>
-                    <TextField
-                      size="small"
-                      label="Image URL"
-                      value={image.url || ''}
-                      onChange={(e) => {
-                        const updated = [...productImages];
-                        updated[index] = { ...image, url: e.target.value };
-                        setProductImages(updated);
-                      }}
-                      sx={{ flex: 1 }}
-                    />
-                    <TextField
-                      size="small"
-                      label="Alt Text"
-                      value={image.altText || ''}
-                      onChange={(e) => {
-                        const updated = [...productImages];
-                        updated[index] = { ...image, altText: e.target.value };
-                        setProductImages(updated);
-                      }}
-                      sx={{ width: 200 }}
-                    />
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={image.isPrimary}
-                          onChange={(e) => {
-                            const updated = productImages.map((img, i) => ({
-                              ...img,
-                              isPrimary: i === index ? e.target.checked : false,
-                            }));
-                            setProductImages(updated);
-                          }}
-                        />
-                      }
-                      label="Primary"
-                    />
-                    <IconButton
-                      size="small"
-                      color="error"
-                      onClick={() => {
-                        setProductImages(productImages.filter((_, i) => i !== index));
-                      }}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </Box>
-                ))}
-                <Button
-                  variant="outlined"
-                  startIcon={<AddIcon />}
-                  onClick={() => {
-                    setProductImages([
-                      ...productImages,
-                      {
-                        url: '',
-                        altText: '',
-                        isPrimary: productImages.length === 0,
-                      },
-                    ]);
-                  }}
-                >
-                  Add Image
-                </Button>
-              </Box>
+              <CloudflareImageUpload
+                images={productImages}
+                onChange={setProductImages}
+                productName={productForm.name || 'Product'}
+                maxImages={10}
+              />
             </Box>
           </Box>
         </DialogContent>
