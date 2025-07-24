@@ -50,7 +50,7 @@ const menuItems = [
   { path: '/tailoring', label: 'Tailoring Journey', icon: <ContentCut /> },
   { path: '/weddings', label: 'Wedding Services', icon: <Favorite /> },
   { path: '/customer-management', label: 'Customer Management', icon: <ManageAccounts /> },
-  { path: '/products', label: 'Products Catalog', icon: <Inventory /> },
+  { path: '/admin/products', label: 'Products Catalog', icon: <Inventory /> },
   { path: '/orders', label: 'Orders & Fulfillment', icon: <LocalShipping /> },
   { path: '/analytics', label: 'Analytics & Reports', icon: <Assessment /> },
   { path: '/marketing', label: 'Marketing Hub', icon: <Campaign /> },

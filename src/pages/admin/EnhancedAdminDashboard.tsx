@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   Box,
   Drawer,
@@ -63,9 +64,37 @@ const EnhancedAdminDashboard: React.FC = () => {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [inventoryOpen, setInventoryOpen] = useState(true);
+  const location = useLocation();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [notificationAnchor, setNotificationAnchor] = useState<null | HTMLElement>(null);
   const [currentView, setCurrentView] = useState('products');
+
+  // Handle URL-based routing
+  useEffect(() => {
+    const path = location.pathname;
+    if (path.includes('/admin/products')) {
+      setCurrentView('products');
+    } else if (path.includes('/admin/dashboard')) {
+      setCurrentView('dashboard');
+    } else if (path.includes('/admin/inventory')) {
+      setCurrentView('inventory');
+    } else if (path.includes('/admin/outfit-builder')) {
+      setCurrentView('outfit-builder');
+    } else if (path.includes('/admin/orders')) {
+      setCurrentView('orders');
+    } else if (path.includes('/admin/customers')) {
+      setCurrentView('customers');
+    } else if (path.includes('/admin/analytics')) {
+      setCurrentView('analytics');
+    } else if (path.includes('/admin/marketing')) {
+      setCurrentView('marketing');
+    } else if (path.includes('/admin/settings')) {
+      setCurrentView('settings');
+    } else {
+      // Default to products for /admin or /admin/
+      setCurrentView('products');
+    }
+  }, [location.pathname]);
 
   const menuItems: MenuItemConfig[] = [
     {
