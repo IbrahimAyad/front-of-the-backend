@@ -17,12 +17,37 @@ import {
   Switch,
   Chip,
   OutlinedInput,
+  IconButton,
 } from '@mui/material';
-import { Add as AddIcon, Refresh as RefreshIcon, Download as DownloadIcon } from '@mui/icons-material';
+import { 
+  Add as AddIcon, 
+  Refresh as RefreshIcon, 
+  Download as DownloadIcon,
+  Delete as DeleteIcon 
+} from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import ProductDataTable from '../../components/Admin/ProductDataTable';
 import api from '../../services/api';
+
+interface ProductImage {
+  id?: string;
+  url: string;
+  altText?: string;
+  isPrimary: boolean;
+  position?: number;
+}
+
+interface ProductVariant {
+  id?: string;
+  name: string;
+  sku: string;
+  size?: string;
+  color?: string;
+  stock: number;
+  price?: number;
+  isActive: boolean;
+}
 
 interface Product {
   id: string;
@@ -40,8 +65,8 @@ interface Product {
   isPublished: boolean;
   isFeatured: boolean;
   isOnSale: boolean;
-  images: Array<{ url: string; isPrimary: boolean }>;
-  variants: Array<{ id: string; name: string; stock: number }>;
+  images: ProductImage[];
+  variants: ProductVariant[];
   brand?: string;
   updatedAt: Date;
   sales?: number;
@@ -78,6 +103,8 @@ const AdminProductsPageWithDialog: React.FC = () => {
     styleAttributes: [],
   });
   const [saving, setSaving] = useState(false);
+  const [productImages, setProductImages] = useState<ProductImage[]>([]);
+  const [productVariants, setProductVariants] = useState<ProductVariant[]>([]);
 
   const handleExport = async () => {
     setExporting(true);
@@ -124,6 +151,8 @@ const AdminProductsPageWithDialog: React.FC = () => {
       occasions: product.occasions || [],
       styleAttributes: product.styleAttributes || [],
     });
+    setProductImages(product.images || []);
+    setProductVariants(product.variants || []);
     setDialogOpen(true);
   };
 
@@ -144,6 +173,8 @@ const AdminProductsPageWithDialog: React.FC = () => {
       occasions: [],
       styleAttributes: [],
     });
+    setProductImages([]);
+    setProductVariants([]);
     setDialogOpen(true);
   };
 
@@ -161,6 +192,8 @@ const AdminProductsPageWithDialog: React.FC = () => {
         price: Number(productForm.price),
         compareAtPrice: productForm.compareAtPrice ? Number(productForm.compareAtPrice) : undefined,
         costPrice: productForm.costPrice ? Number(productForm.costPrice) : undefined,
+        images: productImages,
+        variants: productVariants,
       };
 
       if (editingProduct) {
@@ -299,8 +332,15 @@ const AdminProductsPageWithDialog: React.FC = () => {
       </Box>
       
       <ProductDataTable
-        products={products}
-        onEdit={handleEdit}
+        products={products.map(p => ({
+          ...p,
+          variants: p.variants.map(v => ({
+            id: v.id || '',
+            name: v.name,
+            stock: v.stock
+          }))
+        }))}
+        onEdit={(product: any) => handleEdit(product as Product)}
         onDelete={handleDelete}
         onBulkAction={handleBulkAction}
         onRefresh={fetchProducts}
@@ -489,6 +529,167 @@ const AdminProductsPageWithDialog: React.FC = () => {
                 }
                 label="On Sale"
               />
+            </Box>
+            
+            {/* Variants Section */}
+            <Box sx={{ mt: 3 }}>
+              <Typography variant="h6" gutterBottom>
+                Product Variants
+              </Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {productVariants.map((variant, index) => (
+                  <Box key={index} sx={{ display: 'flex', gap: 2, alignItems: 'center', p: 2, border: '1px solid #ddd', borderRadius: 1 }}>
+                    <TextField
+                      size="small"
+                      label="Size"
+                      value={variant.size || ''}
+                      onChange={(e) => {
+                        const updated = [...productVariants];
+                        updated[index] = { ...variant, size: e.target.value };
+                        setProductVariants(updated);
+                      }}
+                      sx={{ flex: 1 }}
+                    />
+                    <TextField
+                      size="small"
+                      label="Color"
+                      value={variant.color || ''}
+                      onChange={(e) => {
+                        const updated = [...productVariants];
+                        updated[index] = { ...variant, color: e.target.value };
+                        setProductVariants(updated);
+                      }}
+                      sx={{ flex: 1 }}
+                    />
+                    <TextField
+                      size="small"
+                      label="Stock"
+                      type="number"
+                      value={variant.stock}
+                      onChange={(e) => {
+                        const updated = [...productVariants];
+                        updated[index] = { ...variant, stock: parseInt(e.target.value) || 0 };
+                        setProductVariants(updated);
+                      }}
+                      sx={{ width: 100 }}
+                    />
+                    <TextField
+                      size="small"
+                      label="SKU"
+                      value={variant.sku || ''}
+                      onChange={(e) => {
+                        const updated = [...productVariants];
+                        updated[index] = { ...variant, sku: e.target.value };
+                        setProductVariants(updated);
+                      }}
+                      sx={{ flex: 1 }}
+                    />
+                    <IconButton
+                      size="small"
+                      color="error"
+                      onClick={() => {
+                        setProductVariants(productVariants.filter((_, i) => i !== index));
+                      }}
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </Box>
+                ))}
+                <Button
+                  variant="outlined"
+                  startIcon={<AddIcon />}
+                  onClick={() => {
+                    setProductVariants([
+                      ...productVariants,
+                      {
+                        name: '',
+                        sku: '',
+                        size: '',
+                        color: '',
+                        stock: 0,
+                        isActive: true,
+                      },
+                    ]);
+                  }}
+                >
+                  Add Variant
+                </Button>
+              </Box>
+            </Box>
+
+            {/* Images Section */}
+            <Box sx={{ mt: 3 }}>
+              <Typography variant="h6" gutterBottom>
+                Product Images
+              </Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {productImages.map((image, index) => (
+                  <Box key={index} sx={{ display: 'flex', gap: 2, alignItems: 'center', p: 2, border: '1px solid #ddd', borderRadius: 1 }}>
+                    <TextField
+                      size="small"
+                      label="Image URL"
+                      value={image.url || ''}
+                      onChange={(e) => {
+                        const updated = [...productImages];
+                        updated[index] = { ...image, url: e.target.value };
+                        setProductImages(updated);
+                      }}
+                      sx={{ flex: 1 }}
+                    />
+                    <TextField
+                      size="small"
+                      label="Alt Text"
+                      value={image.altText || ''}
+                      onChange={(e) => {
+                        const updated = [...productImages];
+                        updated[index] = { ...image, altText: e.target.value };
+                        setProductImages(updated);
+                      }}
+                      sx={{ width: 200 }}
+                    />
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={image.isPrimary}
+                          onChange={(e) => {
+                            const updated = productImages.map((img, i) => ({
+                              ...img,
+                              isPrimary: i === index ? e.target.checked : false,
+                            }));
+                            setProductImages(updated);
+                          }}
+                        />
+                      }
+                      label="Primary"
+                    />
+                    <IconButton
+                      size="small"
+                      color="error"
+                      onClick={() => {
+                        setProductImages(productImages.filter((_, i) => i !== index));
+                      }}
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </Box>
+                ))}
+                <Button
+                  variant="outlined"
+                  startIcon={<AddIcon />}
+                  onClick={() => {
+                    setProductImages([
+                      ...productImages,
+                      {
+                        url: '',
+                        altText: '',
+                        isPrimary: productImages.length === 0,
+                      },
+                    ]);
+                  }}
+                >
+                  Add Image
+                </Button>
+              </Box>
             </Box>
           </Box>
         </DialogContent>
