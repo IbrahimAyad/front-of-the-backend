@@ -2,13 +2,14 @@
 const isServer = typeof window === 'undefined';
 const isBrowser = typeof window !== 'undefined';
 
-// More robust production detection
+// Force production detection for Vercel deployments
 const isProduction = isServer 
   ? process.env.NODE_ENV === 'production'
   : (isBrowser && (
+      window.location?.hostname === 'kct-menswear-frontend.vercel.app' ||
       window.location?.hostname?.includes('vercel.app') || 
       window.location?.hostname?.includes('railway.app') ||
-      window.location?.hostname?.includes('kct-menswear-frontend.vercel.app')
+      window.location?.protocol === 'https:'
     ));
 
 const getEnv = (key: string, fallback: string = '') => {
@@ -33,6 +34,7 @@ console.log('🔧 Frontend Configuration Debug:', {
   'isServer': isServer,
   'isBrowser': isBrowser,
   'hostname': isBrowser ? window.location?.hostname : 'server',
+  'protocol': isBrowser ? window.location?.protocol : 'server',
   'isProduction': isProduction,
   'NODE_ENV': isServer ? process.env.NODE_ENV : 'browser',
   'Current URL': isBrowser ? window.location?.href : 'server'
@@ -43,8 +45,8 @@ export const CLIENT_CONFIG = {
     ? 'https://kct-menswear-frontend.vercel.app'
     : getEnv('VITE_FRONTEND_URL', 'http://localhost:3003'),
   
-  // Force Railway backend URL in production
-  BACKEND_URL: isProduction 
+  // Always use Railway for production, force it for Vercel
+  BACKEND_URL: (isProduction || (isBrowser && window.location?.hostname?.includes('vercel.app')))
     ? 'https://front-of-the-backend-production.up.railway.app'
     : getEnv('VITE_API_BASE_URL', 'http://localhost:8000'),
   
