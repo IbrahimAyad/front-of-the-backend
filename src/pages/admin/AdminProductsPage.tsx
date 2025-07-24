@@ -42,7 +42,7 @@ const AdminProductsPage: React.FC = () => {
   const fetchProducts = async () => {
     try {
       const response = await api.get('/products');
-      const formattedProducts = response.data.data.map((product: any) => ({
+      const formattedProducts = response.data.data.products.map((product: any) => ({
         ...product,
         price: Number(product.price),
         compareAtPrice: product.compareAtPrice ? Number(product.compareAtPrice) : undefined,
