@@ -40,13 +40,24 @@ console.log('🔧 API Configuration:', {
   'isProduction': CLIENT_CONFIG.BACKEND_URL.includes('railway.app')
 });
 
+// Get timeout from environment or use default
+const getApiTimeout = () => {
+  // Check for environment variable first
+  if (typeof window !== 'undefined' && window.localStorage) {
+    const envTimeout = localStorage.getItem('API_TIMEOUT');
+    if (envTimeout) return parseInt(envTimeout);
+  }
+  // Default: 60 seconds for production, 30 seconds for development
+  return CLIENT_CONFIG.BACKEND_URL.includes('railway.app') ? 60000 : 30000;
+};
+
 // Create axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000, // 10 second timeout
+  timeout: getApiTimeout(),
 });
 
 // Request interceptor to add auth token
@@ -321,11 +332,7 @@ export const productAPI = {
     formData.append('image', imageFile);
     formData.append('metadata', JSON.stringify(metadata));
 
-    const response = await api.post(`/products/${productId}/images`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    const response = await api.post(`/products/${productId}/images`, formData);
     return response.data;
   },
 
@@ -369,11 +376,7 @@ export const productAPI = {
     const formData = new FormData();
     formData.append('file', csvFile);
 
-    const response = await api.post('/products/import', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    const response = await api.post('/products/import', formData);
     return response.data;
   },
 };

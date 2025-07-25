@@ -122,9 +122,12 @@ const AdminProductsPageWithDialog: React.FC = () => {
     fetchProducts();
   }, []);
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (showLoading = true) => {
     try {
-      const response = await api.get('/products?limit=100');
+      if (showLoading) setLoading(true);
+      
+      // Force fresh data by adding timestamp
+      const response = await api.get(`/products?limit=100&t=${Date.now()}`);
       const formattedProducts = response.data.data.products.map((product: any) => ({
         ...product,
         price: Number(product.price),
@@ -137,12 +140,16 @@ const AdminProductsPageWithDialog: React.FC = () => {
         occasions: product.occasions || [],
         styleAttributes: product.styleAttributes || [],
       }));
-      setProducts(formattedProducts);
+      
+      // Clear state first to force re-render
+      setProducts([]);
+      // Then set new data
+      setTimeout(() => setProducts(formattedProducts), 50);
     } catch (error) {
       console.error('Error fetching products:', error);
       toast.error('Failed to load products');
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
@@ -215,7 +222,7 @@ const AdminProductsPageWithDialog: React.FC = () => {
       }
       
       handleCloseDialog();
-      fetchProducts();
+      await fetchProducts(false); // Don't show loading spinner
     } catch (error: any) {
       console.error('Error saving product:', error);
       toast.error(error.response?.data?.message || 'Failed to save product');
@@ -303,6 +310,26 @@ const AdminProductsPageWithDialog: React.FC = () => {
           Products ({products.length})
         </Typography>
         <Box sx={{ display: 'flex', gap: 2 }}>
+          <Button
+            variant="outlined"
+            onClick={async () => {
+              if (confirm('Remove the 4 mock products (Business Suit, Casual Blazer, Wedding Tuxedo, Custom Three-Piece Suit)?')) {
+                try {
+                  const response = await api.post('/cleanup/mock-products');
+                  if (response.data.success) {
+                    toast.success(`Removed ${response.data.data.removedCount} mock products`);
+                    await fetchProducts();
+                  }
+                } catch (error) {
+                  toast.error('Failed to remove mock products');
+                }
+              }
+            }}
+            color="error"
+            sx={{ borderColor: '#d32f2f', color: '#d32f2f' }}
+          >
+            Remove Mock Products
+          </Button>
           <Button
             variant="outlined"
             startIcon={<RefreshIcon />}

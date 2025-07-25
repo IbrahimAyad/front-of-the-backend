@@ -12,6 +12,12 @@ class WebSocketService {
   private reconnectTimeoutId: NodeJS.Timeout | null = null;
 
   connect(token?: string) {
+    // Disable WebSocket in production due to Railway limitations
+    if (CLIENT_CONFIG.WS_BASE_URL?.includes('railway.app')) {
+      console.log('⚠️ WebSocket disabled in production (Railway does not support persistent WebSocket connections)');
+      return;
+    }
+    
     this.token = token || null;
     this.isManuallyDisconnected = false;
     

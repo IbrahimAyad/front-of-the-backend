@@ -79,7 +79,7 @@ const cloudflareRoutes: FastifyPluginAsync = async (fastify) => {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${CLOUDFLARE_CONFIG.IMAGES_API_KEY}`,
-            ...formData.getHeaders(),
+            // DO NOT set Content-Type - let fetch handle it with boundary
           },
           body: formData,
         }
