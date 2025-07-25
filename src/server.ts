@@ -123,18 +123,14 @@ async function start() {
     await fastify.register(restoreRoutes.default, { prefix: '/api/restore' });
     
     // Register multipart support for file uploads (with error handling for duplicates)
-    try {
+    if (!fastify.hasDecorator('multipartErrors')) {
       await fastify.register(import('@fastify/multipart'), {
         limits: {
           files: 10,
           fileSize: 10 * 1024 * 1024, // 10MB
         }
       });
-    } catch (error: any) {
-      if (error.code !== 'FST_ERR_DEC_ALREADY_PRESENT') {
-        throw error;
-      }
-      // Multipart already registered, continue
+    } else {
       fastify.log.info('Multipart plugin already registered, skipping...');
     }
 
