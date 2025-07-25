@@ -109,6 +109,11 @@ const AdminProductsPageWithDialog: React.FC = () => {
   const [productImages, setProductImages] = useState<ProductImage[]>([]);
   const [productVariants, setProductVariants] = useState<ProductVariant[]>([]);
 
+  // Debug variants state changes
+  useEffect(() => {
+    console.log('🔧 ProductVariants state updated:', productVariants);
+  }, [productVariants]);
+
   const handleExport = async () => {
     setExporting(true);
     try {
@@ -162,6 +167,9 @@ const AdminProductsPageWithDialog: React.FC = () => {
       styleAttributes: product.styleAttributes || [],
     });
     setProductImages(product.images || []);
+    console.log('🔧 Loading variants for product:', product.name);
+    console.log('🔧 Raw product variants:', product.variants);
+    console.log('🔧 Variants count:', product.variants?.length || 0);
     setProductVariants(product.variants || []);
     setDialogOpen(true);
   };
@@ -615,7 +623,7 @@ const AdminProductsPageWithDialog: React.FC = () => {
             {/* Variants Section */}
             <Box sx={{ mt: 3 }}>
               <Typography variant="h6" gutterBottom>
-                Product Variants
+                Product Variants ({productVariants.length})
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {productVariants.map((variant, index) => (
