@@ -358,41 +358,81 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
       const { id } = request.params;
       const updateData = request.body;
 
-      // Remove nested relations and computed fields that shouldn't be directly updated
-      const { variants, images, availableVariants, primaryImage, isShirt, isSuit, isTie, isDressShirt, smartSummary, createdAt, ...productData } = updateData;
+      // Remove computed fields but keep images and variants for nested updates
+      const { availableVariants, primaryImage, isShirt, isSuit, isTie, isDressShirt, smartSummary, createdAt, ...productData } = updateData;
+      
+      // Extract images and variants for proper handling
+      const { images, variants, ...basicProductData } = productData;
 
       // Convert arrays to proper format for Prisma
-      if (productData.occasions && Array.isArray(productData.occasions)) {
-        productData.occasions = productData.occasions;
+      if (basicProductData.occasions && Array.isArray(basicProductData.occasions)) {
+        basicProductData.occasions = basicProductData.occasions;
       }
-      if (productData.styleAttributes && Array.isArray(productData.styleAttributes)) {
-        productData.styleAttributes = productData.styleAttributes;
+      if (basicProductData.styleAttributes && Array.isArray(basicProductData.styleAttributes)) {
+        basicProductData.styleAttributes = basicProductData.styleAttributes;
       }
-      if (productData.fabricBenefits && Array.isArray(productData.fabricBenefits)) {
-        productData.fabricBenefits = productData.fabricBenefits;
+      if (basicProductData.fabricBenefits && Array.isArray(basicProductData.fabricBenefits)) {
+        basicProductData.fabricBenefits = basicProductData.fabricBenefits;
       }
-      if (productData.occasionTags && Array.isArray(productData.occasionTags)) {
-        productData.occasionTags = productData.occasionTags;
+      if (basicProductData.occasionTags && Array.isArray(basicProductData.occasionTags)) {
+        basicProductData.occasionTags = basicProductData.occasionTags;
       }
-      if (productData.trendingFor && Array.isArray(productData.trendingFor)) {
-        productData.trendingFor = productData.trendingFor;
+      if (basicProductData.trendingFor && Array.isArray(basicProductData.trendingFor)) {
+        basicProductData.trendingFor = basicProductData.trendingFor;
       }
-      if (productData.pairsWellWith && Array.isArray(productData.pairsWellWith)) {
-        productData.pairsWellWith = productData.pairsWellWith;
+      if (basicProductData.pairsWellWith && Array.isArray(basicProductData.pairsWellWith)) {
+        basicProductData.pairsWellWith = basicProductData.pairsWellWith;
       }
-      if (productData.localKeywords && Array.isArray(productData.localKeywords)) {
-        productData.localKeywords = productData.localKeywords;
+      if (basicProductData.localKeywords && Array.isArray(basicProductData.localKeywords)) {
+        basicProductData.localKeywords = basicProductData.localKeywords;
       }
-      if (productData.tags && Array.isArray(productData.tags)) {
-        productData.tags = productData.tags;
+      if (basicProductData.tags && Array.isArray(basicProductData.tags)) {
+        basicProductData.tags = basicProductData.tags;
+      }
+
+      // Build update data
+      const updateDataForPrisma: any = {
+        ...basicProductData,
+        updatedAt: new Date()
+      };
+      
+      // Handle images if provided
+      if (images && Array.isArray(images)) {
+        updateDataForPrisma.images = {
+          deleteMany: {}, // Delete all existing images
+          create: images.map((img: any, index: number) => ({
+            url: img.url,
+            altText: img.altText || img.alt || `Product image ${index + 1}`,
+            caption: img.caption,
+            isPrimary: img.isPrimary || index === 0,
+            position: img.position || index,
+            width: img.width,
+            height: img.height,
+            size: img.size
+          }))
+        };
+        fastify.log.info(`Updating images for product ${id}:`, images.length);
+      }
+      
+      // Handle variants if provided
+      if (variants && Array.isArray(variants)) {
+        updateDataForPrisma.variants = {
+          deleteMany: {}, // Delete all existing variants
+          create: variants.map((variant: any) => ({
+            name: variant.name,
+            sku: variant.sku,
+            size: variant.size,
+            color: variant.color,
+            stock: variant.stock || 0,
+            price: variant.price,
+            isActive: variant.isActive !== false
+          }))
+        };
       }
 
       const product = await fastify.prisma.product.update({
         where: { id },
-        data: {
-          ...productData,
-          updatedAt: new Date()
-        },
+        data: updateDataForPrisma,
         include: {
           variants: {
             orderBy: [
