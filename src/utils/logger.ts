@@ -41,7 +41,7 @@ if (process.env.NODE_ENV === 'production') {
     })
   ];
   
-  loggerConfig.transports = [...(loggerConfig.transports || []), ...fileTransports];
+  (loggerConfig.transports as winston.transport[]).push(...fileTransports);
 }
 
 // Create logger instance

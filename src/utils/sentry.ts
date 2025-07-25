@@ -88,9 +88,11 @@ export function captureBusinessError(error: Error, operation: string, details?: 
 
 // Performance monitoring helpers
 export function startTransaction(name: string, operation: string) {
-  return Sentry.startTransaction({
+  return Sentry.startSpan({
     name,
     op: operation,
+  }, () => {
+    // Transaction body will be handled by the caller
   });
 }
 

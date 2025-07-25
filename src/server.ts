@@ -1,13 +1,13 @@
-import fastify from 'fastify';
+import fastify, { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import cors from '@fastify/cors';
 import jwt from '@fastify/jwt';
-import rateLimit from '@fastify/rate-limit';
 import websocket from '@fastify/websocket';
+import path from 'path';
 import { SERVER_CONFIG } from './config/server';
 
 // Initialize monitoring and error handling
 import { initSentry } from './utils/sentry';
-import { logger, apiLogger } from './utils/logger';
+import { logger } from './utils/logger';
 import { errorHandler } from './middleware/errorHandler';
 import { setupSecurity, corsOptions } from './middleware/security';
 
@@ -15,7 +15,7 @@ import { setupSecurity, corsOptions } from './middleware/security';
 initSentry();
 
 async function start() {
-  const app = fastify({ 
+  const app: FastifyInstance = fastify({ 
     logger: false, // Use our Winston logger instead
     requestIdLogLabel: 'requestId',
     genReqId: () => `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
@@ -28,154 +28,187 @@ async function start() {
     // Security middleware (rate limiting, headers, etc.)
     await setupSecurity(app);
 
-    // CORS
-    await app.register(cors, corsOptions);
+    // CORS - simplified registration
+    await app.register(cors, {
+      origin: true, // Allow all origins for now - can be restricted later
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key']
+    });
 
-    // File upload plugin moved to Cloudflare section to avoid duplicate registration
+    // JWT
+    await app.register(jwt, {
+      secret: SERVER_CONFIG.JWT_SECRET,
+    });
 
+    // WebSocket
     await app.register(websocket);
 
     // Custom plugins
-    await app.register(databasePlugin);
-    await app.register(authPlugin);
-    await app.register(websocketPlugin);
-    // await fastify.register(syncSchedulerPlugin); // FUTURE: MacOS Admin sync
+    const databasePlugin = await import('./plugins/database');
+    await app.register(databasePlugin.default);
+
+    const authPlugin = await import('./plugins/auth');
+    await app.register(authPlugin.default);
+
+    const websocketPlugin = await import('./plugins/websocket');
+    await app.register(websocketPlugin.default);
 
     // Routes
-    await fastify.register(authRoutes, { prefix: '/api/auth' });
-    await fastify.register(dashboardRoutes, { prefix: '/api/dashboard' });
-    await fastify.register(leadsRoutes, { prefix: '/api/leads' });
-    await fastify.register(customersRoutes, { prefix: '/api/customers' });
-    await fastify.register(ordersRoutes, { prefix: '/api/orders' });
-    await fastify.register(appointmentsRoutes, { prefix: '/api/appointments' });
-    await fastify.register(productsRoutes, { prefix: '/api/products' });
-    await fastify.register(suppliersRoutes, { prefix: '/api/suppliers' });
-    await fastify.register(measurementsRoutes, { prefix: '/api/measurements' });
-    await fastify.register(analyticsRoutes, { prefix: '/api/analytics' });
-    await fastify.register(mcpRoutes); // ✅ Mount MCP decision engine routes
-    await fastify.register(askRoute); // ✅ Mount AI agents routes (includes /api/agents/* endpoints)
-    
-    // Import and register restore routes
+    const authRoutes = await import('./routes/auth');
+    await app.register(authRoutes.default, { prefix: '/api/auth' });
+
+    const dashboardRoutes = await import('./routes/dashboard');
+    await app.register(dashboardRoutes.default, { prefix: '/api/dashboard' });
+
+    const leadsRoutes = await import('./routes/leads');
+    await app.register(leadsRoutes.default, { prefix: '/api/leads' });
+
+    const customersRoutes = await import('./routes/customers');
+    await app.register(customersRoutes.default, { prefix: '/api/customers' });
+
+    const ordersRoutes = await import('./routes/orders');
+    await app.register(ordersRoutes.default, { prefix: '/api/orders' });
+
+    const appointmentsRoutes = await import('./routes/appointments');
+    await app.register(appointmentsRoutes.default, { prefix: '/api/appointments' });
+
+    const productsRoutes = await import('./routes/products');
+    await app.register(productsRoutes.default, { prefix: '/api/products' });
+
+    const suppliersRoutes = await import('./routes/suppliers');
+    await app.register(suppliersRoutes.default, { prefix: '/api/suppliers' });
+
+    // Import and register Restore routes
     const restoreRoutes = await import('./routes/restore');
-    await fastify.register(restoreRoutes.default, { prefix: '/api/restore' });
-    
+    await app.register(restoreRoutes.default, { prefix: '/api/restore' });
+
+    // Import and register Cleanup routes
+    const cleanupRoutes = await import('./routes/cleanup');
+    await app.register(cleanupRoutes.default, { prefix: '/api/cleanup' });
+
     // Import and register collection routes
     const collectionsRoutes = await import('./routes/collections');
-    await fastify.register(collectionsRoutes.default, { prefix: '/api/collections' });
-    
+    await app.register(collectionsRoutes.default, { prefix: '/api/collections' });
+
     // Register multipart support for file uploads (with robust duplicate prevention)
     try {
       // Comprehensive check for existing multipart registration
       const multipartRegistered = 
-        fastify.hasDecorator('multipartErrors') || 
-        fastify.hasDecorator('multipart') ||
-        fastify.hasRequestDecorator('isMultipart') ||
-        fastify.hasRequestDecorator('multipart');
+        app.hasDecorator('multipartErrors') || 
+        app.hasDecorator('multipart') ||
+        app.hasRequestDecorator('isMultipart') ||
+        app.hasRequestDecorator('multipart');
       
       if (!multipartRegistered) {
-        await fastify.register(import('@fastify/multipart'), {
+        await app.register(import('@fastify/multipart'), {
           limits: {
             files: 10,
             fileSize: 10 * 1024 * 1024, // 10MB
           }
         });
-        fastify.log.info('✅ Multipart plugin registered successfully');
+        logger.info('✅ Multipart plugin registered successfully');
       } else {
-        fastify.log.info('ℹ️ Multipart plugin already registered, skipping registration');
+        logger.info('ℹ️ Multipart plugin already registered, skipping registration');
       }
     } catch (multipartError) {
       // If there's ANY error with multipart, just skip it entirely
-      fastify.log.warn('⚠️ Multipart registration failed, continuing without it:', multipartError);
-      fastify.log.info('💡 Base64 image uploads will still work via /api/cloudflare/upload-base64');
+      logger.warn('⚠️ Multipart registration failed, continuing without it:', multipartError);
+      logger.info('💡 Base64 image uploads will still work via /api/cloudflare/upload-base64');
     }
 
     // Import and register Cloudflare routes
     const cloudflareRoutes = await import('./routes/cloudflare');
-    await fastify.register(cloudflareRoutes.default, { prefix: '/api/cloudflare' });
-    
-    // Import and register cleanup routes
-    const cleanupRoutes = await import('./routes/cleanup');
-    await fastify.register(cleanupRoutes.default, { prefix: '/api/cleanup' });
-    
-    // await fastify.register(syncRoutes, { prefix: '/api/sync' }); // Temporarily disabled
-    // await fastify.register(webhooksRoutes, { prefix: '/api/webhooks' }); // Temporarily disabled
-    // await fastify.register(outfitsRoutes, { prefix: '/api/outfits' }); // Temporarily disabled
+    await app.register(cloudflareRoutes.default, { prefix: '/api/cloudflare' });
 
-    // Health checks
-    fastify.get('/health', async () => ({
-      status: 'ok',
-      timestamp: new Date().toISOString(),
-      version: '22b9088a', // Latest commit hash
-      environment: process.env.NODE_ENV || 'development',
-    }));
+    // Import and register Health routes
+    const healthRoutes = await import('./routes/health');
+    await app.register(healthRoutes.default);
 
-    fastify.get('/health/database', async (request, reply) => {
+    // Additional health check for database
+    app.get('/health/db', async (request: FastifyRequest, reply: FastifyReply) => {
       try {
-        await fastify.prisma.$queryRaw`SELECT 1`;
-        return { status: 'ok', database: 'connected' };
-      } catch (error: any) {
-        reply.code(503);
-        return {
-          status: 'error',
-          database: 'disconnected',
-          error: error.message,
-        };
-      }
-    });
-
-    // Root status info
-    fastify.get('/', async () => ({
-      message: 'KCT Menswear Backend API',
-      version: '1.0.0',
-      status: 'running',
-      endpoints: {
-        health: '/health',
-        auth: '/api/auth/*',
-        dashboard: '/api/dashboard/*',
-        customers: '/api/customers/*',
-        leads: '/api/leads/*',
-        orders: '/api/orders/*',
-        products: '/api/products/*',
-        suppliers: '/api/suppliers/*',
-        measurements: '/api/measurements/*',
-        appointments: '/api/appointments/*',
-        analytics: '/api/analytics/*',
-        mcp: '/api/mcp/*',
-        ask: '/api/ask/*',
-        sync: '/api/sync/*',
-        webhooks: '/api/webhooks/*',
-      },
-    }));
-
-    // Global error handler
-    fastify.setErrorHandler((error, request, reply) => {
-      fastify.log.error(error);
-
-      if (error.validation) {
-        reply.code(400).send({
-          success: false,
-          error: 'Validation Error',
-          details: error.validation,
+        if ((app as any).prisma) {
+          await (app as any).prisma.$queryRaw`SELECT 1`;
+          return { healthy: true, database: 'connected' };
+        } else {
+          reply.status(503).send({ healthy: false, database: 'not_initialized' });
+        }
+      } catch (error) {
+        reply.status(503).send({ 
+          healthy: false, 
+          database: 'error',
+          message: (error as Error).message 
         });
-        return;
       }
+    });
 
-      reply.code(error.statusCode || 500).send({
-        success: false,
-        error: error.message || 'Internal Server Error',
+    // Frontend serving in production
+    if (process.env.NODE_ENV === 'production') {
+      // Serve static files from dist directory
+      await app.register(import('@fastify/static'), {
+        root: path.join(__dirname, '../dist'),
+        prefix: '/',
       });
-    });
 
-    await fastify.listen({
-      port: availablePort,
-      host: '0.0.0.0',
-    });
+      // SPA fallback
+      app.get('/*', async (request: FastifyRequest, reply: FastifyReply) => {
+        return reply.sendFile('index.html');
+      });
+    }
 
-    console.log(`🚀 Fastify server running on http://localhost:${availablePort}`);
-  } catch (err) {
-    fastify.log.error(err);
+    // Determine port with fallback
+    let port = SERVER_CONFIG.PORT;
+    
+    // Try to start the server
+    try {
+      await app.listen({ 
+        host: '0.0.0.0', 
+        port: port 
+      });
+      
+      logger.info(`🚀 Server started successfully on port ${port}`);
+      console.log(`🚀 Fastify server running on http://localhost:${port}`);
+    } catch (err) {
+      const error = err as Error;
+      if (error.message.includes('EADDRINUSE')) {
+        // Port is in use, try the next port
+        port = port + 1;
+        console.log(`⚠️ Port ${SERVER_CONFIG.PORT} is in use, using port ${port} instead`);
+        
+        await app.listen({ 
+          host: '0.0.0.0', 
+          port: port 
+        });
+        
+        logger.info(`🚀 Server started on fallback port ${port}`);
+        console.log(`🚀 Fastify server running on http://localhost:${port}`);
+      } else {
+        throw error;
+      }
+    }
+
+  } catch (error) {
+    logger.error('Failed to start server:', error);
+    console.error('❌ Failed to start server:', error);
     process.exit(1);
   }
 }
 
-start();
+// Handle graceful shutdown
+process.on('SIGINT', () => {
+  logger.info('Received SIGINT, shutting down gracefully...');
+  process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+  logger.info('Received SIGTERM, shutting down gracefully...');
+  process.exit(0);
+});
+
+// Start the server
+start().catch((error) => {
+  logger.error('Server startup failed:', error);
+  console.error('❌ Server startup failed:', error);
+  process.exit(1);
+});
