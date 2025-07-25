@@ -147,12 +147,11 @@ const collectionsRoutes: FastifyPluginAsync = async (fastify) => {
           };
         }
 
-        // Name filtering (for specific products like "Tuxedo")
+        // Name filtering (for specific products like "Tuxedo") - FIXED
         if (categoryRules.names && Array.isArray(categoryRules.names)) {
-          categoryCondition.name = {
-            contains: categoryRules.names.join('|'), // Simple OR matching
-            mode: 'insensitive'
-          };
+          categoryCondition.OR = categoryRules.names.map((name: string) => ({
+            name: { contains: name, mode: 'insensitive' }
+          }));
         }
 
         whereConditions.push(categoryCondition);
@@ -307,14 +306,14 @@ const collectionsRoutes: FastifyPluginAsync = async (fastify) => {
       }
 
       // Use the same filtering logic as the products endpoint
-      const { data } = await fastify.inject({
+      const response = await fastify.inject({
         method: 'POST',
         url: `/api/collections/${slug}/products`,
         payload: { page: 1, limit: 1000 } // Get all matching products
       });
 
-      const response = JSON.parse(data);
-      if (!response.success) {
+      const responseData = JSON.parse(response.body);
+      if (!responseData.success) {
         throw new Error('Failed to fetch matching products');
       }
 
@@ -324,7 +323,7 @@ const collectionsRoutes: FastifyPluginAsync = async (fastify) => {
       });
 
       // Add matching products to collection
-      const productAssociations = response.data.products.map((product: any, index: number) => ({
+      const productAssociations = responseData.data.products.map((product: any, index: number) => ({
         productId: product.id,
         collectionId: collection.id,
         position: index

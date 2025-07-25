@@ -196,6 +196,10 @@ model Product {
   outfitComponents OutfitComponent[]
   collections   ProductCollection[]
 
+  // Performance indexes for collection filtering
+  @@index([category, status, isPublished])
+  @@index([tags])
+  @@index([colorFamily])
   @@map("products")
 }
 

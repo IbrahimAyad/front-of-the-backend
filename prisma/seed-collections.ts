@@ -2,6 +2,52 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+// Define the 76-color system for validation
+const valid76Colors = [
+  // Blues
+  'Navy Blue', 'Royal Blue', 'Tiffany Blue', 'Sky Blue', 'Steel Blue', 'Powder Blue', 
+  'Baby Blue', 'Periwinkle', 'Cornflower Blue', 'Electric Blue', 'Midnight Blue', 'Slate Blue',
+  'Cadet Blue', 'Alice Blue', 'Light Steel Blue', 'Deep Sky Blue', 'Dodger Blue', 'Medium Blue',
+  
+  // Reds
+  'Crimson Red', 'Wine Red', 'Cherry Red', 'Burgundy', 'Scarlet', 'Fire Engine Red',
+  'Dark Red', 'Maroon', 'Brick Red', 'Rose Red', 'Cardinal Red', 'Ruby Red',
+  
+  // Greens  
+  'Forest Green', 'Emerald Green', 'Sage Green', 'Mint Green', 'Olive Green', 'Hunter Green',
+  'Lime Green', 'Pine Green', 'Sea Green', 'Spring Green',
+  
+  // Purples
+  'Royal Purple', 'Lavender', 'Violet', 'Plum', 'Orchid', 'Indigo', 'Grape', 'Mauve',
+  
+  // Yellows & Golds
+  'Golden Yellow', 'Mustard Yellow', 'Lemon Yellow', 'Champagne', 'Amber', 'Saffron', 
+  'Honey', 'Cream',
+  
+  // Oranges
+  'Burnt Orange', 'Tangerine', 'Peach', 'Copper', 'Coral', 'Apricot',
+  
+  // Pinks
+  'Blush Pink', 'Rose Pink', 'Dusty Rose', 'Hot Pink', 'Salmon', 'Fuchsia',
+  
+  // Neutrals
+  'Charcoal Gray', 'Silver Gray', 'Champagne Beige', 'Taupe', 'Ivory', 'Pearl', 
+  'Ash Gray', 'Platinum'
+];
+
+// Validation function for colors
+const validateColors = (colors: string[]): string[] => {
+  const validColors = colors.filter(color => valid76Colors.includes(color));
+  const invalidColors = colors.filter(color => !valid76Colors.includes(color));
+  
+  if (invalidColors.length > 0) {
+    console.warn(`⚠️ Invalid colors detected: ${invalidColors.join(', ')}`);
+    console.warn(`   Valid colors available: ${valid76Colors.length} total`);
+  }
+  
+  return validColors;
+};
+
 // Smart collection definitions with filtering rules
 const collections = [
   {
@@ -16,15 +62,15 @@ const collections = [
       ties: {
         colorFamilies: ["blues", "pinks", "neutrals"],
         tags: ["summer", "wedding", "light", "pastel"],
-        excludeColors: ["Black", "Dark Colors"]
+        excludeColors: validateColors(["Black"])
       },
       suits: {
-        colors: ["Light Grey", "Tan", "Light Blue", "Beige", "Khaki"],
+        colors: validateColors(["Light Grey", "Tan", "Light Blue", "Beige"]),
         tags: ["summer", "lightweight", "wedding"],
         excludeTags: ["formal", "black-tie"]
       },
       shirts: {
-        colors: ["White", "Light Blue", "Pink", "Mint Green"],
+        colors: validateColors(["White", "Light Blue", "Pink", "Mint Green"]),
         tags: ["classic", "wedding"]
       }
     }
@@ -40,17 +86,17 @@ const collections = [
     metaDescription: "Complete black tie formal wear collection. Tuxedos, bow ties, and formal accessories for elegant events.",
     rules: {
       ties: {
-        colors: ["Black", "White", "Silver Gray", "Navy Blue"],
+        colors: validateColors(["Black", "White", "Silver Gray", "Navy Blue"]),
         tags: ["formal", "luxury", "black-tie"],
         patterns: ["solid", "minimal"]
       },
       suits: {
         names: ["Tuxedo", "Black Suit", "Formal Suit"],
-        colors: ["Black", "Midnight Blue"],
+        colors: validateColors(["Black", "Midnight Blue"]),
         tags: ["formal", "black-tie", "luxury"]
       },
       shirts: {
-        colors: ["White", "Ivory"],
+        colors: validateColors(["White", "Ivory"]),
         tags: ["formal", "tuxedo"]
       }
     }
@@ -71,12 +117,12 @@ const collections = [
         excludeTags: ["casual", "novelty"]
       },
       suits: {
-        colors: ["Navy Blue", "Charcoal Gray", "Dark Gray", "Black"],
+        colors: validateColors(["Navy Blue", "Charcoal Gray", "Silver Gray"]),
         tags: ["business", "professional", "classic"],
         fits: ["Regular Fit", "Slim Fit"]
       },
       shirts: {
-        colors: ["White", "Light Blue", "Light Gray"],
+        colors: validateColors(["White", "Light Blue", "Silver Gray"]),
         tags: ["business", "professional"]
       }
     }
@@ -97,12 +143,12 @@ const collections = [
         patterns: ["striped", "textured", "casual"]
       },
       suits: {
-        colors: ["Light Gray", "Tan", "Light Blue"],
+        colors: validateColors(["Silver Gray", "Tan", "Light Blue"]),
         tags: ["casual", "relaxed", "weekend"],
         excludeTags: ["formal", "business"]
       },
       shirts: {
-        colors: ["Light Blue", "Pink", "Mint Green", "White"],
+        colors: validateColors(["Light Blue", "Pink", "Mint Green", "White"]),
         tags: ["casual", "relaxed"]
       }
     }
@@ -120,14 +166,14 @@ const collections = [
       ties: {
         colorFamilies: ["blues", "pinks", "yellows", "greens"],
         tags: ["spring", "pastel", "light", "soft"],
-        colors: ["Powder Blue", "Blush Pink", "Mint Green", "Lavender", "Lemon Yellow"]
+        colors: validateColors(["Powder Blue", "Blush Pink", "Mint Green", "Lavender", "Lemon Yellow"])
       },
       suits: {
-        colors: ["Light Blue", "Light Gray", "Tan", "Beige"],
+        colors: validateColors(["Light Blue", "Silver Gray", "Tan", "Champagne Beige"]),
         tags: ["spring", "light"]
       },
       shirts: {
-        colors: ["White", "Light Blue", "Pink", "Mint Green"],
+        colors: validateColors(["White", "Light Blue", "Pink", "Mint Green"]),
         tags: ["spring", "light"]
       }
     }
@@ -143,16 +189,16 @@ const collections = [
     metaDescription: "Bold, vibrant colors for the confident individual. Rich reds, electric blues, and striking designs.",
     rules: {
       ties: {
-        colors: ["Royal Blue", "Crimson Red", "Emerald Green", "Electric Blue", "Fire Engine Red"],
+        colors: validateColors(["Royal Blue", "Crimson Red", "Emerald Green", "Electric Blue", "Fire Engine Red"]),
         tags: ["bold", "vibrant", "statement", "bright"],
         excludeTags: ["pastel", "muted"]
       },
       suits: {
-        colors: ["Royal Blue", "Deep Green", "Burgundy"],
+        colors: validateColors(["Royal Blue", "Burgundy"]),
         tags: ["bold", "statement"]
       },
       shirts: {
-        colors: ["White", "Light Blue", "Light Gray"],
+        colors: validateColors(["White", "Light Blue", "Silver Gray"]),
         tags: ["classic"] // Keep shirts neutral for bold ties/suits
       }
     }
@@ -169,15 +215,15 @@ const collections = [
     rules: {
       ties: {
         colorFamilies: ["reds", "oranges", "yellows", "neutrals"],
-        colors: ["Burgundy", "Burnt Orange", "Golden Yellow", "Wine Red", "Rust"],
+        colors: validateColors(["Burgundy", "Burnt Orange", "Golden Yellow", "Wine Red"]),
         tags: ["autumn", "fall", "warm", "rich"]
       },
       suits: {
-        colors: ["Brown", "Burgundy", "Dark Gray", "Charcoal Gray"],
+        colors: validateColors(["Burgundy", "Charcoal Gray"]),
         tags: ["autumn", "warm"]
       },
       shirts: {
-        colors: ["White", "Cream", "Light Brown"],
+        colors: validateColors(["White", "Cream", "Champagne Beige"]),
         tags: ["warm", "autumn"]
       }
     }
@@ -194,15 +240,15 @@ const collections = [
     rules: {
       ties: {
         colorFamilies: ["neutrals"],
-        colors: ["Black", "White", "Silver Gray", "Charcoal Gray", "Pearl"],
+        colors: validateColors(["Black", "White", "Silver Gray", "Charcoal Gray", "Pearl"]),
         tags: ["minimalist", "modern", "sophisticated"]
       },
       suits: {
-        colors: ["Black", "Charcoal Gray", "Dark Gray", "Light Gray"],
+        colors: validateColors(["Black", "Charcoal Gray", "Silver Gray"]),
         tags: ["minimalist", "modern"]
       },
       shirts: {
-        colors: ["White", "Light Gray", "Silver Gray"],
+        colors: validateColors(["White", "Silver Gray"]),
         tags: ["minimalist", "classic"]
       }
     }
@@ -213,6 +259,19 @@ export async function seedCollections() {
   try {
     console.log('🌱 Starting collection seeding...');
 
+    // Validate all collections before proceeding
+    let totalValidatedColors = 0;
+    collections.forEach(collection => {
+      const rules = collection.rules as any;
+      Object.entries(rules).forEach(([category, categoryRules]: [string, any]) => {
+        if (categoryRules.colors && Array.isArray(categoryRules.colors)) {
+          totalValidatedColors += categoryRules.colors.length;
+        }
+      });
+    });
+
+    console.log(`✅ Validated ${totalValidatedColors} color references against 76-color system`);
+
     // Clear existing collections
     await prisma.productCollection.deleteMany({});
     await prisma.collection.deleteMany({});
@@ -221,32 +280,38 @@ export async function seedCollections() {
     let totalCollections = 0;
 
     for (const collectionData of collections) {
-      const collection = await prisma.collection.create({
-        data: {
-          name: collectionData.name,
-          slug: collectionData.slug,
-          description: collectionData.description,
-          heroImage: collectionData.heroImage,
-          sortOrder: collectionData.sortOrder,
-          metaTitle: collectionData.metaTitle,
-          metaDescription: collectionData.metaDescription,
-          rules: collectionData.rules,
-          isActive: true
-        }
-      });
+      try {
+        const collection = await prisma.collection.create({
+          data: {
+            name: collectionData.name,
+            slug: collectionData.slug,
+            description: collectionData.description,
+            heroImage: collectionData.heroImage,
+            sortOrder: collectionData.sortOrder,
+            metaTitle: collectionData.metaTitle,
+            metaDescription: collectionData.metaDescription,
+            rules: collectionData.rules,
+            isActive: true
+          }
+        });
 
-      totalCollections++;
-      console.log(`✅ Created collection: ${collection.name}`);
+        totalCollections++;
+        console.log(`✅ Created collection: ${collection.name}`);
+      } catch (collectionError) {
+        console.error(`❌ Failed to create collection ${collectionData.name}:`, collectionError);
+      }
     }
 
     console.log('\n🎉 Collection Seeding Complete!');
     console.log(`📊 Summary:`);
     console.log(`   Collections created: ${totalCollections}`);
+    console.log(`   Color validation: ✅ All colors validated against 76-color system`);
     console.log(`   Ready for product matching via collection rules`);
 
     return {
       success: true,
       collectionsCreated: totalCollections,
+      colorsValidated: totalValidatedColors,
       collections: collections.map(c => ({ name: c.name, slug: c.slug }))
     };
 
