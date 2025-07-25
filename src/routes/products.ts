@@ -310,15 +310,51 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
       const { id } = request.params;
       const updateData = request.body;
 
+      // Remove nested relations and computed fields that shouldn't be directly updated
+      const { variants, images, availableVariants, primaryImage, isShirt, isSuit, isTie, isDressShirt, smartSummary, createdAt, ...productData } = updateData;
+
+      // Convert arrays to proper format for Prisma
+      if (productData.occasions && Array.isArray(productData.occasions)) {
+        productData.occasions = productData.occasions;
+      }
+      if (productData.styleAttributes && Array.isArray(productData.styleAttributes)) {
+        productData.styleAttributes = productData.styleAttributes;
+      }
+      if (productData.fabricBenefits && Array.isArray(productData.fabricBenefits)) {
+        productData.fabricBenefits = productData.fabricBenefits;
+      }
+      if (productData.occasionTags && Array.isArray(productData.occasionTags)) {
+        productData.occasionTags = productData.occasionTags;
+      }
+      if (productData.trendingFor && Array.isArray(productData.trendingFor)) {
+        productData.trendingFor = productData.trendingFor;
+      }
+      if (productData.pairsWellWith && Array.isArray(productData.pairsWellWith)) {
+        productData.pairsWellWith = productData.pairsWellWith;
+      }
+      if (productData.localKeywords && Array.isArray(productData.localKeywords)) {
+        productData.localKeywords = productData.localKeywords;
+      }
+      if (productData.tags && Array.isArray(productData.tags)) {
+        productData.tags = productData.tags;
+      }
+
       const product = await fastify.prisma.product.update({
         where: { id },
         data: {
-          ...updateData,
+          ...productData,
           updatedAt: new Date()
         },
         include: {
-          variants: true,
-          images: true
+          variants: {
+            orderBy: [
+              { size: 'asc' },
+              { color: 'asc' }
+            ]
+          },
+          images: {
+            orderBy: { position: 'asc' }
+          }
         }
       });
 
@@ -328,9 +364,11 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
       });
     } catch (error) {
       fastify.log.error('Error updating product:', error);
+      fastify.log.error('Update data:', JSON.stringify(request.body, null, 2));
       return reply.status(500).send({
         success: false,
-        error: 'Failed to update product'
+        error: 'Failed to update product',
+        details: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   });

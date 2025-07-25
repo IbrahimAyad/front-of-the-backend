@@ -123,15 +123,21 @@ async function start() {
     await fastify.register(restoreRoutes.default, { prefix: '/api/restore' });
     
     // Register multipart support for file uploads (with error handling for duplicates)
-    if (!fastify.hasDecorator('multipartErrors')) {
-      await fastify.register(import('@fastify/multipart'), {
-        limits: {
-          files: 10,
-          fileSize: 10 * 1024 * 1024, // 10MB
-        }
-      });
-    } else {
-      fastify.log.info('Multipart plugin already registered, skipping...');
+    try {
+      if (!fastify.hasDecorator('multipartErrors')) {
+        await fastify.register(import('@fastify/multipart'), {
+          limits: {
+            files: 10,
+            fileSize: 10 * 1024 * 1024, // 10MB
+          }
+        });
+        fastify.log.info('✅ Multipart plugin registered successfully');
+      } else {
+        fastify.log.info('ℹ️ Multipart plugin already registered, skipping...');
+      }
+    } catch (multipartError) {
+      fastify.log.warn('⚠️ Multipart registration issue, but continuing:', multipartError);
+      // Continue without multipart if there's an issue
     }
 
     // Import and register Cloudflare routes
