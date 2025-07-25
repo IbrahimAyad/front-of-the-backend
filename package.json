@@ -17,6 +17,7 @@
     "deploy:vercel": "vercel --prod",
     "deploy:netlify": "netlify deploy --prod --dir=dist",
     "db:seed": "prisma db seed",
+    "db:seed:production": "tsx prisma/seed-production.ts",
     "db:reset": "prisma migrate reset",
     "db:setup": "prisma migrate deploy && prisma db seed",
     "seed:customers": "tsx prisma/seed-customers.ts",

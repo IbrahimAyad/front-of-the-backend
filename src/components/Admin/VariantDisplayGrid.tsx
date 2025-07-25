@@ -38,6 +38,10 @@ interface ProductVariant {
   isActive: boolean;
 }
 
+interface VariantWithIndex extends ProductVariant {
+  originalIndex: number;
+}
+
 interface VariantDisplayGridProps {
   variants: ProductVariant[];
   productCategory: string;
@@ -86,7 +90,7 @@ const VariantDisplayGrid: React.FC<VariantDisplayGridProps> = ({
     
     if (category.includes('tie')) {
       // Group by color for ties
-      const colorGroups: Record<string, ProductVariant[]> = {};
+      const colorGroups: Record<string, VariantWithIndex[]> = {};
       variants.forEach((variant, index) => {
         const color = variant.color || 'No Color';
         if (!colorGroups[color]) colorGroups[color] = [];
@@ -100,7 +104,7 @@ const VariantDisplayGrid: React.FC<VariantDisplayGridProps> = ({
     
     if (category.includes('suit')) {
       // Group by size for suits (34R, 36S, etc.)
-      const sizeGroups: Record<string, ProductVariant[]> = {};
+      const sizeGroups: Record<string, VariantWithIndex[]> = {};
       variants.forEach((variant, index) => {
         // Make sure we're getting the actual size from the variant
         const variantSize = variant.size || 'No Size';
@@ -118,7 +122,7 @@ const VariantDisplayGrid: React.FC<VariantDisplayGridProps> = ({
     
     if (category.includes('shirt')) {
       // Group by size for shirts (15", 15.5", etc.)
-      const sizeGroups: Record<string, ProductVariant[]> = {};
+      const sizeGroups: Record<string, VariantWithIndex[]> = {};
       variants.forEach((variant, index) => {
         // Make sure we're getting the actual size from the variant
         const variantSize = variant.size || 'No Size';
@@ -139,7 +143,7 @@ const VariantDisplayGrid: React.FC<VariantDisplayGridProps> = ({
   }, [variants, productCategory]);
 
   // Render ties as color grid
-  const renderTiesGrid = (colorGroups: Record<string, ProductVariant[]>) => (
+  const renderTiesGrid = (colorGroups: Record<string, VariantWithIndex[]>) => (
     <Box>
       <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <InventoryIcon />
@@ -247,7 +251,7 @@ const VariantDisplayGrid: React.FC<VariantDisplayGridProps> = ({
   );
 
   // Render suits as size matrix
-  const renderSuitsMatrix = (sizeGroups: Record<string, ProductVariant[]>) => {
+  const renderSuitsMatrix = (sizeGroups: Record<string, VariantWithIndex[]>) => {
     const sizes = Object.keys(sizeGroups).sort((a, b) => {
       // Sort by number then by length (R, S, L)
       const aMatch = a.match(/(\d+)([RSL]?)/);
@@ -367,7 +371,7 @@ const VariantDisplayGrid: React.FC<VariantDisplayGridProps> = ({
   };
 
   // Render shirts as size table
-  const renderShirtsTable = (sizeGroups: Record<string, ProductVariant[]>) => {
+  const renderShirtsTable = (sizeGroups: Record<string, VariantWithIndex[]>) => {
     const sizes = Object.keys(sizeGroups).sort((a, b) => {
       const aNum = parseFloat(a.replace('"', ''));
       const bNum = parseFloat(b.replace('"', ''));
@@ -545,9 +549,9 @@ const VariantDisplayGrid: React.FC<VariantDisplayGridProps> = ({
 
   return (
     <Box sx={{ mt: 2 }}>
-      {organizedVariants.type === 'ties' && renderTiesGrid(organizedVariants.data as Record<string, ProductVariant[]>)}
-      {organizedVariants.type === 'suits' && renderSuitsMatrix(organizedVariants.data as Record<string, ProductVariant[]>)}
-      {organizedVariants.type === 'shirts' && renderShirtsTable(organizedVariants.data as Record<string, ProductVariant[]>)}
+      {organizedVariants.type === 'ties' && renderTiesGrid(organizedVariants.data as Record<string, VariantWithIndex[]>)}
+      {organizedVariants.type === 'suits' && renderSuitsMatrix(organizedVariants.data as Record<string, VariantWithIndex[]>)}
+      {organizedVariants.type === 'shirts' && renderShirtsTable(organizedVariants.data as Record<string, VariantWithIndex[]>)}
       {organizedVariants.type === 'default' && renderDefaultList(organizedVariants.data as ProductVariant[])}
     </Box>
   );
