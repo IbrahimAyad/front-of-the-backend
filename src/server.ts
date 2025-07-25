@@ -143,19 +143,19 @@ async function start() {
       }
     });
 
-    // Frontend serving in production
-    if (process.env.NODE_ENV === 'production') {
-      // Serve static files from dist directory
-      await app.register(import('@fastify/static'), {
-        root: path.join(__dirname, '../dist'),
-        prefix: '/',
-      });
+    // Frontend serving in production - DISABLED for now
+    // if (process.env.NODE_ENV === 'production') {
+    //   // Serve static files from dist directory
+    //   await app.register(import('@fastify/static'), {
+    //     root: path.join(__dirname, '../dist'),
+    //     prefix: '/',
+    //   });
 
-      // SPA fallback
-      app.get('/*', async (request: FastifyRequest, reply: FastifyReply) => {
-        return reply.sendFile('index.html');
-      });
-    }
+    //   // SPA fallback
+    //   app.get('/*', async (request: FastifyRequest, reply: FastifyReply) => {
+    //     return reply.sendFile('index.html');
+    //   });
+    // }
 
     // Determine port with fallback
     let port = SERVER_CONFIG.PORT;

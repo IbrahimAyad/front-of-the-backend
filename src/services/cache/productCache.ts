@@ -44,7 +44,9 @@ export async function getCachedProductBySlug(slug: string): Promise<Product | nu
 }
 
 export async function setCachedProductBySlug(product: Product): Promise<void> {
-  await cacheSet(CACHE_KEYS.PRODUCT_BY_SLUG(product.slug), product, CACHE_TTL.PRODUCTS);
+  if (product.slug) {
+    await cacheSet(CACHE_KEYS.PRODUCT_BY_SLUG(product.slug), product, CACHE_TTL.PRODUCTS);
+  }
 }
 
 export async function getCachedProductsByCategory(category: string): Promise<Product[] | null> {
