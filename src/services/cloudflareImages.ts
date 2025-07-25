@@ -49,7 +49,39 @@ export class CloudflareImagesService {
   }
 
   /**
-   * Upload an image to Cloudflare Images via backend proxy
+   * Upload an image to Cloudflare Images via base64 (bypasses multipart issues)
+   */
+  static async uploadBase64(data: {
+    image: string;
+    filename: string;
+    mimetype: string;
+    metadata?: Record<string, string>;
+  }): Promise<any> {
+    console.log('🚀 Base64 uploading to:', `${this.getBackendUrl()}/api/cloudflare/upload-base64`);
+    console.log('📦 File:', data.filename, 'base64 length:', data.image.length);
+
+    const response = await fetch(`${this.getBackendUrl()}/api/cloudflare/upload-base64`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+      signal: AbortSignal.timeout(60000), // 60 second timeout for larger files
+    }).catch(error => {
+      console.error('🔴 Base64 upload fetch error:', error);
+      throw new Error(`Network error: ${error.message}`);
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Base64 upload failed: ${response.statusText} - ${errorText}`);
+    }
+
+    return await response.json();
+  }
+
+  /**
+   * Upload an image to Cloudflare Images via backend proxy (DEPRECATED - use uploadBase64)
    */
   static async uploadImage(file: File, metadata?: Record<string, string>): Promise<CloudflareImageUploadResponse> {
     const formData = new FormData();

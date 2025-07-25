@@ -200,6 +200,89 @@ const cloudflareRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
+  // Base64 upload endpoint (bypasses multipart issues)
+  fastify.post('/upload-base64', async (request: any, reply) => {
+    console.log('📥 Base64 upload endpoint hit!');
+    
+    try {
+      const { image, filename, mimetype, metadata } = request.body;
+      
+      if (!image) {
+        return reply.status(400).send({
+          success: false,
+          error: 'No image data provided'
+        });
+      }
+
+      // Convert base64 to buffer
+      const base64Data = image.replace(/^data:image\/[a-z]+;base64,/, '');
+      const fileBuffer = Buffer.from(base64Data, 'base64');
+      
+      console.log('📊 Base64 buffer size:', fileBuffer.length);
+
+      // Create FormData for Cloudflare API
+      const FormData = await import('form-data');
+      const formData = new FormData.default();
+      formData.append('file', fileBuffer, {
+        filename: filename || 'upload.jpg',
+        contentType: mimetype || 'image/jpeg',
+      });
+
+      // Add metadata if provided
+      if (metadata && Object.keys(metadata).length > 0) {
+        formData.append('metadata', JSON.stringify(metadata));
+      }
+
+      // Upload to Cloudflare
+      const response = await fetch(
+        `https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_CONFIG.ACCOUNT_ID}/images/v1`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${CLOUDFLARE_CONFIG.IMAGES_API_KEY}`,
+            ...formData.getHeaders(),
+          },
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.log('❌ Cloudflare error:', errorText);
+        return reply.status(response.status).send({
+          success: false,
+          error: `Cloudflare upload failed: ${response.statusText}`,
+          details: errorText,
+        });
+      }
+
+      const result = await response.json();
+      
+      console.log('✅ Upload successful:', result.result.id);
+      
+      return reply.send({
+        success: true,
+        data: {
+          ...result,
+          urls: {
+            public: `${CLOUDFLARE_CONFIG.DELIVERY_URL}/${result.result.id}/public`,
+            thumbnail: `${CLOUDFLARE_CONFIG.DELIVERY_URL}/${result.result.id}/w=150,h=150,fit=cover,format=auto`,
+            productCard: `${CLOUDFLARE_CONFIG.DELIVERY_URL}/${result.result.id}/w=300,h=300,fit=cover,format=auto`,
+            productDetail: `${CLOUDFLARE_CONFIG.DELIVERY_URL}/${result.result.id}/w=800,h=800,fit=cover,format=auto`,
+          }
+        }
+      });
+
+    } catch (error) {
+      console.log('💥 Base64 upload error:', error);
+      return reply.status(500).send({
+        success: false,
+        error: 'Failed to upload image',
+        details: (error as Error).message,
+      });
+    }
+  });
+
   // Delete image from Cloudflare
   fastify.delete('/images/:imageId', async (request: any, reply) => {
     try {

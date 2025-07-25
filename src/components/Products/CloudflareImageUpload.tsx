@@ -52,26 +52,35 @@ const CloudflareImageUpload: React.FC<CloudflareImageUploadProps> = ({
     setUploadProgress(0);
 
     try {
-      // Show progress increment
-      const progressInterval = setInterval(() => {
-        setUploadProgress(prev => Math.min(prev + 10, 90));
-      }, 200);
+      // Convert file to base64
+      setUploadProgress(10);
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
 
-      const metadata = {
-        productName: productName,
-        uploadedAt: new Date().toISOString(),
-        category: 'product-image',
-      };
+      setUploadProgress(30);
 
-      const result = await CloudflareImagesService.uploadImage(file, metadata);
+      // Upload via base64 (bypasses multipart issues)
+      const result = await CloudflareImagesService.uploadBase64({
+        image: base64,
+        filename: file.name,
+        mimetype: file.type,
+        metadata: {
+          productName: productName,
+          uploadedAt: new Date().toISOString(),
+          category: 'product-image',
+        }
+      });
       
-      clearInterval(progressInterval);
       setUploadProgress(100);
 
       // Create new image object
       const newImage: ProductImage = {
-        cloudflareId: result.result.id,
-        url: CloudflareImagesService.getProductCardUrl(result.result.id),
+        cloudflareId: result.data.result.id,
+        url: result.data.urls.productCard,
         altText: `${productName} - Image ${images.length + 1}`,
         isPrimary: images.length === 0, // First image is primary
         position: images.length,
