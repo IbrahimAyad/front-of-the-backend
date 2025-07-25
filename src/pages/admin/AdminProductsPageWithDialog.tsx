@@ -29,6 +29,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import ProductDataTable from '../../components/Admin/ProductDataTable';
 import CloudflareImageUpload, { ProductImage as CloudflareProductImage } from '../../components/Products/CloudflareImageUpload';
+import VariantDisplayGrid from '../../components/Admin/VariantDisplayGrid';
 import api from '../../services/api';
 
 // Use compatible ProductImage interface
@@ -844,90 +845,120 @@ const AdminProductsPageWithDialog: React.FC = () => {
               />
             </Box>
             
-            {/* Variants Section */}
+            {/* Variants Section - Enhanced with Simple Input + Organized Display */}
             <Box sx={{ mt: 3 }}>
               <Typography variant="h6" gutterBottom>
-                Product Variants ({productVariants.length})
+                Product Variants
               </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {productVariants.map((variant, index) => (
-                  <Box key={index} sx={{ display: 'flex', gap: 2, alignItems: 'center', p: 2, border: '1px solid #ddd', borderRadius: 1 }}>
-                    <TextField
-                      size="small"
-                      label="Size"
-                      value={variant.size || ''}
-                      onChange={(e) => {
-                        const updated = [...productVariants];
-                        updated[index] = { ...variant, size: e.target.value };
-                        setProductVariants(updated);
-                      }}
-                      sx={{ flex: 1 }}
-                    />
-                    <TextField
-                      size="small"
-                      label="Color"
-                      value={variant.color || ''}
-                      onChange={(e) => {
-                        const updated = [...productVariants];
-                        updated[index] = { ...variant, color: e.target.value };
-                        setProductVariants(updated);
-                      }}
-                      sx={{ flex: 1 }}
-                    />
-                    <TextField
-                      size="small"
-                      label="Stock"
-                      type="number"
-                      value={variant.stock}
-                      onChange={(e) => {
-                        const updated = [...productVariants];
-                        updated[index] = { ...variant, stock: parseInt(e.target.value) || 0 };
-                        setProductVariants(updated);
-                      }}
-                      sx={{ width: 100 }}
-                    />
-                    <TextField
-                      size="small"
-                      label="SKU"
-                      value={variant.sku || ''}
-                      onChange={(e) => {
-                        const updated = [...productVariants];
-                        updated[index] = { ...variant, sku: e.target.value };
-                        setProductVariants(updated);
-                      }}
-                      sx={{ flex: 1 }}
-                    />
-                    <IconButton
-                      size="small"
-                      color="error"
+              
+              {/* Simple Variant Creation (Keep Text Inputs) */}
+              <Box sx={{ mb: 3, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                <Typography variant="subtitle2" gutterBottom>
+                  Add New Variant (Simple Entry)
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <TextField
+                    size="small"
+                    label="Size"
+                    placeholder="e.g., 42R, 16.5, Medium"
+                    sx={{ minWidth: 120 }}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        // Focus next field logic could go here
+                      }
+                    }}
+                  />
+                  <TextField
+                    size="small"
+                    label="Color"
+                    placeholder="e.g., Navy Blue, White"
+                    sx={{ minWidth: 120 }}
+                  />
+                  <TextField
+                    size="small"
+                    label="Stock"
+                    type="number"
+                    defaultValue={0}
+                    sx={{ width: 80 }}
+                  />
+                  <TextField
+                    size="small"
+                    label="SKU"
+                    placeholder="Auto-generated"
+                    sx={{ minWidth: 140 }}
+                  />
+                  <Button
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    onClick={() => {
+                      // Get values from form fields and add variant
+                      setProductVariants([
+                        ...productVariants,
+                        {
+                          name: '',
+                          sku: '',
+                          size: '',
+                          color: '',
+                          stock: 0,
+                          isActive: true,
+                        },
+                      ]);
+                    }}
+                    sx={{ bgcolor: '#1976d2' }}
+                  >
+                    Add
+                  </Button>
+                </Box>
+              </Box>
+
+              {/* Enhanced Variant Display Grid */}
+              <VariantDisplayGrid
+                variants={productVariants}
+                productCategory={productForm.category || ''}
+                onVariantUpdate={(updatedVariant, index) => {
+                  const updated = [...productVariants];
+                  updated[index] = updatedVariant;
+                  setProductVariants(updated);
+                }}
+                colorHexMap={productForm.smartAttributes?.colorHexMap || {}}
+              />
+
+              {/* Quick Actions for Existing Variants */}
+              {productVariants.length > 0 && (
+                <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                  <Typography variant="subtitle2" gutterBottom>
+                    Quick Actions
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                    <Button 
+                      size="small" 
+                      variant="outlined"
                       onClick={() => {
-                        setProductVariants(productVariants.filter((_, i) => i !== index));
+                        // Clear all variants
+                        if (confirm('Remove all variants?')) {
+                          setProductVariants([]);
+                        }
                       }}
                     >
-                      <DeleteIcon />
-                    </IconButton>
+                      Clear All
+                    </Button>
+                    <Button 
+                      size="small" 
+                      variant="outlined"
+                      onClick={() => {
+                        // Set all stock to same value
+                        const stock = prompt('Set all stock to:');
+                        if (stock !== null) {
+                          const updated = productVariants.map(v => ({ ...v, stock: parseInt(stock) || 0 }));
+                          setProductVariants(updated);
+                        }
+                      }}
+                    >
+                      Bulk Stock Update
+                    </Button>
                   </Box>
-                ))}
-                <Button
-                  variant="outlined"
-                  startIcon={<AddIcon />}
-                  onClick={() => {
-                    setProductVariants([
-                      ...productVariants,
-                      {
-                        name: '',
-                        sku: '',
-                        size: '',
-                        color: '',
-                        stock: 0,
-                        isActive: true,
-                      },
-                    ]);
-                  }}
-                >
-                  Add Variant
-                </Button>
-              </Box>
+                </Box>
+              )}
             </Box>
 
             {/* Cloudflare Images Section */}
