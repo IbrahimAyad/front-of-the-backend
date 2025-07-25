@@ -47,12 +47,25 @@ const CloudflareImageUpload: React.FC<CloudflareImageUploadProps> = ({
   const [uploadProgress, setUploadProgress] = useState(0);
 
   const handleUpload = useCallback(async (file: File) => {
+    // 🔍 DEBUG: Log image upload start
+    console.log('🔍 IMAGE UPLOAD DEBUG - Starting upload:', {
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type,
+      currentImagesCount: images.length,
+      productName
+    });
+
     setUploading(true);
     setUploadProgress(0);
 
     try {
       // Convert file to base64
       setUploadProgress(10);
+      
+      // 🔍 DEBUG: Log base64 conversion start
+      console.log('🔍 IMAGE UPLOAD DEBUG - Converting to base64...');
+      
       const base64 = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => resolve(reader.result as string);
@@ -60,9 +73,18 @@ const CloudflareImageUpload: React.FC<CloudflareImageUploadProps> = ({
         reader.readAsDataURL(file);
       });
 
+      // 🔍 DEBUG: Log base64 conversion complete
+      console.log('🔍 IMAGE UPLOAD DEBUG - Base64 conversion complete:', {
+        base64Length: base64.length,
+        base64Preview: base64.substring(0, 100) + '...'
+      });
+
       setUploadProgress(30);
 
       // Upload via base64 (bypasses multipart issues)
+      // 🔍 DEBUG: Log API call start
+      console.log('🔍 IMAGE UPLOAD DEBUG - Starting API call to Cloudflare...');
+      
       const result = await CloudflareImagesService.uploadBase64({
         image: base64,
         filename: file.name,
@@ -72,6 +94,14 @@ const CloudflareImageUpload: React.FC<CloudflareImageUploadProps> = ({
           uploadedAt: new Date().toISOString(),
           category: 'product-image',
         }
+      });
+      
+      // 🔍 DEBUG: Log API response
+      console.log('🔍 IMAGE UPLOAD DEBUG - Cloudflare API response:', {
+        result,
+        hasPublicUrl: !!result.data.urls?.public,
+        publicUrl: result.data.urls?.public,
+        resultId: result.data.result?.id
       });
       
       setUploadProgress(100);
@@ -84,14 +114,35 @@ const CloudflareImageUpload: React.FC<CloudflareImageUploadProps> = ({
         position: images.length,
       };
 
+      // 🔍 DEBUG: Log new image object
+      console.log('🔍 IMAGE UPLOAD DEBUG - Created new image object:', {
+        newImage,
+        finalUrl: newImage.url,
+        isPrimary: newImage.isPrimary,
+        position: newImage.position
+      });
+
       // Add to images array
       const updatedImages = [...images, newImage];
+      
+      // 🔍 DEBUG: Log updated images array
+      console.log('🔍 IMAGE UPLOAD DEBUG - Updated images array:', {
+        previousCount: images.length,
+        newCount: updatedImages.length,
+        updatedImages
+      });
+      
       onChange(updatedImages);
 
       toast.success(`✅ Image uploaded successfully!`);
       
     } catch (error: any) {
-      console.error('Upload failed:', error);
+      // 🔍 DEBUG: Log upload error
+      console.error('🔍 IMAGE UPLOAD DEBUG - Upload failed:', {
+        error,
+        errorMessage: error.message,
+        errorStack: error.stack
+      });
       
       // Check if it's a CORS or backend deployment issue
       if (error.message.includes('Load failed') || error.message.includes('CORS') || error.message.includes('404')) {

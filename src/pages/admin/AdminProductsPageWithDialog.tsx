@@ -248,6 +248,18 @@ const AdminProductsPageWithDialog: React.FC = () => {
   };
 
   const handleEdit = (product: Product) => {
+    // 🔍 DEBUG: Log comprehensive product data being loaded
+    console.log('🔍 PRODUCT EDIT DEBUG - Loading product for editing:', {
+      productId: product.id,
+      productName: product.name,
+      productCategory: product.category,
+      rawProduct: product,
+      variantsExist: !!product.variants,
+      variantsCount: product.variants?.length || 0,
+      firstVariant: product.variants?.[0],
+      allVariants: product.variants
+    });
+
     setEditingProduct(product);
     setProductForm({
       ...product,
@@ -274,6 +286,21 @@ const AdminProductsPageWithDialog: React.FC = () => {
     console.log('🔧 Variants count:', product.variants?.length || 0);
     console.log('🎨 Smart attributes loaded:', product.smartAttributes);
     console.log('🌈 Color family:', product.colorFamily);
+    
+    // 🔍 DEBUG: Log detailed variant analysis
+    if (product.variants && product.variants.length > 0) {
+      product.variants.forEach((variant, index) => {
+        console.log(`🔍 PRODUCT EDIT DEBUG - Variant ${index}:`, {
+          variant,
+          hasSize: !!variant.size,
+          hasColor: !!variant.color,
+          sizeValue: variant.size,
+          colorValue: variant.color,
+          variantType: typeof variant
+        });
+      });
+    }
+    
     setProductVariants(product.variants || []);
     setDialogOpen(true);
   };
@@ -309,6 +336,16 @@ const AdminProductsPageWithDialog: React.FC = () => {
   const handleSave = async () => {
     // Prevent double-click
     if (saving) return;
+    
+    // 🔍 DEBUG: Log save process start
+    console.log('🔍 SAVE DEBUG - Starting save process:', {
+      editingProduct: !!editingProduct,
+      productFormData: productForm,
+      imagesCount: productImages.length,
+      variantsCount: productVariants.length,
+      productImages,
+      productVariants
+    });
     
     setSaving(true);
     try {
@@ -380,7 +417,7 @@ const AdminProductsPageWithDialog: React.FC = () => {
 
       // Add images if we have any (for Prisma nested update)
       if (productImages.length > 0) {
-        productData.images = {
+        const imageData = {
           deleteMany: {}, // Clear existing images
           create: productImages.map((img, index) => ({
             url: img.url,
@@ -389,11 +426,22 @@ const AdminProductsPageWithDialog: React.FC = () => {
             position: img.position || index,
           }))
         };
+        
+        // 🔍 DEBUG: Log image data being saved
+        console.log('🔍 SAVE DEBUG - Image data being saved:', {
+          imageCount: productImages.length,
+          imageData,
+          originalImages: productImages
+        });
+        
+        productData.images = imageData;
+      } else {
+        console.log('🔍 SAVE DEBUG - No images to save');
       }
 
       // Add variants if we have any (for Prisma nested update)
       if (productVariants.length > 0) {
-        productData.variants = {
+        const variantData = {
           deleteMany: {}, // Clear existing variants
           create: productVariants.map((variant, index) => ({
             name: variant.name || `${productData.sku}-${index + 1}`,
@@ -405,29 +453,75 @@ const AdminProductsPageWithDialog: React.FC = () => {
             isActive: variant.isActive ?? true,
           }))
         };
+        
+        // 🔍 DEBUG: Log variant data being saved
+        console.log('🔍 SAVE DEBUG - Variant data being saved:', {
+          variantCount: productVariants.length,
+          variantData,
+          originalVariants: productVariants
+        });
+        
+        productData.variants = variantData;
+      } else {
+        console.log('🔍 SAVE DEBUG - No variants to save');
       }
 
       console.log('🚀 Sending product data:', productData);
       console.log('🖼️ Product images to save:', productImages);
       console.log('🔧 Product variants to save:', productVariants);
 
+      // 🔍 DEBUG: Log final payload
+      console.log('🔍 SAVE DEBUG - Final API payload:', {
+        endpoint: editingProduct ? `/products/${editingProduct.id}` : '/products',
+        method: editingProduct ? 'PUT' : 'POST',
+        payload: productData,
+        payloadSize: JSON.stringify(productData).length
+      });
+
       if (editingProduct) {
         // Update existing product (main data only)
         const response = await api.put(`/products/${editingProduct.id}`, productData);
         console.log('✅ Product update response:', response.data);
+        
+        // 🔍 DEBUG: Log update response
+        console.log('🔍 SAVE DEBUG - Update response details:', {
+          status: response.status,
+          data: response.data,
+          hasVariants: !!response.data?.variants,
+          hasImages: !!response.data?.images,
+          variantCount: response.data?.variants?.length || 0,
+          imageCount: response.data?.images?.length || 0
+        });
         
         // Images and variants are now saved as part of the main product update
         
         toast.success('Product updated successfully');
       } else {
         // Create new product (main data only)
-        await api.post('/products', productData);
+        const response = await api.post('/products', productData);
+        
+        // 🔍 DEBUG: Log create response
+        console.log('🔍 SAVE DEBUG - Create response details:', {
+          status: response.status,
+          data: response.data,
+          hasVariants: !!response.data?.variants,
+          hasImages: !!response.data?.images
+        });
+        
         toast.success('Product created successfully (variants/images support coming soon)');
       }
       
       handleCloseDialog();
       await fetchProducts(false); // Don't show loading spinner
     } catch (error: any) {
+      // 🔍 DEBUG: Log save error
+      console.error('🔍 SAVE DEBUG - Save failed:', {
+        error,
+        errorMessage: error.message,
+        errorResponse: error.response?.data,
+        errorStatus: error.response?.status
+      });
+      
       console.error('Error saving product:', error);
       toast.error(error.response?.data?.message || 'Failed to save product');
     } finally {
@@ -505,6 +599,18 @@ const AdminProductsPageWithDialog: React.FC = () => {
     const stock = parseInt(variantStockRef.current?.value || '0');
     const sku = variantSkuRef.current?.value || '';
 
+    // 🔍 DEBUG: Log variant creation inputs
+    console.log('🔍 VARIANT CREATION DEBUG - Input values:', {
+      size,
+      color,
+      stock,
+      sku,
+      sizeRefValue: variantSizeRef.current?.value,
+      colorRefValue: variantColorRef.current?.value,
+      stockRefValue: variantStockRef.current?.value,
+      skuRefValue: variantSkuRef.current?.value
+    });
+
     // Auto-generate SKU if not provided
     const autoSku = sku || `${productForm.sku || 'VAR'}-${size}-${color}`.toUpperCase().replace(/\s+/g, '-');
 
@@ -518,7 +624,19 @@ const AdminProductsPageWithDialog: React.FC = () => {
         isActive: true,
       };
 
+      // 🔍 DEBUG: Log created variant object
+      console.log('🔍 VARIANT CREATION DEBUG - Created variant:', {
+        newVariant,
+        sizeIsSet: !!newVariant.size,
+        colorIsSet: !!newVariant.color,
+        sizeValue: newVariant.size,
+        colorValue: newVariant.color
+      });
+
       setProductVariants([...productVariants, newVariant]);
+
+      // 🔍 DEBUG: Log updated variants array
+      console.log('🔍 VARIANT CREATION DEBUG - Updated variants array:', [...productVariants, newVariant]);
 
       // Clear form inputs
       if (variantSizeRef.current) variantSizeRef.current.value = '';
@@ -528,6 +646,9 @@ const AdminProductsPageWithDialog: React.FC = () => {
 
       // Focus back to size field for quick entry
       variantSizeRef.current?.focus();
+    } else {
+      // 🔍 DEBUG: Log when variant creation is skipped
+      console.log('🔍 VARIANT CREATION DEBUG - Variant creation skipped - neither size nor color provided');
     }
   };
 

@@ -57,6 +57,14 @@ const VariantDisplayGrid: React.FC<VariantDisplayGridProps> = ({
   onVariantDelete,
   colorHexMap = {}
 }) => {
+  // 🔍 DEBUG: Log incoming variant data
+  console.log('🔍 VariantDisplayGrid DEBUG - Incoming props:', {
+    variantsCount: variants.length,
+    productCategory,
+    firstVariant: variants[0],
+    allVariants: variants
+  });
+
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editingVariant, setEditingVariant] = useState<ProductVariant | null>(null);
 
@@ -88,17 +96,38 @@ const VariantDisplayGrid: React.FC<VariantDisplayGridProps> = ({
   const organizedVariants = useMemo(() => {
     const category = productCategory.toLowerCase();
     
+    // 🔍 DEBUG: Log category processing
+    console.log('🔍 VariantDisplayGrid DEBUG - Category processing:', {
+      originalCategory: productCategory,
+      lowercaseCategory: category,
+      isTie: category.includes('tie'),
+      isSuit: category.includes('suit')
+    });
+    
     if (category.includes('tie')) {
       // Group by color for ties
       const colorGroups: Record<string, VariantWithIndex[]> = {};
       variants.forEach((variant, index) => {
         const color = variant.color || 'No Color';
+        
+        // 🔍 DEBUG: Log each tie variant processing
+        console.log(`🔍 VariantDisplayGrid DEBUG - Processing tie variant ${index}:`, {
+          variant,
+          extractedColor: color,
+          hasColor: !!variant.color,
+          colorValue: variant.color
+        });
+        
         if (!colorGroups[color]) colorGroups[color] = [];
         colorGroups[color].push({
           ...variant,
           originalIndex: index
         });
       });
+      
+      // 🔍 DEBUG: Log final tie groups
+      console.log('🔍 VariantDisplayGrid DEBUG - Final tie color groups:', colorGroups);
+      
       return { type: 'ties', data: colorGroups };
     }
     
@@ -108,6 +137,15 @@ const VariantDisplayGrid: React.FC<VariantDisplayGridProps> = ({
       variants.forEach((variant, index) => {
         // Make sure we're getting the actual size from the variant
         const variantSize = variant.size || 'No Size';
+        
+        // 🔍 DEBUG: Log each suit variant processing
+        console.log(`🔍 VariantDisplayGrid DEBUG - Processing suit variant ${index}:`, {
+          variant,
+          extractedSize: variantSize,
+          hasSize: !!variant.size,
+          sizeValue: variant.size
+        });
+        
         if (!sizeGroups[variantSize]) {
           sizeGroups[variantSize] = [];
         }
@@ -117,6 +155,10 @@ const VariantDisplayGrid: React.FC<VariantDisplayGridProps> = ({
           originalIndex: index
         });
       });
+      
+      // 🔍 DEBUG: Log final suit groups
+      console.log('🔍 VariantDisplayGrid DEBUG - Final suit size groups:', sizeGroups);
+      
       return { type: 'suits', data: sizeGroups };
     }
     
