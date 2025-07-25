@@ -1,107 +1,44 @@
-import Fastify from 'fastify';
+import fastify from 'fastify';
 import cors from '@fastify/cors';
 import jwt from '@fastify/jwt';
-import websocket from '@fastify/websocket';
-
 import rateLimit from '@fastify/rate-limit';
-import dotenv from 'dotenv';
-
+import websocket from '@fastify/websocket';
 import { SERVER_CONFIG } from './config/server';
-import { databasePlugin } from './plugins/database';
-import { authPlugin } from './plugins/auth';
-import { websocketPlugin } from './plugins/websocket';
-// import syncSchedulerPlugin from './plugins/syncScheduler'; // FUTURE: MacOS Admin sync
 
-// Routes
-import authRoutes from './routes/auth';
-import dashboardRoutes from './routes/dashboard';
-import leadsRoutes from './routes/leads';
-import customersRoutes from './routes/customers';
-import ordersRoutes from './routes/orders';
-import appointmentsRoutes from './routes/appointments';
-import productsRoutes from './routes/products';
-import suppliersRoutes from './routes/suppliers';
-import measurementsRoutes from './routes/measurements';
-import analyticsRoutes from './routes/analytics';
-import mcpRoutes from './routes/mcp';
-import askRoute from './routes/ask';
+// Initialize monitoring and error handling
+import { initSentry } from './utils/sentry';
+import { logger, apiLogger } from './utils/logger';
+import { errorHandler } from './middleware/errorHandler';
+import { setupSecurity, corsOptions } from './middleware/security';
 
-
-dotenv.config();
-
-const fastify = Fastify({
-  logger: true,
-  pluginTimeout: 30000, // 30 seconds timeout for plugins
-});
-
-// Port detection utility
-async function findAvailablePort(startPort: number): Promise<number> {
-  const net = await import('net');
-  
-  return new Promise((resolve, reject) => {
-    const server = net.createServer();
-    
-    server.listen(startPort, () => {
-      const port = (server.address() as any)?.port;
-      server.close(() => {
-        resolve(port);
-      });
-    });
-    
-    server.on('error', (err: any) => {
-      if (err.code === 'EADDRINUSE') {
-        // Port is in use, try next port
-        findAvailablePort(startPort + 1).then(resolve).catch(reject);
-      } else {
-        reject(err);
-      }
-    });
-  });
-}
+// Initialize Sentry first
+initSentry();
 
 async function start() {
+  const app = fastify({ 
+    logger: false, // Use our Winston logger instead
+    requestIdLogLabel: 'requestId',
+    genReqId: () => `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+  });
+
   try {
-    // Find available port starting from SERVER_CONFIG.PORT
-    const availablePort = await findAvailablePort(SERVER_CONFIG.PORT || 8000);
-    
-    if (availablePort !== (SERVER_CONFIG.PORT || 8000)) {
-      console.log(`⚠️  Port ${SERVER_CONFIG.PORT || 8000} is in use, using port ${availablePort} instead`);
-    }
+    // Set up error handler
+    app.setErrorHandler(errorHandler);
 
-    await fastify.register(cors, {
-      origin: [
-        SERVER_CONFIG.FRONTEND_URL,
-        'http://localhost:3001',
-        'http://localhost:3002',
-        'http://localhost:3003',
-        'http://localhost:3000',
-        'http://localhost:4173',
-        'https://kct-menswear-frontend-b0j1t22z6-ibrahimayads-projects.vercel.app',
-        /\.vercel\.app$/,
-        /\.railway\.app$/
-      ],
-      credentials: true,
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization'],
-    });
+    // Security middleware (rate limiting, headers, etc.)
+    await setupSecurity(app);
 
-    await fastify.register(rateLimit, {
-      max: 100,
-      timeWindow: '1 minute',
-    });
-
-    await fastify.register(jwt, {
-      secret: SERVER_CONFIG.JWT_SECRET,
-    });
+    // CORS
+    await app.register(cors, corsOptions);
 
     // File upload plugin moved to Cloudflare section to avoid duplicate registration
 
-    await fastify.register(websocket);
+    await app.register(websocket);
 
     // Custom plugins
-    await fastify.register(databasePlugin);
-    await fastify.register(authPlugin);
-    await fastify.register(websocketPlugin);
+    await app.register(databasePlugin);
+    await app.register(authPlugin);
+    await app.register(websocketPlugin);
     // await fastify.register(syncSchedulerPlugin); // FUTURE: MacOS Admin sync
 
     // Routes
