@@ -200,23 +200,36 @@ const AdminProductsPageWithDialog: React.FC = () => {
     
     setSaving(true);
     try {
-      // Separate main product data from variants and images (exclude problematic fields)
-      const { variants, images, ...cleanProductForm } = productForm;
-      
+      // Only send essential database fields to avoid Prisma errors
       const productData = {
-        ...cleanProductForm,
-        price: Number(cleanProductForm.price),
-        compareAtPrice: cleanProductForm.compareAtPrice ? Number(cleanProductForm.compareAtPrice) : undefined,
-        costPrice: cleanProductForm.costPrice ? Number(cleanProductForm.costPrice) : undefined,
+        name: productForm.name,
+        description: productForm.description,
+        category: productForm.category,
+        subcategory: productForm.subcategory,
+        price: Number(productForm.price),
+        compareAtPrice: productForm.compareAtPrice ? Number(productForm.compareAtPrice) : undefined,
+        costPrice: productForm.costPrice ? Number(productForm.costPrice) : undefined,
+        sku: productForm.sku,
+        brand: productForm.brand,
+        occasions: productForm.occasions || [],
+        styleAttributes: productForm.styleAttributes || [],
+        status: productForm.status || 'ACTIVE',
+        isPublished: productForm.isPublished ?? true,
+        isFeatured: productForm.isFeatured ?? false,
+        isOnSale: productForm.isOnSale ?? false,
+        tags: productForm.tags || [],
       };
+
+      console.log('🚀 Sending product data:', productData);
 
       if (editingProduct) {
         // Update existing product (main data only)
-        await api.put(`/products/${editingProduct.id}`, productData);
+        const response = await api.put(`/products/${editingProduct.id}`, productData);
+        console.log('✅ Product update response:', response.data);
         
         // TODO: Handle variants and images separately when backend routes are available
         // For now, we'll just update the main product data
-        toast.success('Product updated successfully (variants/images support coming soon)');
+        toast.success('Product updated successfully');
       } else {
         // Create new product (main data only)
         await api.post('/products', productData);
