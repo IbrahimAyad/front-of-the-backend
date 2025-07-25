@@ -606,6 +606,32 @@ const restoreRoutes: FastifyPluginAsync = async (fastify) => {
       });
     }
   });
+
+  // NEW: Add 76-color tie system endpoint
+  fastify.post('/76-tie-colors', async (request, reply) => {
+    try {
+      console.log('🎨 Starting 76-color tie system API call...');
+      
+      // Import and execute the 76-color script
+      const add76TieColors = await import('../../prisma/add-76-tie-colors');
+      const result = await add76TieColors.default();
+      
+      return reply.send({
+        success: true,
+        message: '76-color tie system implemented successfully!',
+        data: result
+      });
+      
+    } catch (error) {
+      fastify.log.error('Error implementing 76-color tie system:', error);
+      return reply.status(500).send({
+        success: false,
+        error: 'Failed to implement 76-color tie system',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
 };
 
 export default restoreRoutes; 

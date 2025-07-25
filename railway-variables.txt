@@ -1,0 +1,26 @@
+RAILWAY ENVIRONMENT VARIABLES
+Copy and paste these into your Railway service variables:
+=========================================================
+
+CLOUDFLARE_ACCOUNT_ID=62232025da980a57e4774b60fef3dccc
+CLOUDFLARE_API_TOKEN=Chn3Hcgcy-BQ306WCrA6bT5gSTa5wE-F0SfxNR4k
+JWT_SECRET=4884ff2143bdb1a6afd467add12df04bc4a1c59447b375e3cc38706aef59906f0705262312a04a4f0f9be112d3ec0d7cb2cdef8437e07cd309bfccd8eede441a
+GEMINI_API_KEY=AIzaSyCn4BY552YeO_NQANTNBbIVG5XH4W6IB3I
+NODE_ENV=production
+PORT=8000
+
+Note: DATABASE_URL is automatically provided by Railway when you connect a PostgreSQL database.
+
+
+VERCEL ENVIRONMENT VARIABLES
+Copy and paste these into your Vercel project settings:
+=========================================================
+
+VITE_CLOUDFLARE_ACCOUNT_ID=62232025da980a57e4774b60fef3dccc
+VITE_CLOUDFLARE_API_TOKEN=Chn3Hcgcy-BQ306WCrA6bT5gSTa5wE-F0SfxNR4k
+VITE_API_BASE_URL=https://front-of-the-backend-production.up.railway.app
+VITE_IMAGES_BASE_URL=https://kct-product-images.s3.us-east-2.amazonaws.com
+VITE_SUITS_API_URL=https://kct-suits-services-production.up.railway.app
+VITE_TIES_API_URL=https://kct-ties-services-production.up.railway.app
+VITE_VENDOR_API_URL=https://kct-vendor-sync-production.up.railway.app
+DATABASE_URL=postgresql://postgres:DnXmjiyxUQqPjVSXBHXyYxcTccUPdkrx@trolley.proxy.rlwy.net:21772/railway

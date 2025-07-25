@@ -565,6 +565,37 @@ const AdminProductsPageWithDialog: React.FC = () => {
             {isRestoring ? 'Restoring...' : 'Restore Full Catalog (51+ Products)'}
           </Button>
           <Button
+            variant="outlined"
+            onClick={async () => {
+              if (confirm('This will add 76 color variants to each tie product (304 total variants). Continue?')) {
+                try {
+                  setIsRestoring(true);
+                  const response = await api.post('/restore/76-tie-colors');
+                  if (response.data.success) {
+                    toast.success(`🎨 76-Color Tie System Implemented! ${response.data.data.totalVariants} variants created`);
+                    await fetchProducts();
+                  }
+                } catch (error) {
+                  toast.error('Failed to implement 76-color tie system');
+                } finally {
+                  setIsRestoring(false);
+                }
+              }
+            }}
+            disabled={isRestoring}
+            color="secondary"
+            sx={{ 
+              borderColor: '#9c27b0', 
+              color: '#9c27b0',
+              '&:hover': { 
+                borderColor: '#7b1fa2', 
+                backgroundColor: 'rgba(156, 39, 176, 0.04)' 
+              }
+            }}
+          >
+            🎨 Add 76 Tie Colors
+          </Button>
+          <Button
             variant="contained"
             startIcon={<AddIcon />}
             onClick={handleAddNew}
