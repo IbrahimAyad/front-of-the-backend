@@ -108,7 +108,14 @@ const VariantDisplayGrid: React.FC<VariantDisplayGridProps> = ({
       // Group by color for ties
       const colorGroups: Record<string, VariantWithIndex[]> = {};
       variants.forEach((variant, index) => {
-        const color = variant.color || 'No Color';
+        // Extract color from variant name if color field is empty
+        let color = variant.color;
+        if (!color && variant.name?.includes(' - ')) {
+          // Extract last part after dash (e.g., "Bow Ties - Navy Blue" → "Navy Blue")
+          const parts = variant.name.split(' - ');
+          color = parts[parts.length - 1];
+        }
+        color = color || 'No Color';
         
         // 🔍 DEBUG: Log each tie variant processing
         console.log(`🔍 VariantDisplayGrid DEBUG - Processing tie variant ${index}:`, {
