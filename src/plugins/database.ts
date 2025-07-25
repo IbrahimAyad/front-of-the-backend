@@ -75,7 +75,7 @@ const databasePlugin: FastifyPluginAsync = async (fastify) => {
         deleteMany: async () => ({ count: 0 })
       },
       product: { 
-        findMany: async () => ({ data: { products: [] } }),
+        findMany: async () => [],
         findUnique: async () => null,
         create: async (data: any) => ({ id: 'mock-id', ...data }),
         update: async (data: any) => ({ id: 'mock-id', ...data }),

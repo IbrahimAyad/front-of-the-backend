@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -201,6 +201,12 @@ const AdminProductsPageWithDialog: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [productImages, setProductImages] = useState<ProductImage[]>([]);
   const [productVariants, setProductVariants] = useState<ProductVariant[]>([]);
+
+  // Add refs for variant form inputs
+  const variantSizeRef = useRef<HTMLInputElement>(null);
+  const variantColorRef = useRef<HTMLInputElement>(null);
+  const variantStockRef = useRef<HTMLInputElement>(null);
+  const variantSkuRef = useRef<HTMLInputElement>(null);
 
   // Debug variants state changes
   useEffect(() => {
@@ -410,7 +416,7 @@ const AdminProductsPageWithDialog: React.FC = () => {
         productData.variants = {
           deleteMany: {}, // Clear existing variants
           create: productVariants.map((variant, index) => ({
-            name: variant.name || `${productForm.name} - ${variant.size || 'Standard'} - ${variant.color || 'Default'}`,
+            name: variant.name || `${productData.sku}-${index + 1}`,
             sku: variant.sku || `${productData.sku}-${index + 1}`,
             size: variant.size || null,
             color: variant.color || null,
@@ -510,6 +516,38 @@ const AdminProductsPageWithDialog: React.FC = () => {
       toast.error('Failed to restore catalog');
     } finally {
       setIsRestoring(false);
+    }
+  };
+
+  const handleAddVariant = () => {
+    const size = variantSizeRef.current?.value || '';
+    const color = variantColorRef.current?.value || '';
+    const stock = parseInt(variantStockRef.current?.value || '0');
+    const sku = variantSkuRef.current?.value || '';
+
+    // Auto-generate SKU if not provided
+    const autoSku = sku || `${productForm.sku || 'VAR'}-${size}-${color}`.toUpperCase().replace(/\s+/g, '-');
+
+    if (size || color) { // At least size or color is required
+      const newVariant = {
+        name: `${productForm.name || 'Product'} - ${size} ${color}`.trim(),
+        sku: autoSku,
+        size: size || undefined,
+        color: color || undefined,
+        stock,
+        isActive: true,
+      };
+
+      setProductVariants([...productVariants, newVariant]);
+
+      // Clear form inputs
+      if (variantSizeRef.current) variantSizeRef.current.value = '';
+      if (variantColorRef.current) variantColorRef.current.value = '';
+      if (variantStockRef.current) variantStockRef.current.value = '0';
+      if (variantSkuRef.current) variantSkuRef.current.value = '';
+
+      // Focus back to size field for quick entry
+      variantSizeRef.current?.focus();
     }
   };
 
@@ -858,52 +896,58 @@ const AdminProductsPageWithDialog: React.FC = () => {
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
                   <TextField
+                    inputRef={variantSizeRef}
                     size="small"
                     label="Size"
                     placeholder="e.g., 42R, 16.5, Medium"
                     sx={{ minWidth: 120 }}
                     onKeyPress={(e) => {
                       if (e.key === 'Enter') {
-                        // Focus next field logic could go here
+                        variantColorRef.current?.focus();
                       }
                     }}
                   />
                   <TextField
+                    inputRef={variantColorRef}
                     size="small"
                     label="Color"
                     placeholder="e.g., Navy Blue, White"
                     sx={{ minWidth: 120 }}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        variantStockRef.current?.focus();
+                      }
+                    }}
                   />
                   <TextField
+                    inputRef={variantStockRef}
                     size="small"
                     label="Stock"
                     type="number"
                     defaultValue={0}
                     sx={{ width: 80 }}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        variantSkuRef.current?.focus();
+                      }
+                    }}
                   />
                   <TextField
+                    inputRef={variantSkuRef}
                     size="small"
                     label="SKU"
                     placeholder="Auto-generated"
                     sx={{ minWidth: 140 }}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        handleAddVariant();
+                      }
+                    }}
                   />
                   <Button
                     variant="contained"
                     startIcon={<AddIcon />}
-                    onClick={() => {
-                      // Get values from form fields and add variant
-                      setProductVariants([
-                        ...productVariants,
-                        {
-                          name: '',
-                          sku: '',
-                          size: '',
-                          color: '',
-                          stock: 0,
-                          isActive: true,
-                        },
-                      ]);
-                    }}
+                    onClick={handleAddVariant}
                     sx={{ bgcolor: '#1976d2' }}
                   >
                     Add
@@ -918,6 +962,10 @@ const AdminProductsPageWithDialog: React.FC = () => {
                 onVariantUpdate={(updatedVariant, index) => {
                   const updated = [...productVariants];
                   updated[index] = updatedVariant;
+                  setProductVariants(updated);
+                }}
+                onVariantDelete={(index) => {
+                  const updated = productVariants.filter((_, i) => i !== index);
                   setProductVariants(updated);
                 }}
                 colorHexMap={productForm.smartAttributes?.colorHexMap || {}}
@@ -948,13 +996,55 @@ const AdminProductsPageWithDialog: React.FC = () => {
                       onClick={() => {
                         // Set all stock to same value
                         const stock = prompt('Set all stock to:');
-                        if (stock !== null) {
-                          const updated = productVariants.map(v => ({ ...v, stock: parseInt(stock) || 0 }));
+                        if (stock !== null && !isNaN(parseInt(stock))) {
+                          const updated = productVariants.map(v => ({ ...v, stock: parseInt(stock) }));
                           setProductVariants(updated);
                         }
                       }}
                     >
                       Bulk Stock Update
+                    </Button>
+                    <Button 
+                      size="small" 
+                      variant="outlined"
+                      onClick={() => {
+                        // Generate quick suit sizes
+                        if (productForm.category?.toLowerCase().includes('suit')) {
+                          const suitSizes = ['38R', '40R', '42R', '44R', '46R', '48R'];
+                          const newVariants = suitSizes.map(size => ({
+                            name: `${productForm.name} - ${size}`,
+                            sku: `${productForm.sku}-${size}`,
+                            size,
+                            color: undefined,
+                            stock: 5,
+                            isActive: true,
+                          }));
+                          setProductVariants([...productVariants, ...newVariants]);
+                        }
+                      }}
+                    >
+                      Quick Add Suit Sizes
+                    </Button>
+                    <Button 
+                      size="small" 
+                      variant="outlined"
+                      onClick={() => {
+                        // Generate quick shirt sizes
+                        if (productForm.category?.toLowerCase().includes('shirt')) {
+                          const shirtSizes = ['15"', '15.5"', '16"', '16.5"', '17"'];
+                          const newVariants = shirtSizes.map(size => ({
+                            name: `${productForm.name} - ${size}`,
+                            sku: `${productForm.sku}-${size.replace('"', 'IN')}`,
+                            size,
+                            color: undefined,
+                            stock: 10,
+                            isActive: true,
+                          }));
+                          setProductVariants([...productVariants, ...newVariants]);
+                        }
+                      }}
+                    >
+                      Quick Add Shirt Sizes
                     </Button>
                   </Box>
                 </Box>

@@ -23,7 +23,8 @@ import {
   Save as SaveIcon,
   Cancel as CancelIcon,
   Inventory as InventoryIcon,
-  Warning as WarningIcon
+  Warning as WarningIcon,
+  Delete as DeleteIcon
 } from '@mui/icons-material';
 
 interface ProductVariant {
@@ -41,6 +42,7 @@ interface VariantDisplayGridProps {
   variants: ProductVariant[];
   productCategory: string;
   onVariantUpdate: (updatedVariant: ProductVariant, index: number) => void;
+  onVariantDelete?: (index: number) => void; // Add delete callback
   colorHexMap?: Record<string, string>; // For tie color visualization
 }
 
@@ -48,6 +50,7 @@ const VariantDisplayGrid: React.FC<VariantDisplayGridProps> = ({
   variants,
   productCategory,
   onVariantUpdate,
+  onVariantDelete,
   colorHexMap = {}
 }) => {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -69,6 +72,12 @@ const VariantDisplayGrid: React.FC<VariantDisplayGridProps> = ({
   const handleEditCancel = () => {
     setEditingIndex(null);
     setEditingVariant(null);
+  };
+
+  const handleVariantDelete = (index: number) => {
+    if (onVariantDelete && confirm('Delete this variant?')) {
+      onVariantDelete(index);
+    }
   };
 
   // Organize variants by category
@@ -122,7 +131,7 @@ const VariantDisplayGrid: React.FC<VariantDisplayGridProps> = ({
       
       <Box sx={{ 
         display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', 
+        gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', 
         gap: 2 
       }}>
         {Object.entries(colorGroups).map(([color, colorVariants]) => {
@@ -198,6 +207,15 @@ const VariantDisplayGrid: React.FC<VariantDisplayGridProps> = ({
                           >
                             <EditIcon />
                           </IconButton>
+                          {onVariantDelete && (
+                            <IconButton 
+                              size="small" 
+                              color="error"
+                              onClick={() => handleVariantDelete(variantIndex)}
+                            >
+                              <DeleteIcon />
+                            </IconButton>
+                          )}
                         </>
                       )}
                     </Box>
@@ -301,12 +319,23 @@ const VariantDisplayGrid: React.FC<VariantDisplayGridProps> = ({
                             </IconButton>
                           </Box>
                         ) : (
-                          <IconButton 
-                            size="small" 
-                            onClick={() => handleEditStart(variant, variantIndex)}
-                          >
-                            <EditIcon />
-                          </IconButton>
+                          <Box sx={{ display: 'flex', gap: 1 }}>
+                            <IconButton 
+                              size="small" 
+                              onClick={() => handleEditStart(variant, variantIndex)}
+                            >
+                              <EditIcon />
+                            </IconButton>
+                            {onVariantDelete && (
+                              <IconButton 
+                                size="small" 
+                                color="error"
+                                onClick={() => handleVariantDelete(variantIndex)}
+                              >
+                                <DeleteIcon />
+                              </IconButton>
+                            )}
+                          </Box>
                         )}
                       </TableCell>
                     </TableRow>
@@ -485,8 +514,14 @@ const VariantDisplayGrid: React.FC<VariantDisplayGridProps> = ({
 
   if (variants.length === 0) {
     return (
-      <Alert severity="info">
-        No variants created yet. Use the "Add New Variant" form above to create product variants.
+      <Alert severity="info" sx={{ mt: 2 }}>
+        <Typography variant="body2">
+          <strong>No variants created yet.</strong>
+        </Typography>
+        <Typography variant="caption">
+          Use the "Add New Variant" form above to create product variants. 
+          Try the "Quick Add" buttons for common sizes!
+        </Typography>
       </Alert>
     );
   }
