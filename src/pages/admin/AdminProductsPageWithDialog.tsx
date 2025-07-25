@@ -234,7 +234,6 @@ const AdminProductsPageWithDialog: React.FC = () => {
           deleteMany: {}, // Clear existing images
           create: productImages.map((img, index) => ({
             url: img.url,
-            cloudflareId: img.cloudflareId || null,
             altText: img.altText || `Product image ${index + 1}`,
             isPrimary: img.isPrimary || index === 0,
             position: img.position || index,
@@ -247,6 +246,7 @@ const AdminProductsPageWithDialog: React.FC = () => {
         productData.variants = {
           deleteMany: {}, // Clear existing variants
           create: productVariants.map((variant, index) => ({
+            name: variant.name || `${productForm.name} - ${variant.size || 'Standard'} - ${variant.color || 'Default'}`,
             sku: variant.sku || `${productData.sku}-${index + 1}`,
             size: variant.size || null,
             color: variant.color || null,

@@ -24,7 +24,6 @@ import CloudflareImagesService, { CloudflareImageUploadResponse } from '../../se
 
 export interface ProductImage {
   id?: string;
-  cloudflareId?: string;
   url: string;
   altText?: string;
   isPrimary?: boolean;
@@ -79,8 +78,7 @@ const CloudflareImageUpload: React.FC<CloudflareImageUploadProps> = ({
 
       // Create new image object
       const newImage: ProductImage = {
-        cloudflareId: result.data.result.id,
-        url: result.data.urls.productCard,
+        url: result.data.urls.public || `https://imagedelivery.net/QI-O2U_ayTU_H_Ilcb4c6Q/${result.data.result.id}/public`,
         altText: `${productName} - Image ${images.length + 1}`,
         isPrimary: images.length === 0, // First image is primary
         position: images.length,
@@ -151,9 +149,10 @@ const CloudflareImageUpload: React.FC<CloudflareImageUploadProps> = ({
     const imageToDelete = images[index];
     
     try {
-      // Delete from Cloudflare if it has a cloudflareId
-      if (imageToDelete.cloudflareId) {
-        await CloudflareImagesService.deleteImage(imageToDelete.cloudflareId);
+      // Extract Cloudflare ID from URL for deletion
+      const cloudflareIdMatch = imageToDelete.url.match(/\/([a-f0-9-]{36})\//);
+      if (cloudflareIdMatch) {
+        await CloudflareImagesService.deleteImage(cloudflareIdMatch[1]);
       }
       
       const newImages = images.filter((_, i) => i !== index);
