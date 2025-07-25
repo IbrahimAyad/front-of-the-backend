@@ -126,14 +126,16 @@ async function start() {
     const collectionsRoutes = await import('./routes/collections');
     await fastify.register(collectionsRoutes.default, { prefix: '/api/collections' });
     
-    // Register multipart support for file uploads (with error handling for duplicates)
+    // Register multipart support for file uploads (with robust duplicate prevention)
     try {
-      // Check if multipart is already registered by testing for the plugin
-      const hasMultipart = fastify.hasDecorator('multipartErrors') || 
-                          fastify.hasDecorator('multipart') ||
-                          fastify.hasRequestDecorator('isMultipart');
+      // Comprehensive check for existing multipart registration
+      const multipartRegistered = 
+        fastify.hasDecorator('multipartErrors') || 
+        fastify.hasDecorator('multipart') ||
+        fastify.hasRequestDecorator('isMultipart') ||
+        fastify.hasRequestDecorator('multipart');
       
-      if (!hasMultipart) {
+      if (!multipartRegistered) {
         await fastify.register(import('@fastify/multipart'), {
           limits: {
             files: 10,
@@ -142,11 +144,12 @@ async function start() {
         });
         fastify.log.info('✅ Multipart plugin registered successfully');
       } else {
-        fastify.log.info('ℹ️ Multipart plugin already registered, skipping...');
+        fastify.log.info('ℹ️ Multipart plugin already registered, skipping registration');
       }
     } catch (multipartError) {
+      // If there's ANY error with multipart, just skip it entirely
       fastify.log.warn('⚠️ Multipart registration failed, continuing without it:', multipartError);
-      // Continue without multipart if there's an issue - base64 uploads still work
+      fastify.log.info('💡 Base64 image uploads will still work via /api/cloudflare/upload-base64');
     }
 
     // Import and register Cloudflare routes
