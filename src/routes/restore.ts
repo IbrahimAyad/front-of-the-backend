@@ -632,6 +632,64 @@ const restoreRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
+  // DELETE route to remove mock products
+  fastify.delete('/mock-products', async (request, reply) => {
+    try {
+      // Find products that look like mock data
+      const mockProducts = await fastify.prisma.product.findMany({
+        where: {
+          OR: [
+            { sku: { startsWith: 'SUIT-' } },
+            { sku: { startsWith: 'SHIRT-' } },
+            { sku: { startsWith: 'TIE-' } },
+            { name: { contains: 'Classic Business Suit' } },
+            { name: { contains: 'Summer Wedding' } },
+            // Products with single letter names
+            { name: { in: ['B', 'L', 'D'] } },
+            { sku: { startsWith: 'TEST-' } },
+            { name: { contains: 'Test' } },
+            { name: { contains: 'Mock' } }
+          ]
+        }
+      });
+
+      const deletedIds = mockProducts.map(p => p.id);
+
+      if (deletedIds.length === 0) {
+        return reply.send({
+          success: true,
+          message: 'No mock products found',
+          deletedCount: 0
+        });
+      }
+
+      // Delete in order: variants, images, then products
+      await fastify.prisma.productVariant.deleteMany({
+        where: { productId: { in: deletedIds } }
+      });
+
+      await fastify.prisma.productImage.deleteMany({
+        where: { productId: { in: deletedIds } }
+      });
+
+      const result = await fastify.prisma.product.deleteMany({
+        where: { id: { in: deletedIds } }
+      });
+
+      return reply.send({
+        success: true,
+        message: `Removed ${result.count} mock products`,
+        deletedCount: result.count
+      });
+    } catch (error) {
+      fastify.log.error('Error removing mock products:', error);
+      return reply.status(500).send({
+        success: false,
+        error: 'Failed to remove mock products'
+      });
+    }
+  });
+
 };
 
 export default restoreRoutes; 

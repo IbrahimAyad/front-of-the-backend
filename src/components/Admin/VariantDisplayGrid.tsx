@@ -87,10 +87,13 @@ const VariantDisplayGrid: React.FC<VariantDisplayGridProps> = ({
     if (category.includes('tie')) {
       // Group by color for ties
       const colorGroups: Record<string, ProductVariant[]> = {};
-      variants.forEach(variant => {
+      variants.forEach((variant, index) => {
         const color = variant.color || 'No Color';
         if (!colorGroups[color]) colorGroups[color] = [];
-        colorGroups[color].push(variant);
+        colorGroups[color].push({
+          ...variant,
+          originalIndex: index
+        });
       });
       return { type: 'ties', data: colorGroups };
     }
@@ -98,10 +101,17 @@ const VariantDisplayGrid: React.FC<VariantDisplayGridProps> = ({
     if (category.includes('suit')) {
       // Group by size for suits (34R, 36S, etc.)
       const sizeGroups: Record<string, ProductVariant[]> = {};
-      variants.forEach(variant => {
-        const size = variant.size || 'No Size';
-        if (!sizeGroups[size]) sizeGroups[size] = [];
-        sizeGroups[size].push(variant);
+      variants.forEach((variant, index) => {
+        // Make sure we're getting the actual size from the variant
+        const variantSize = variant.size || 'No Size';
+        if (!sizeGroups[variantSize]) {
+          sizeGroups[variantSize] = [];
+        }
+        // Push the complete variant object with its original index
+        sizeGroups[variantSize].push({
+          ...variant,
+          originalIndex: index
+        });
       });
       return { type: 'suits', data: sizeGroups };
     }
@@ -109,10 +119,17 @@ const VariantDisplayGrid: React.FC<VariantDisplayGridProps> = ({
     if (category.includes('shirt')) {
       // Group by size for shirts (15", 15.5", etc.)
       const sizeGroups: Record<string, ProductVariant[]> = {};
-      variants.forEach(variant => {
-        const size = variant.size || 'No Size';
-        if (!sizeGroups[size]) sizeGroups[size] = [];
-        sizeGroups[size].push(variant);
+      variants.forEach((variant, index) => {
+        // Make sure we're getting the actual size from the variant
+        const variantSize = variant.size || 'No Size';
+        if (!sizeGroups[variantSize]) {
+          sizeGroups[variantSize] = [];
+        }
+        // Push the complete variant object with its original index
+        sizeGroups[variantSize].push({
+          ...variant,
+          originalIndex: index
+        });
       });
       return { type: 'shirts', data: sizeGroups };
     }
@@ -276,9 +293,9 @@ const VariantDisplayGrid: React.FC<VariantDisplayGridProps> = ({
                     <TableRow key={`${size}-${index}`}>
                       <TableCell>
                         <Chip 
-                          label={size} 
+                          label={variant.size || size} 
                           size="small"
-                          color={size.includes('S') ? 'info' : size.includes('L') ? 'warning' : 'default'}
+                          color={variant.size?.includes('S') ? 'info' : variant.size?.includes('L') ? 'warning' : 'default'}
                         />
                       </TableCell>
                       <TableCell>

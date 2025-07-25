@@ -177,26 +177,6 @@ const AdminProductsPageWithDialog: React.FC = () => {
     tags: [],
     occasions: [],
     styleAttributes: [],
-    occasionTags: [],
-    fabricBenefits: [],
-    pairsWellWith: [],
-    trendingFor: [],
-    localKeywords: [],
-    // Smart attributes - initialize with default structure
-    smartAttributes: undefined,
-    colorFamily: undefined,
-    hexPrimary: undefined,
-    hexSecondary: undefined,
-    primaryOccasion: undefined,
-    outfitRole: undefined,
-    styleNotes: undefined,
-    fabricMarketing: undefined,
-    fabricCare: undefined,
-    targetLocation: undefined,
-    metaTitle: undefined,
-    metaDescription: undefined,
-    weight: undefined,
-    dimensions: undefined,
   });
   const [saving, setSaving] = useState(false);
   const [productImages, setProductImages] = useState<ProductImage[]>([]);
@@ -569,11 +549,11 @@ const AdminProductsPageWithDialog: React.FC = () => {
           <Button
             variant="outlined"
             onClick={async () => {
-              if (confirm('Remove the 4 mock products (Business Suit, Casual Blazer, Wedding Tuxedo, Custom Three-Piece Suit)?')) {
+              if (confirm('Remove all mock/test products? This cannot be undone.')) {
                 try {
-                  const response = await api.post('/cleanup/mock-products');
+                  const response = await api.delete('/restore/mock-products');
                   if (response.data.success) {
-                    toast.success(`Removed ${response.data.data.removedCount} mock products`);
+                    toast.success(`Removed ${response.data.deletedCount} mock products`);
                     await fetchProducts();
                   }
                 } catch (error) {
@@ -587,88 +567,10 @@ const AdminProductsPageWithDialog: React.FC = () => {
             Remove Mock Products
           </Button>
           <Button
-            variant="outlined"
-            startIcon={<RefreshIcon />}
-            onClick={handleRestoreCatalog}
-            disabled={isRestoring}
-            color="warning"
-            sx={{ 
-              borderColor: '#ff9800', 
-              color: '#ff9800',
-              '&:hover': { 
-                borderColor: '#f57c00', 
-                backgroundColor: 'rgba(255, 152, 0, 0.04)' 
-              }
-            }}
-          >
-            {isRestoring ? 'Restoring...' : 'Restore Full Catalog (51+ Products)'}
-          </Button>
-          <Button
-            variant="outlined"
-            onClick={async () => {
-              if (confirm('This will add 76 color variants to each tie product (304 total variants). Continue?')) {
-                try {
-                  setIsRestoring(true);
-                  const response = await api.post('/restore/76-tie-colors');
-                  if (response.data.success) {
-                    toast.success(`🎨 76-Color Tie System Implemented! ${response.data.data.totalVariants} variants created`);
-                    await fetchProducts();
-                  }
-                } catch (error) {
-                  toast.error('Failed to implement 76-color tie system');
-                } finally {
-                  setIsRestoring(false);
-                }
-              }
-            }}
-            disabled={isRestoring}
-            color="secondary"
-            sx={{ 
-              borderColor: '#9c27b0', 
-              color: '#9c27b0',
-              '&:hover': { 
-                borderColor: '#7b1fa2', 
-                backgroundColor: 'rgba(156, 39, 176, 0.04)' 
-              }
-            }}
-          >
-            🎨 Add 76 Tie Colors
-          </Button>
-          <Button
-            variant="outlined"
-            onClick={async () => {
-              if (confirm('This will create 8 smart collections (Summer Wedding, Black Tie, Business, etc.) with rule-based filtering. Continue?')) {
-                try {
-                  setIsRestoring(true);
-                  const response = await api.post('/collections/seed');
-                  if (response.data.success) {
-                    toast.success(`🏷️ Smart Collections Created! ${response.data.data.collectionsCreated} collections added`);
-                  }
-                } catch (error) {
-                  toast.error('Failed to create smart collections');
-                } finally {
-                  setIsRestoring(false);
-                }
-              }
-            }}
-            disabled={isRestoring}
-            color="info"
-            sx={{ 
-              borderColor: '#2196f3', 
-              color: '#2196f3',
-              '&:hover': { 
-                borderColor: '#1976d2', 
-                backgroundColor: 'rgba(33, 150, 243, 0.04)' 
-              }
-            }}
-          >
-            🏷️ Create Smart Collections
-          </Button>
-          <Button
             variant="contained"
             startIcon={<AddIcon />}
             onClick={handleAddNew}
-            sx={{ bgcolor: '#d32f2f', '&:hover': { bgcolor: '#b71c1c' } }}
+            sx={{ bgcolor: '#1976d2', '&:hover': { bgcolor: '#1565c0' } }}
           >
             Add Product
           </Button>
