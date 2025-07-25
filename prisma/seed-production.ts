@@ -58,8 +58,11 @@ async function main() {
     })
   ]);
 
-  // Create suits
-  console.log('🤵 Creating suits with variants...');
+  // Create all 29 suits
+  console.log('🤵 Creating 29 suits with variants...');
+  
+  // Import the complete suit creation
+  const { default: addMissingSuits } = await import('../src/seeds/add-missing-suits');
   
   // Wine Tuxedo
   const wineTux = await prisma.product.create({
