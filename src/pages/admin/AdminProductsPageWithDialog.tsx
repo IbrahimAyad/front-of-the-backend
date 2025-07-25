@@ -55,29 +55,90 @@ interface ProductVariant {
 interface Product {
   id: string;
   name: string;
-  sku: string;
+  description?: string;
+  longDescription?: string;
   category: string;
   subcategory?: string;
   price: number;
   compareAtPrice?: number;
   costPrice?: number;
+  sku: string;
+  barcode?: string;
+  slug?: string;
+  brand?: string;
+  fabric?: string;
+  pattern?: string;
+  season?: string;
+  occasions: string[];
+  styleAttributes: string[];
+  care?: string;
+  
+  // Smart Product Attributes
+  smartAttributes?: any; // JSON field for formality_level, conservative_rating, etc.
+  fabricMarketing?: string;
+  fabricCare?: string;
+  fabricBenefits: string[];
+  
+  // Color Intelligence
+  colorFamily?: string;
+  hexPrimary?: string;
+  hexSecondary?: string;
+  
+  // Event & Occasion
+  primaryOccasion?: string;
+  occasionTags: string[];
+  trendingFor: string[];
+  
+  // Outfit Building Helpers
+  outfitRole?: string;
+  pairsWellWith: string[];
+  styleNotes?: string;
+  
+  // Local SEO
+  localKeywords: string[];
+  targetLocation?: string;
+  
+  // Inventory Management
+  trackStock: boolean;
   totalStock: number;
   availableStock: number;
   reservedStock: number;
+  minimumStock: number;
+  maximumStock?: number;
+  reorderPoint: number;
+  reorderQuantity: number;
+  
+  // Status & Visibility
   status: 'ACTIVE' | 'INACTIVE' | 'DISCONTINUED';
   isPublished: boolean;
   isFeatured: boolean;
   isOnSale: boolean;
-  images: ProductImage[];
-  variants: ProductVariant[];
-  brand?: string;
+  
+  // SEO & Marketing
+  metaTitle?: string;
+  metaDescription?: string;
+  tags: string[];
+  weight?: number;
+  dimensions?: string;
+  
+  // Supplier Information
+  supplierId?: string;
+  supplierSku?: string;
+  leadTime?: number;
+  
+  // Timestamps
+  createdAt?: string;
   updatedAt: Date;
+  publishedAt?: string;
+  discontinuedAt?: string;
+  
+  // Relations
+  variants: ProductVariant[];
+  images: ProductImage[];
+  
+  // Computed fields (for backward compatibility)
   sales?: number;
   revenue?: number;
-  description?: string;
-  tags?: string[];
-  occasions?: string[];
-  styleAttributes?: string[];
 }
 
 const AdminProductsPageWithDialog: React.FC = () => {
@@ -98,12 +159,43 @@ const AdminProductsPageWithDialog: React.FC = () => {
     price: 0,
     compareAtPrice: 0,
     description: '',
+    longDescription: '',
+    brand: '',
+    fabric: '',
+    pattern: '',
+    season: '',
+    care: '',
     status: 'ACTIVE',
     isPublished: true,
     isFeatured: false,
+    isOnSale: false,
+    trackStock: true,
+    minimumStock: 5,
+    reorderPoint: 10,
+    reorderQuantity: 50,
     tags: [],
     occasions: [],
     styleAttributes: [],
+    occasionTags: [],
+    fabricBenefits: [],
+    pairsWellWith: [],
+    trendingFor: [],
+    localKeywords: [],
+    // Smart attributes - initialize with default structure
+    smartAttributes: undefined,
+    colorFamily: undefined,
+    hexPrimary: undefined,
+    hexSecondary: undefined,
+    primaryOccasion: undefined,
+    outfitRole: undefined,
+    styleNotes: undefined,
+    fabricMarketing: undefined,
+    fabricCare: undefined,
+    targetLocation: undefined,
+    metaTitle: undefined,
+    metaDescription: undefined,
+    weight: undefined,
+    dimensions: undefined,
   });
   const [saving, setSaving] = useState(false);
   const [productImages, setProductImages] = useState<ProductImage[]>([]);
@@ -131,8 +223,8 @@ const AdminProductsPageWithDialog: React.FC = () => {
     try {
       if (showLoading) setLoading(true);
       
-      // Force fresh data by adding timestamp
-      const response = await api.get(`/products?limit=100&t=${Date.now()}`);
+      // Fetch fresh data
+      const response = await api.get(`/products?limit=100`);
       const formattedProducts = response.data.data.products.map((product: any) => ({
         ...product,
         price: Number(product.price),
@@ -144,12 +236,22 @@ const AdminProductsPageWithDialog: React.FC = () => {
         tags: product.tags || [],
         occasions: product.occasions || [],
         styleAttributes: product.styleAttributes || [],
+        occasionTags: product.occasionTags || [],
+        fabricBenefits: product.fabricBenefits || [],
+        pairsWellWith: product.pairsWellWith || [],
+        trendingFor: product.trendingFor || [],
+        localKeywords: product.localKeywords || [],
+        // Include all smart attributes from database
+        smartAttributes: product.smartAttributes || null,
+        colorFamily: product.colorFamily || null,
+        fabricMarketing: product.fabricMarketing || null,
+        fabricCare: product.fabricCare || null,
+        metaTitle: product.metaTitle || null,
+        metaDescription: product.metaDescription || null,
       }));
       
-      // Clear state first to force re-render
-      setProducts([]);
-      // Then set new data
-      setTimeout(() => setProducts(formattedProducts), 50);
+      // Direct update - no aggressive clearing
+      setProducts(formattedProducts);
     } catch (error) {
       console.error('Error fetching products:', error);
       toast.error('Failed to load products');
@@ -162,14 +264,29 @@ const AdminProductsPageWithDialog: React.FC = () => {
     setEditingProduct(product);
     setProductForm({
       ...product,
+      // Ensure arrays are properly initialized
       tags: product.tags || [],
       occasions: product.occasions || [],
       styleAttributes: product.styleAttributes || [],
+      occasionTags: product.occasionTags || [],
+      fabricBenefits: product.fabricBenefits || [],
+      pairsWellWith: product.pairsWellWith || [],
+      trendingFor: product.trendingFor || [],
+      localKeywords: product.localKeywords || [],
+      // Ensure smart attributes are loaded
+      smartAttributes: product.smartAttributes || undefined,
+      colorFamily: product.colorFamily || undefined,
+      fabricMarketing: product.fabricMarketing || undefined,
+      fabricCare: product.fabricCare || undefined,
+      metaTitle: product.metaTitle || undefined,
+      metaDescription: product.metaDescription || undefined,
     });
     setProductImages(product.images || []);
     console.log('🔧 Loading variants for product:', product.name);
     console.log('🔧 Raw product variants:', product.variants);
     console.log('🔧 Variants count:', product.variants?.length || 0);
+    console.log('🎨 Smart attributes loaded:', product.smartAttributes);
+    console.log('🌈 Color family:', product.colorFamily);
     setProductVariants(product.variants || []);
     setDialogOpen(true);
   };
@@ -208,24 +325,70 @@ const AdminProductsPageWithDialog: React.FC = () => {
     
     setSaving(true);
     try {
-      // Build product data with images if we have any
+      // Build comprehensive product data with ALL fields
       const productData: any = {
         name: productForm.name,
         description: productForm.description,
+        longDescription: productForm.longDescription,
         category: productForm.category,
         subcategory: productForm.subcategory,
         price: Number(productForm.price),
         compareAtPrice: productForm.compareAtPrice ? Number(productForm.compareAtPrice) : undefined,
         costPrice: productForm.costPrice ? Number(productForm.costPrice) : undefined,
         sku: productForm.sku,
+        barcode: productForm.barcode,
+        slug: productForm.slug,
         brand: productForm.brand,
+        fabric: productForm.fabric,
+        pattern: productForm.pattern,
+        season: productForm.season,
+        care: productForm.care,
+        
+        // Arrays and collections
         occasions: productForm.occasions || [],
         styleAttributes: productForm.styleAttributes || [],
+        tags: productForm.tags || [],
+        occasionTags: productForm.occasionTags || [],
+        fabricBenefits: productForm.fabricBenefits || [],
+        pairsWellWith: productForm.pairsWellWith || [],
+        trendingFor: productForm.trendingFor || [],
+        localKeywords: productForm.localKeywords || [],
+        
+        // Smart attributes
+        smartAttributes: productForm.smartAttributes,
+        fabricMarketing: productForm.fabricMarketing,
+        fabricCare: productForm.fabricCare,
+        
+        // Color intelligence
+        colorFamily: productForm.colorFamily,
+        hexPrimary: productForm.hexPrimary,
+        hexSecondary: productForm.hexSecondary,
+        
+        // Event & occasion
+        primaryOccasion: productForm.primaryOccasion,
+        
+        // Outfit building
+        outfitRole: productForm.outfitRole,
+        styleNotes: productForm.styleNotes,
+        
+        // SEO & marketing
+        metaTitle: productForm.metaTitle,
+        metaDescription: productForm.metaDescription,
+        weight: productForm.weight ? Number(productForm.weight) : undefined,
+        dimensions: productForm.dimensions,
+        targetLocation: productForm.targetLocation,
+        
+        // Inventory management
+        trackStock: productForm.trackStock ?? true,
+        minimumStock: productForm.minimumStock ? Number(productForm.minimumStock) : 5,
+        reorderPoint: productForm.reorderPoint ? Number(productForm.reorderPoint) : 10,
+        reorderQuantity: productForm.reorderQuantity ? Number(productForm.reorderQuantity) : 50,
+        
+        // Status & visibility
         status: productForm.status || 'ACTIVE',
         isPublished: productForm.isPublished ?? true,
         isFeatured: productForm.isFeatured ?? false,
         isOnSale: productForm.isOnSale ?? false,
-        tags: productForm.tags || [],
       };
 
       // Add images if we have any (for Prisma nested update)

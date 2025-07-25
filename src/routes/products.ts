@@ -41,7 +41,7 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
       const orderBy: any = {};
       orderBy[sortBy] = sortOrder;
 
-      // Get products from database
+      // Get products from database with ALL fields including smart attributes
       const [products, total] = await Promise.all([
         fastify.prisma.product.findMany({
           where,
@@ -50,24 +50,12 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
           orderBy,
           include: {
             variants: {
-              select: {
-                id: true,
-                name: true,
-                sku: true,
-                size: true,
-                color: true,
-                stock: true,
-                price: true,
-                isActive: true
-              }
+              orderBy: [
+                { size: 'asc' },
+                { color: 'asc' }
+              ]
             },
             images: {
-              select: {
-                id: true,
-                url: true,
-                altText: true,
-                isPrimary: true
-              },
               orderBy: { position: 'asc' }
             }
           }
