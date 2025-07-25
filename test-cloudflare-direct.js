@@ -5,7 +5,7 @@ const fetch = require('node-fetch');
 // Test Cloudflare Images API directly
 async function testCloudflareUpload() {
   const ACCOUNT_ID = 'ea644c4a47a499ad4721449cbac587f4';
-  const API_TOKEN = 'feda0b5504010de502b702700c9e403680105';
+  const API_TOKEN = 'Chn3Hcgcy-BQ306WCrA6bT5gSTa5wE-F0SfxNR4k';
   
   console.log('🧪 Testing Cloudflare Images API directly...\n');
   

@@ -122,13 +122,21 @@ async function start() {
     const restoreRoutes = await import('./routes/restore');
     await fastify.register(restoreRoutes.default, { prefix: '/api/restore' });
     
-    // Register multipart support for file uploads
-    await fastify.register(import('@fastify/multipart'), {
-      limits: {
-        files: 10,
-        fileSize: 10 * 1024 * 1024, // 10MB
+    // Register multipart support for file uploads (with error handling for duplicates)
+    try {
+      await fastify.register(import('@fastify/multipart'), {
+        limits: {
+          files: 10,
+          fileSize: 10 * 1024 * 1024, // 10MB
+        }
+      });
+    } catch (error: any) {
+      if (error.code !== 'FST_ERR_DEC_ALREADY_PRESENT') {
+        throw error;
       }
-    });
+      // Multipart already registered, continue
+      fastify.log.info('Multipart plugin already registered, skipping...');
+    }
 
     // Import and register Cloudflare routes
     const cloudflareRoutes = await import('./routes/cloudflare');

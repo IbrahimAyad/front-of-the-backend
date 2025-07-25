@@ -59,9 +59,16 @@ export class CloudflareImagesService {
       formData.append('metadata', JSON.stringify(metadata));
     }
 
+    console.log('🚀 Uploading to:', `${this.getBackendUrl()}/api/cloudflare/upload`);
+    console.log('📦 File:', file.name, file.size, 'bytes');
+
     const response = await fetch(`${this.getBackendUrl()}/api/cloudflare/upload`, {
       method: 'POST',
       body: formData,
+      signal: AbortSignal.timeout(30000), // 30 second timeout
+    }).catch(error => {
+      console.error('🔴 Upload fetch error:', error);
+      throw new Error(`Network error: ${error.message}`);
     });
 
     if (!response.ok) {

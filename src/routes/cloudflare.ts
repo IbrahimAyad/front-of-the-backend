@@ -13,6 +13,9 @@ const cloudflareRoutes: FastifyPluginAsync = async (fastify) => {
 
   // Upload image to Cloudflare Images
   fastify.post('/upload', async (request: any, reply) => {
+    console.log('📥 Upload endpoint hit!');
+    console.log('📋 Headers:', request.headers);
+    
     try {
       const parts = request.parts();
       let fileBuffer: Buffer | null = null;
