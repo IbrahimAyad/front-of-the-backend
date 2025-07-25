@@ -1,9 +1,37 @@
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
+async function ensureAdminUser() {
+  const existingAdmin = await prisma.user.findFirst({
+    where: { email: 'admin@kct.com' }
+  });
+
+  if (!existingAdmin) {
+    const hashedPassword = await bcrypt.hash('admin123', 10);
+    await prisma.user.create({
+      data: {
+        email: 'admin@kct.com',
+        passwordHash: hashedPassword,
+        firstName: 'Admin',
+        lastName: 'User',
+        name: 'Admin User',
+        role: 'ADMIN',
+        isActive: true
+      }
+    });
+    console.log('✅ Admin user created');
+  } else {
+    console.log('✅ Admin user already exists');
+  }
+}
+
 async function main() {
   console.log('🌱 Starting database seed...');
+  
+  // Ensure admin user exists first
+  await ensureAdminUser();
 
   // Check if already seeded
   const existingProducts = await prisma.product.count();
