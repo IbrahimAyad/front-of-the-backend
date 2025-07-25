@@ -122,6 +122,10 @@ async function start() {
     const restoreRoutes = await import('./routes/restore');
     await fastify.register(restoreRoutes.default, { prefix: '/api/restore' });
     
+    // Import and register collection routes
+    const collectionsRoutes = await import('./routes/collections');
+    await fastify.register(collectionsRoutes.default, { prefix: '/api/collections' });
+    
     // Register multipart support for file uploads (with error handling for duplicates)
     try {
       // Check if multipart is already registered by testing for the plugin

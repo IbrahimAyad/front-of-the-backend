@@ -596,6 +596,36 @@ const AdminProductsPageWithDialog: React.FC = () => {
             🎨 Add 76 Tie Colors
           </Button>
           <Button
+            variant="outlined"
+            onClick={async () => {
+              if (confirm('This will create 8 smart collections (Summer Wedding, Black Tie, Business, etc.) with rule-based filtering. Continue?')) {
+                try {
+                  setIsRestoring(true);
+                  const response = await api.post('/collections/seed');
+                  if (response.data.success) {
+                    toast.success(`🏷️ Smart Collections Created! ${response.data.data.collectionsCreated} collections added`);
+                  }
+                } catch (error) {
+                  toast.error('Failed to create smart collections');
+                } finally {
+                  setIsRestoring(false);
+                }
+              }
+            }}
+            disabled={isRestoring}
+            color="info"
+            sx={{ 
+              borderColor: '#2196f3', 
+              color: '#2196f3',
+              '&:hover': { 
+                borderColor: '#1976d2', 
+                backgroundColor: 'rgba(33, 150, 243, 0.04)' 
+              }
+            }}
+          >
+            🏷️ Create Smart Collections
+          </Button>
+          <Button
             variant="contained"
             startIcon={<AddIcon />}
             onClick={handleAddNew}
