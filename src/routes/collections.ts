@@ -270,7 +270,7 @@ const collectionsRoutes: FastifyPluginAsync = async (fastify) => {
       console.log('🌱 Starting collection seeding via API...');
       
       // Import and execute the seed script
-      const seedCollections = await import('../../prisma/seed-collections');
+      const seedCollections = await import('../seeds/seed-collections');
       const result = await seedCollections.default();
       
       return reply.send({

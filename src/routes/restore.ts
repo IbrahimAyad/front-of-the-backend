@@ -613,7 +613,7 @@ const restoreRoutes: FastifyPluginAsync = async (fastify) => {
       console.log('🎨 Starting 76-color tie system API call...');
       
       // Import and execute the 76-color script
-      const add76TieColors = await import('../../prisma/add-76-tie-colors');
+      const add76TieColors = await import('../seeds/add-76-tie-colors');
       const result = await add76TieColors.default();
       
       return reply.send({
