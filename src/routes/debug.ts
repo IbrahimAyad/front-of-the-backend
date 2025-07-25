@@ -156,6 +156,34 @@ const debugRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
+  // Debug endpoint to check admin user exists
+  fastify.get('/check-admin', async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const adminUser = await fastify.prisma.user.findFirst({
+        where: {
+          email: 'admin@kct.com'
+        },
+        select: {
+          id: true,
+          email: true,
+          role: true,
+          isActive: true
+        }
+      });
+
+      return {
+        success: true,
+        adminExists: !!adminUser,
+        adminData: adminUser
+      };
+    } catch (error) {
+      return reply.status(500).send({ 
+        error: 'Failed to check admin user',
+        details: (error as Error).message 
+      });
+    }
+  });
+
   // Debug endpoint to check image persistence
   fastify.get('/images-check', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
