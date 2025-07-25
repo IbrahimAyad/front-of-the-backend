@@ -200,8 +200,8 @@ const AdminProductsPageWithDialog: React.FC = () => {
     
     setSaving(true);
     try {
-      // Only send essential database fields to avoid Prisma errors
-      const productData = {
+      // Build product data with images if we have any
+      const productData: any = {
         name: productForm.name,
         description: productForm.description,
         category: productForm.category,
@@ -220,15 +220,46 @@ const AdminProductsPageWithDialog: React.FC = () => {
         tags: productForm.tags || [],
       };
 
+      // Add images if we have any (for Prisma nested update)
+      if (productImages.length > 0) {
+        productData.images = {
+          deleteMany: {}, // Clear existing images
+          create: productImages.map((img, index) => ({
+            url: img.url,
+            cloudflareId: img.cloudflareId || null,
+            altText: img.altText || `Product image ${index + 1}`,
+            isPrimary: img.isPrimary || index === 0,
+            position: img.position || index,
+          }))
+        };
+      }
+
+      // Add variants if we have any (for Prisma nested update)
+      if (productVariants.length > 0) {
+        productData.variants = {
+          deleteMany: {}, // Clear existing variants
+          create: productVariants.map((variant, index) => ({
+            sku: variant.sku || `${productData.sku}-${index + 1}`,
+            size: variant.size || null,
+            color: variant.color || null,
+            price: variant.price ? Number(variant.price) : Number(productData.price),
+            stock: variant.stock ? Number(variant.stock) : 0,
+            isActive: variant.isActive ?? true,
+          }))
+        };
+      }
+
       console.log('🚀 Sending product data:', productData);
+      console.log('🖼️ Product images to save:', productImages);
+      console.log('🔧 Product variants to save:', productVariants);
 
       if (editingProduct) {
         // Update existing product (main data only)
         const response = await api.put(`/products/${editingProduct.id}`, productData);
         console.log('✅ Product update response:', response.data);
         
-        // TODO: Handle variants and images separately when backend routes are available
-        // For now, we'll just update the main product data
+        // Images and variants are now saved as part of the main product update
+        
         toast.success('Product updated successfully');
       } else {
         // Create new product (main data only)
