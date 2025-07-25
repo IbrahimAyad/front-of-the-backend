@@ -200,12 +200,14 @@ const AdminProductsPageWithDialog: React.FC = () => {
     
     setSaving(true);
     try {
-      // Separate main product data from variants and images
+      // Separate main product data from variants and images (exclude problematic fields)
+      const { variants, images, ...cleanProductForm } = productForm;
+      
       const productData = {
-        ...productForm,
-        price: Number(productForm.price),
-        compareAtPrice: productForm.compareAtPrice ? Number(productForm.compareAtPrice) : undefined,
-        costPrice: productForm.costPrice ? Number(productForm.costPrice) : undefined,
+        ...cleanProductForm,
+        price: Number(cleanProductForm.price),
+        compareAtPrice: cleanProductForm.compareAtPrice ? Number(cleanProductForm.compareAtPrice) : undefined,
+        costPrice: cleanProductForm.costPrice ? Number(cleanProductForm.costPrice) : undefined,
       };
 
       if (editingProduct) {
