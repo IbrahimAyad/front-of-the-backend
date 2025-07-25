@@ -135,8 +135,16 @@ const VariantDisplayGrid: React.FC<VariantDisplayGridProps> = ({
       // Group by size for suits (34R, 36S, etc.)
       const sizeGroups: Record<string, VariantWithIndex[]> = {};
       variants.forEach((variant, index) => {
-        // Make sure we're getting the actual size from the variant
-        const variantSize = variant.size || 'No Size';
+        // Fix "No Size" bug - extract size from variant name if size field is missing
+        let variantSize = variant.size;
+        if (!variantSize && variant.name) {
+          // Try to extract size from name like "Business Suit - 42R" or "Classic Tuxedo 38S"
+          const sizeMatch = variant.name.match(/(\d{2}[RSL])/);
+          if (sizeMatch) {
+            variantSize = sizeMatch[1];
+          }
+        }
+        variantSize = variantSize || 'No Size';
         
         // 🔍 DEBUG: Log each suit variant processing
         console.log(`🔍 VariantDisplayGrid DEBUG - Processing suit variant ${index}:`, {
@@ -166,8 +174,16 @@ const VariantDisplayGrid: React.FC<VariantDisplayGridProps> = ({
       // Group by size for shirts (15", 15.5", etc.)
       const sizeGroups: Record<string, VariantWithIndex[]> = {};
       variants.forEach((variant, index) => {
-        // Make sure we're getting the actual size from the variant
-        const variantSize = variant.size || 'No Size';
+        // Fix "No Size" bug - extract size from variant name if size field is missing
+        let variantSize = variant.size;
+        if (!variantSize && variant.name) {
+          // Try to extract size from name like "White Dress Shirt - 16" or "Blue Classic 15.5"
+          const sizeMatch = variant.name.match(/(\d{1,2}(?:\.\d)?)/);
+          if (sizeMatch) {
+            variantSize = sizeMatch[1] + '"';
+          }
+        }
+        variantSize = variantSize || 'No Size';
         if (!sizeGroups[variantSize]) {
           sizeGroups[variantSize] = [];
         }

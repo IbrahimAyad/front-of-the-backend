@@ -99,6 +99,10 @@ async function start() {
     const debugRoutes = await import('./routes/debug');
     await app.register(debugRoutes.default, { prefix: '/api/debug' });
 
+    // Import and register analytics routes  
+    const analyticsRoutes = await import('./routes/analytics');
+    await app.register(analyticsRoutes.default, { prefix: '/api/analytics' });
+
     // Skip multipart registration entirely to avoid decorator conflicts
     // Base64 uploads work fine via /api/cloudflare/upload-base64
     logger.info('ℹ️ Skipping multipart registration to prevent conflicts - using base64 uploads only');
