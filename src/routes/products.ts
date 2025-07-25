@@ -1,4 +1,11 @@
 import { FastifyPluginAsync } from 'fastify';
+import { 
+  getCachedProducts, 
+  setCachedProducts, 
+  getCachedProductById, 
+  setCachedProductById,
+  invalidateProductCache
+} from '../services/cache/productCache';
 
 const productsRoutes: FastifyPluginAsync = async (fastify) => {
   // Get products with enhanced filtering - PUBLIC ROUTE (no auth required for admin dashboard)
@@ -16,6 +23,26 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
       } = request.query;
       
       const skip = (page - 1) * limit;
+      
+      // Try to get from cache first (only for default queries)
+      if (!category && !subcategory && !search && page === 1 && status === 'ACTIVE') {
+        const cachedProducts = await getCachedProducts();
+        if (cachedProducts) {
+          return reply.send({
+            success: true,
+            data: {
+              products: cachedProducts.slice(0, limit),
+              pagination: {
+                page: 1,
+                limit: parseInt(limit),
+                total: cachedProducts.length,
+                pages: Math.ceil(cachedProducts.length / limit)
+              }
+            },
+            cached: true
+          });
+        }
+      }
       
       // Build where clause
       const where: any = { status };
@@ -89,6 +116,11 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
         };
       });
 
+      // Cache the products if it's a default query
+      if (!category && !subcategory && !search && page === 1 && status === 'ACTIVE') {
+        await setCachedProducts(productsWithStock);
+      }
+
       return reply.send({
         success: true,
         data: {
@@ -127,6 +159,16 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get('/:id', async (request: any, reply) => {
     try {
       const { id } = request.params;
+
+      // Try to get from cache first
+      const cachedProduct = await getCachedProductById(id);
+      if (cachedProduct) {
+        return reply.send({
+          success: true,
+          data: cachedProduct,
+          cached: true
+        });
+      }
 
       const product = await fastify.prisma.product.findUnique({
         where: { id },
@@ -167,6 +209,9 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
         isDressShirt: product.category?.toLowerCase() === 'shirts' && 
                      product.subcategory?.toLowerCase() === 'dress'
       };
+
+      // Cache the enhanced product
+      await setCachedProductById(enhancedProduct);
 
       return reply.send({
         success: true,
@@ -291,6 +336,9 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
         }
       });
 
+      // Invalidate cache after creating product
+      await invalidateProductCache();
+
       return reply.status(201).send({
         success: true,
         data: { product }
@@ -358,6 +406,9 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
         }
       });
 
+      // Invalidate cache after updating product
+      await invalidateProductCache(id);
+
       return reply.send({
         success: true,
         data: { product }
@@ -387,6 +438,9 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
         }
       });
 
+      // Invalidate cache after patching product
+      await invalidateProductCache(id);
+
       return reply.send({
         success: true,
         data: { product }
@@ -412,6 +466,9 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
           updatedAt: new Date()
         }
       });
+
+      // Invalidate cache after deleting product
+      await invalidateProductCache(id);
 
       return reply.send({
         success: true,

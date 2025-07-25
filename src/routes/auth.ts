@@ -272,6 +272,94 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
       });
     }
   });
+
+  // Debug: Setup admin user (for production debugging)
+  fastify.post('/setup-admin', async (request, reply) => {
+    try {
+      const { ADMIN_EMAIL, ADMIN_PASSWORD } = SERVER_CONFIG;
+      
+      // Check if admin user exists
+      const existingAdmin = await fastify.prisma.user.findUnique({
+        where: { email: ADMIN_EMAIL },
+      });
+
+      if (existingAdmin) {
+        return reply.send({
+          success: true,
+          message: 'Admin user already exists',
+          data: {
+            email: ADMIN_EMAIL,
+            exists: true
+          }
+        });
+      }
+
+      // Create admin user
+      const passwordHash = await fastify.hashPassword(ADMIN_PASSWORD);
+      
+      const adminUser = await fastify.prisma.user.create({
+        data: {
+          email: ADMIN_EMAIL,
+          name: 'Admin User',
+          firstName: 'Admin',
+          lastName: 'User',
+          passwordHash,
+          role: 'ADMIN',
+        },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          role: true,
+          createdAt: true,
+        },
+      });
+
+      reply.send({
+        success: true,
+        message: 'Admin user created successfully',
+        data: {
+          user: adminUser,
+          credentials: {
+            email: ADMIN_EMAIL,
+            password: ADMIN_PASSWORD,
+          }
+        }
+      });
+    } catch (error: any) {
+      fastify.log.error('Failed to setup admin user:', error);
+      reply.code(500).send({
+        success: false,
+        error: 'Failed to setup admin user',
+        details: error?.message,
+      });
+    }
+  });
+
+  // Debug: Database status
+  fastify.get('/debug/status', async (request, reply) => {
+    try {
+      const userCount = await fastify.prisma.user.count();
+      const productCount = await fastify.prisma.product.count();
+      
+      reply.send({
+        success: true,
+        data: {
+          database: 'connected',
+          users: userCount,
+          products: productCount,
+          environment: process.env.NODE_ENV,
+          timestamp: new Date().toISOString(),
+        }
+      });
+    } catch (error: any) {
+      reply.code(500).send({
+        success: false,
+        error: 'Database connection failed',
+        details: error?.message,
+      });
+    }
+  });
 };
 
 export default authRoutes;
