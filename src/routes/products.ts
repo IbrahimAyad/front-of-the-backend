@@ -447,7 +447,7 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
       // Debug: Log the update data
       fastify.log.info(`🔍 Update data for Prisma:`, JSON.stringify(updateDataForPrisma, null, 2));
       
-      const product = await fastify.prisma.product.update({
+      let product = await fastify.prisma.product.update({
         where: { id },
         data: updateDataForPrisma,
         include: {
