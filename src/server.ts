@@ -7,13 +7,21 @@ import { SERVER_CONFIG } from './config/server';
 
 // Initialize monitoring and error handling
 import { initSentry } from './utils/sentry';
+import { initializeMonitoring, captureError } from './config/monitoring';
 import { logger } from './utils/logger';
 import { errorHandler } from './middleware/errorHandler';
 import { setupSecurity, corsOptions } from './middleware/security';
 import { connectRedis, disconnectRedis } from './services/cache/redisClient';
 
-// Initialize Sentry first
+// Initialize monitoring systems
 initSentry();
+initializeMonitoring({
+  sentryDsn: process.env.SENTRY_DSN,
+  environment: process.env.NODE_ENV || 'development',
+  version: process.env.npm_package_version || '1.0.0',
+  enableProfiling: process.env.NODE_ENV === 'production',
+  enableTracing: process.env.NODE_ENV === 'production',
+});
 
 async function start() {
   const app: FastifyInstance = fastify({ 

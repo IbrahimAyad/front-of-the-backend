@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Grid,
@@ -22,6 +22,8 @@ import {
   Badge,
   useTheme,
   alpha,
+  Tooltip,
+  LinearProgress,
 } from '@mui/material';
 import {
   People,
@@ -33,6 +35,10 @@ import {
   FilterList,
   MoreVert,
   Star,
+  DiamondOutlined,
+  LocalOffer,
+  AttachMoney,
+  ShoppingBag,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { CLIENT_CONFIG } from '../../config/client';
@@ -61,7 +67,7 @@ function TabPanel(props: TabPanelProps) {
 }
 
 // Types for mock data (for UI only)
-type UICustomer = Customer & { status?: string; value?: number; lastVisit?: string };
+type UICustomer = Customer & { status?: string; value?: number; lastVisit?: string; tier?: string; totalOrders?: number; averageOrderValue?: number; engagementScore?: number };
 type UILead = { id: number; name: string; email: string; phone: string; source: string; status: string; score: number; created: string };
 type UIAppointment = { id: number; customer: string; type: string; date: string; time: string; status: string; notes: string };
 type UIMeasurement = { id: number; customer: string; type: string; date: string; status: string; measurements: { chest: number; waist: number; inseam: number }; };
@@ -69,7 +75,7 @@ type UIMeasurement = { id: number; customer: string; type: string; date: string;
 // Mock data (typed)
 const mockCustomers: UICustomer[] = [
   {
-    id: 1,
+    id: 'cust-1',
     name: 'James Wilson',
     email: 'james@email.com',
     phone: '+1 234-567-8901',
@@ -85,9 +91,13 @@ const mockCustomers: UICustomer[] = [
     status: 'Active',
     value: 2500,
     lastVisit: '2024-01-15',
+    tier: 'Silver',
+    totalOrders: 5,
+    averageOrderValue: 500,
+    engagementScore: 85,
   },
   {
-    id: 2,
+    id: 'cust-2',
     name: 'Emma Thompson',
     email: 'emma@email.com',
     phone: '+1 234-567-8902',
@@ -103,9 +113,13 @@ const mockCustomers: UICustomer[] = [
     status: 'VIP',
     value: 8500,
     lastVisit: '2024-01-14',
+    tier: 'Gold',
+    totalOrders: 10,
+    averageOrderValue: 850,
+    engagementScore: 95,
   },
   {
-    id: 3,
+    id: 'cust-3',
     name: 'Michael Brown',
     email: 'michael@email.com',
     phone: '+1 234-567-8903',
@@ -121,6 +135,10 @@ const mockCustomers: UICustomer[] = [
     status: 'Active',
     value: 1200,
     lastVisit: '2024-01-13',
+    tier: 'Bronze',
+    totalOrders: 2,
+    averageOrderValue: 600,
+    engagementScore: 70,
   },
 ];
 
@@ -378,10 +396,10 @@ const CustomerManagementPage: React.FC = () => {
                 <TableRow>
                   <TableCell>Customer</TableCell>
                   <TableCell>Contact</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Orders</TableCell>
+                  <TableCell>Tier & Status</TableCell>
+                  <TableCell>Analytics</TableCell>
                   <TableCell>Total Value</TableCell>
-                  <TableCell>Last Visit</TableCell>
+                  <TableCell>Engagement</TableCell>
                   <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
@@ -390,10 +408,49 @@ const CustomerManagementPage: React.FC = () => {
                   <TableRow key={customer.id} hover>
                     <TableCell>
                       <Box display="flex" alignItems="center" gap={2}>
-                        <Avatar sx={{ bgcolor: 'primary.main' }}>
-                          {customer.name?.charAt(0) ?? '?'}
-                        </Avatar>
-                        <Typography fontWeight="medium">{customer.name}</Typography>
+                        <Badge
+                          overlap="circular"
+                          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                          badgeContent={
+                            customer.tier ? (
+                              <Tooltip title={`${customer.tier} Tier`}>
+                                <Box
+                                  sx={{
+                                    width: 12,
+                                    height: 12,
+                                    borderRadius: '50%',
+                                    backgroundColor: customer.tier === 'Platinum' ? '#E5E4E2' : 
+                                                   customer.tier === 'Gold' ? '#FFD700' :
+                                                   customer.tier === 'Silver' ? '#C0C0C0' : '#CD7F32',
+                                    border: '2px solid white',
+                                  }}
+                                />
+                              </Tooltip>
+                            ) : null
+                          }
+                        >
+                          <Avatar sx={{ bgcolor: 'primary.main' }}>
+                            {customer.name?.charAt(0) ?? '?'}
+                          </Avatar>
+                        </Badge>
+                        <Box>
+                          <Typography fontWeight="medium">{customer.name}</Typography>
+                          {customer.tier && (
+                            <Chip 
+                              label={customer.tier}
+                              size="small"
+                              sx={{ 
+                                fontSize: '0.7rem',
+                                height: 18,
+                                backgroundColor: customer.tier === 'Platinum' ? '#E5E4E2' : 
+                                               customer.tier === 'Gold' ? '#FFD700' :
+                                               customer.tier === 'Silver' ? '#C0C0C0' : '#CD7F32',
+                                color: 'black',
+                                fontWeight: 'bold'
+                              }}
+                            />
+                          )}
+                        </Box>
                       </Box>
                     </TableCell>
                     <TableCell>
@@ -403,15 +460,59 @@ const CustomerManagementPage: React.FC = () => {
                       </Box>
                     </TableCell>
                     <TableCell>
-                      <Chip 
-                        label={customer.status ?? 'N/A'} 
-                        color={getStatusColor(customer.status) as any}
-                        size="small"
-                      />
+                      <Box display="flex" flexDirection="column" gap={0.5}>
+                        <Chip 
+                          label={customer.status ?? 'N/A'} 
+                          color={getStatusColor(customer.status) as any}
+                          size="small"
+                        />
+                        {customer.engagementScore && (
+                          <Box display="flex" alignItems="center" gap={0.5}>
+                            <LinearProgress
+                              variant="determinate"
+                              value={customer.engagementScore}
+                              sx={{ width: 40, height: 4, borderRadius: 2 }}
+                            />
+                            <Typography variant="caption" color="textSecondary">
+                              {customer.engagementScore}%
+                            </Typography>
+                          </Box>
+                        )}
+                      </Box>
                     </TableCell>
-                    <TableCell>{Array.isArray(customer.orders) ? customer.orders.length : customer.orders ?? 'N/A'}</TableCell>
-                    <TableCell>${customer.value?.toLocaleString() || 'N/A'}</TableCell>
-                    <TableCell>{customer.lastVisit || 'N/A'}</TableCell>
+                    <TableCell>
+                      <Box display="flex" flexDirection="column" gap={0.5}>
+                        <Box display="flex" alignItems="center" gap={0.5}>
+                          <ShoppingBag sx={{ fontSize: 14, color: 'primary.main' }} />
+                          <Typography variant="body2">
+                            {customer.totalOrders || 0} orders
+                          </Typography>
+                        </Box>
+                        {customer.averageOrderValue && (
+                          <Box display="flex" alignItems="center" gap={0.5}>
+                            <AttachMoney sx={{ fontSize: 14, color: 'success.main' }} />
+                            <Typography variant="caption" color="textSecondary">
+                              Avg: ${customer.averageOrderValue}
+                            </Typography>
+                          </Box>
+                        )}
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="h6" fontWeight="bold" color="primary">
+                        ${customer.value?.toLocaleString() || '0'}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Box display="flex" alignItems="center" gap={1}>
+                        {customer.engagementScore && customer.engagementScore >= 80 ? (
+                          <Star sx={{ fontSize: 16, color: 'warning.main' }} />
+                        ) : null}
+                        <Typography variant="body2">
+                          {customer.lastVisit || 'N/A'}
+                        </Typography>
+                      </Box>
+                    </TableCell>
                     <TableCell>
                       <IconButton size="small">
                         <MoreVert />
