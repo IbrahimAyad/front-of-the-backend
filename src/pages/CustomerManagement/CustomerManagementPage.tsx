@@ -32,6 +32,8 @@ import {
   MenuItem,
   TextField,
   InputAdornment,
+  useTheme,
+  alpha,
 } from '@mui/material';
 import {
   Add,
@@ -325,7 +327,8 @@ const CustomerManagementPage: React.FC = () => {
         </Box>
       </CardContent>
     </Card>
-  );
+    );
+  };
 
   // Loading state
   if (customersLoading) {
