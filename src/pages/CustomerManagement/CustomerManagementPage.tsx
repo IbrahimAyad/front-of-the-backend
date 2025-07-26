@@ -318,8 +318,8 @@ const CustomerManagementPage: React.FC = () => {
             </Box>
             <Avatar 
               sx={{ 
-                bgcolor: alpha(theme.palette[color as keyof typeof theme.palette].main, 0.1),
-                color: theme.palette[color as keyof typeof theme.palette].main,
+                bgcolor: theme.palette.primary.main,
+                color: 'white',
                 width: 48,
                 height: 48,
               }}
