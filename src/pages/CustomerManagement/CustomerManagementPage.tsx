@@ -168,14 +168,18 @@ const CustomerManagementPage: React.FC = () => {
   const [showAddMeasurement, setShowAddMeasurement] = useState(false);
   const [showAddAppointment, setShowAddAppointment] = useState(false);
 
-  // Real data fetching (customers only for now) - moved inside component
-  const { data: customersData, isLoading: customersLoading } = useCustomers();
+  // Real data fetching with enhanced customer profiles
+  const { data: customersData, isLoading: customersLoading } = useCustomers({ limit: 100 });
   const realCustomers: UICustomer[] = (customersData as any)?.data?.customers ? 
-    (customersData as any).data.customers.map((c: Customer) => ({
+    (customersData as any).data.customers.map((c: any) => ({
       ...c,
-      status: 'Active', // TODO: Add status field to Customer type
-      value: 0, // TODO: Replace with real value
-      lastVisit: '', // TODO: Replace with real last visit
+      status: c.profile?.vipStatus ? 'VIP' : 'Active',
+      value: parseFloat(c.profile?.totalSpent || '0'),
+      lastVisit: c.profile?.lastPurchaseDate ? new Date(c.profile.lastPurchaseDate).toLocaleDateString() : 'Never',
+      tier: c.profile?.customerTier || 'Silver',
+      totalOrders: c.profile?.totalOrders || 0,
+      averageOrderValue: parseFloat(c.profile?.averageOrderValue || '0'),
+      engagementScore: c.profile?.engagementScore || 0,
     })) : [];
   // TODO: Replace with real data fetching for leads, appointments, and measurements
   const realLeads: UILead[] = [];

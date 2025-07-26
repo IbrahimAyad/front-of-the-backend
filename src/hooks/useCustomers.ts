@@ -9,7 +9,7 @@ export const customerKeys = {
   lists: () => [...customerKeys.all, 'list'] as const,
   list: (params: any) => [...customerKeys.lists(), params] as const,
   details: () => [...customerKeys.all, 'detail'] as const,
-  detail: (id: number) => [...customerKeys.details(), id] as const,
+  detail: (id: string) => [...customerKeys.details(), id] as const,
 };
 
 // Get customers with pagination and search
@@ -20,14 +20,14 @@ export const useCustomers = (params?: {
 }) => {
   return useQuery({
     queryKey: customerKeys.list(params),
-    queryFn: () => customerAPI.getCustomers(params),
-    keepPreviousData: true,
+    queryFn: () => customerAPI.getCustomersPublic(params),
     staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 3,
   });
 };
 
 // Get single customer
-export const useCustomer = (id: number) => {
+export const useCustomer = (id: string) => {
   return useQuery({
     queryKey: customerKeys.detail(id),
     queryFn: () => customerAPI.getCustomer(id),
@@ -62,7 +62,7 @@ export const useUpdateCustomer = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: Partial<CustomerFormData> }) =>
+    mutationFn: ({ id, data }: { id: string; data: Partial<CustomerFormData> }) =>
       customerAPI.updateCustomer(id, data),
     onSuccess: (response, { id }) => {
       // Invalidate specific customer and lists
@@ -85,7 +85,7 @@ export const useDeleteCustomer = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: number) => customerAPI.deleteCustomer(id),
+    mutationFn: (id: string) => customerAPI.deleteCustomer(id),
     onSuccess: (response) => {
       // Invalidate customers list
       queryClient.invalidateQueries({ queryKey: customerKeys.lists() });

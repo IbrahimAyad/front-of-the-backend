@@ -2,12 +2,10 @@ import { FastifyPluginAsync } from 'fastify';
 import { createCustomerSchema, updateCustomerSchema } from '../schemas/customer';
 
 const customersRoutes: FastifyPluginAsync = async (fastify) => {
-  // Get customers with pagination
-  fastify.get('/', {
-    preHandler: fastify.authenticate,
-  }, async (request: any, reply) => {
+  // Public endpoint for customer data (for development/dashboard)
+  fastify.get('/public', async (request: any, reply) => {
     try {
-      const { page = 1, limit = 10, search } = request.query;
+      const { page = 1, limit = 50, search } = request.query;
       const skip = (page - 1) * limit;
 
       const where: any = {};
@@ -25,6 +23,60 @@ const customersRoutes: FastifyPluginAsync = async (fastify) => {
           skip,
           take: parseInt(limit),
           orderBy: { createdAt: 'desc' },
+          include: {
+            profile: true, // Include customer profiles for enhanced data
+          },
+        }),
+        fastify.prisma.customer.count({ where }),
+      ]);
+
+      reply.send({
+        success: true,
+        data: {
+          customers,
+          pagination: {
+            page: parseInt(page),
+            limit: parseInt(limit),
+            total,
+            pages: Math.ceil(total / limit),
+          },
+        },
+      });
+    } catch (error) {
+      fastify.log.error(error);
+      reply.code(500).send({
+        success: false,
+        error: 'Internal Server Error',
+      });
+    }
+  });
+
+  // Get customers with pagination (authenticated)
+  fastify.get('/', {
+    preHandler: fastify.authenticate,
+  }, async (request: any, reply) => {
+    try {
+      const { page = 1, limit = 50, search } = request.query; // Increased default limit
+      const skip = (page - 1) * limit;
+
+      const where: any = {};
+      if (search) {
+        where.OR = [
+          { name: { contains: search } },
+          { email: { contains: search } },
+          { phone: { contains: search } },
+        ];
+      }
+
+      const [customers, total] = await Promise.all([
+        fastify.prisma.customer.findMany({
+          where,
+          skip,
+          take: parseInt(limit),
+          orderBy: { createdAt: 'desc' },
+          include: {
+            profile: true, // Include customer profiles for enhanced data
+          },
         }),
         fastify.prisma.customer.count({ where }),
       ]);

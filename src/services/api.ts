@@ -169,6 +169,16 @@ export const customerAPI = {
     return response.data;
   },
 
+  // Public customer endpoint (no auth required)
+  getCustomersPublic: async (params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+  }): Promise<PaginatedResponse<Customer>> => {
+    const response = await api.get('/customers/public', { params });
+    return response.data;
+  },
+
   getCustomer: async (id: string): Promise<ApiResponse<Customer>> => {
     const response = await api.get(`/customers/${id}`);
     return response.data;
