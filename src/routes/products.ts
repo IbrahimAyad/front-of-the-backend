@@ -473,29 +473,48 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
 
       // Now handle images separately if we have any
       if (imagesToUpdate && imagesToUpdate.length > 0) {
+        fastify.log.info(`🎯 Attempting to save ${imagesToUpdate.length} images for product ${id}`);
+        
         try {
-          // Simple approach - delete then create without transaction
-          fastify.log.info(`🗑️ Deleting existing images for product ${id}`);
-          await fastify.prisma.productImage.deleteMany({
-            where: { productId: id }
-          });
+          // First, let's test if we can create a single image
+          fastify.log.info(`🧪 Testing single image creation...`);
+          const testImage = {
+            productId: id,
+            url: imagesToUpdate[0].url,
+            altText: 'Test image',
+            isPrimary: true,
+            position: 0
+          };
           
-          // Create images one by one for better error tracking
-          fastify.log.info(`➕ Creating ${imagesToUpdate.length} new images`);
-          const createdImages = [];
-          for (let i = 0; i < imagesToUpdate.length; i++) {
-            try {
+          try {
+            const testCreated = await fastify.prisma.productImage.create({
+              data: testImage
+            });
+            fastify.log.info(`✅ Test image created successfully: ${testCreated.id}`);
+            
+            // If test succeeded, delete all and recreate
+            await fastify.prisma.productImage.deleteMany({
+              where: { productId: id }
+            });
+            
+            // Now create all images
+            for (let i = 0; i < imagesToUpdate.length; i++) {
+              const imgData = imagesToUpdate[i];
+              fastify.log.info(`📸 Creating image ${i + 1}: ${imgData.url.substring(0, 50)}...`);
+              
               const created = await fastify.prisma.productImage.create({
-                data: imagesToUpdate[i]
+                data: imgData
               });
-              createdImages.push(created);
-              fastify.log.info(`✅ Created image ${i + 1}/${imagesToUpdate.length}: ${created.url}`);
-            } catch (err) {
-              fastify.log.error(`❌ Failed to create image ${i + 1}:`, err);
+              
+              fastify.log.info(`✅ Image ${i + 1} saved with ID: ${created.id}`);
             }
+          } catch (testError: any) {
+            fastify.log.error(`❌ Test image creation failed:`, {
+              error: testError.message,
+              code: testError.code,
+              meta: testError.meta
+            });
           }
-          
-          fastify.log.info(`✅ Created ${createdImages.length} out of ${imagesToUpdate.length} images`);
           
           // Fetch the updated product with images
           product = await fastify.prisma.product.findUnique({
@@ -512,10 +531,17 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
               }
             }
           }) || product;
-        } catch (imageError) {
-          fastify.log.error(`❌ Error saving images:`, imageError);
-          // Don't fail the whole request if images fail
+          
+          fastify.log.info(`📊 Final image count: ${product.images?.length || 0}`);
+        } catch (imageError: any) {
+          fastify.log.error(`❌ Image operation failed:`, {
+            error: imageError.message,
+            code: imageError.code,
+            stack: imageError.stack
+          });
         }
+      } else {
+        fastify.log.info(`⚠️ No images to update for product ${id}`);
       }
 
       // Debug: Log what was returned
