@@ -1,45 +1,54 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
+  Typography,
   Grid,
   Card,
   CardContent,
-  Typography,
   Button,
   Tabs,
   Tab,
-  IconButton,
-  Avatar,
-  Chip,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  TextField,
-  InputAdornment,
+  Paper,
+  Chip,
+  Avatar,
+  IconButton,
   Badge,
-  useTheme,
-  alpha,
   Tooltip,
   LinearProgress,
-  Paper,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Pagination,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  TextField,
+  InputAdornment,
 } from '@mui/material';
 import {
+  Add,
   People,
   TrendingUp,
   Event,
-  Straighten,
-  Add,
-  Search,
-  FilterList,
-  MoreVert,
+  Rule,
   Star,
   DiamondOutlined,
   LocalOffer,
   AttachMoney,
   ShoppingBag,
+  Edit,
+  Delete,
+  Visibility,
+  Search,
+  FilterList,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { CLIENT_CONFIG } from '../../config/client';
@@ -163,15 +172,25 @@ const mockMeasurements: UIMeasurement[] = [
 ];
 
 const CustomerManagementPage: React.FC = () => {
-  const theme = useTheme();
   const navigate = useNavigate();
-  const [tabValue, setTabValue] = useState(0);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showAddMeasurement, setShowAddMeasurement] = useState(false);
+  const [value, setValue] = useState(0);
+  const [showAddCustomer, setShowAddCustomer] = useState(false);
+  const [showAddLead, setShowAddLead] = useState(false);
   const [showAddAppointment, setShowAddAppointment] = useState(false);
+  
+  // Pagination and filtering state
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCustomer, setSelectedCustomer] = useState<UICustomer | null>(null);
+  const [showCustomerDetail, setShowCustomerDetail] = useState(false);
 
   // Real data fetching with enhanced customer analytics
-  const { data: customersData, isLoading: customersLoading, error: customersError } = useCustomers({ limit: 100 });
+  const { data: customersData, isLoading: customersLoading, error: customersError } = useCustomers({ 
+    page, 
+    limit: pageSize,
+    search: searchTerm 
+  });
   
   // Enhanced data processing with analytics
   const realCustomers: UICustomer[] = (customersData as any)?.data?.customers ? 
@@ -186,7 +205,7 @@ const CustomerManagementPage: React.FC = () => {
       engagementScore: c.profile?.engagementScore || 0,
     })) : [];
 
-  // Get analytics summary
+  const pagination = (customersData as any)?.data?.pagination;
   const analytics = (customersData as any)?.data?.analytics;
 
   // TODO: Replace with real data fetching for leads, appointments, and measurements
@@ -194,8 +213,40 @@ const CustomerManagementPage: React.FC = () => {
   const realAppointments: UIAppointment[] = [];
   const realMeasurements: UIMeasurement[] = [];
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue);
+  // Use real data if available, otherwise fallback to mock data
+  const customers = realCustomers.length > 0 ? realCustomers : mockCustomers;
+  const leads = CLIENT_CONFIG.USE_MOCK_DATA ? mockLeads : realLeads;
+  const appointments = CLIENT_CONFIG.USE_MOCK_DATA ? mockAppointments : realAppointments;
+  const measurements = CLIENT_CONFIG.USE_MOCK_DATA ? mockMeasurements : realMeasurements;
+
+  // Customer action handlers
+  const handleCustomerClick = (customer: UICustomer) => {
+    setSelectedCustomer(customer);
+    setShowCustomerDetail(true);
+  };
+
+  const handleEditCustomer = (customer: UICustomer) => {
+    console.log('Edit customer:', customer);
+    // TODO: Open edit modal
+  };
+
+  const handleDeleteCustomer = (customer: UICustomer) => {
+    console.log('Delete customer:', customer);
+    // TODO: Show confirmation dialog and delete
+  };
+
+  const handlePageChange = (event: React.ChangeEvent<unknown>, newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handlePageSizeChange = (event: any) => {
+    setPageSize(event.target.value);
+    setPage(1); // Reset to first page
+  };
+
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(event.target.value);
+    setPage(1); // Reset to first page when searching
   };
 
   const handleAddMeasurement = () => {
@@ -253,13 +304,6 @@ const CustomerManagementPage: React.FC = () => {
       </CardContent>
     </Card>
   );
-
-      // Always use real customer data now that we have enhanced customers imported
-    // Use real data if available, otherwise fallback to mock data
-    const customers = realCustomers.length > 0 ? realCustomers : mockCustomers;
-  const leads = CLIENT_CONFIG.USE_MOCK_DATA ? mockLeads : realLeads;
-  const appointments = CLIENT_CONFIG.USE_MOCK_DATA ? mockAppointments : realAppointments;
-  const measurements = CLIENT_CONFIG.USE_MOCK_DATA ? mockMeasurements : realMeasurements;
 
   // Loading state
   if (customersLoading) {
@@ -414,14 +458,15 @@ const CustomerManagementPage: React.FC = () => {
         </Grid>
       </Grid>
 
-      {/* Search and Filters */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Box display="flex" gap={2} alignItems="center">
+      {/* Enhanced Search and Controls */}
+      <Box mb={3}>
+        <Grid container spacing={3} alignItems="center">
+          <Grid item xs={12} md={6}>
             <TextField
-              placeholder="Search customers, leads, appointments..."
+              fullWidth
+              placeholder="Search customers by name, email, or phone..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={handleSearchChange}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -429,63 +474,61 @@ const CustomerManagementPage: React.FC = () => {
                   </InputAdornment>
                 ),
               }}
-              sx={{ flexGrow: 1 }}
             />
+          </Grid>
+          <Grid item xs={6} md={2}>
+            <FormControl fullWidth>
+              <InputLabel>Page Size</InputLabel>
+              <Select
+                value={pageSize}
+                label="Page Size"
+                onChange={handlePageSizeChange}
+              >
+                <MenuItem value={10}>10 per page</MenuItem>
+                <MenuItem value={25}>25 per page</MenuItem>
+                <MenuItem value={50}>50 per page</MenuItem>
+                <MenuItem value={100}>100 per page</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item xs={6} md={2}>
             <Button
               variant="outlined"
               startIcon={<FilterList />}
+              fullWidth
             >
               Filters
             </Button>
-          </Box>
-        </CardContent>
-      </Card>
+          </Grid>
+          <Grid item xs={12} md={2}>
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              fullWidth
+              onClick={() => setShowAddCustomer(true)}
+            >
+              New Customer
+            </Button>
+          </Grid>
+        </Grid>
+      </Box>
 
       {/* Tabs */}
       <Card>
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs value={tabValue} onChange={handleTabChange} aria-label="customer management tabs">
+          <Tabs value={value} onChange={(e, v) => setValue(v)} aria-label="customer management tabs">
             <Tab 
-              label={
-                <Box display="flex" alignItems="center" gap={1}>
-                  <People />
-                  Customers
-                  <Badge badgeContent={customers.length} color="primary" />
-                </Box>
-              } 
+              label={`CUSTOMERS (${pagination?.total || customers.length})`} 
+              icon={<People />} 
             />
-            <Tab 
-              label={
-                <Box display="flex" alignItems="center" gap={1}>
-                  <TrendingUp />
-                  Leads
-                  <Badge badgeContent={leads.length} color="secondary" />
-                </Box>
-              } 
-            />
-            <Tab 
-              label={
-                <Box display="flex" alignItems="center" gap={1}>
-                  <Event />
-                  Appointments
-                  <Badge badgeContent={appointments.length} color="success" />
-                </Box>
-              } 
-            />
-            <Tab 
-              label={
-                <Box display="flex" alignItems="center" gap={1}>
-                  <Straighten />
-                  Measurements
-                  <Badge badgeContent={measurements.length} color="warning" />
-                </Box>
-              } 
-            />
+            <Tab label="LEADS" icon={<TrendingUp />} />
+            <Tab label="APPOINTMENTS" icon={<Event />} />
+            <Tab label="MEASUREMENTS" icon={<Rule />} />
           </Tabs>
         </Box>
 
         {/* Customers Tab */}
-        <TabPanel value={tabValue} index={0}>
+        <TabPanel value={value} index={0}>
           <TableContainer>
             <Table>
               <TableHead>
@@ -501,7 +544,12 @@ const CustomerManagementPage: React.FC = () => {
               </TableHead>
               <TableBody>
                 {customers.map((customer) => (
-                  <TableRow key={customer.id} hover>
+                  <TableRow 
+                    key={customer.id} 
+                    hover
+                    sx={{ cursor: 'pointer' }}
+                    onClick={() => handleCustomerClick(customer)}
+                  >
                     <TableCell>
                       <Box display="flex" alignItems="center" gap={2}>
                         <Badge
@@ -531,49 +579,42 @@ const CustomerManagementPage: React.FC = () => {
                         </Badge>
                         <Box>
                           <Typography fontWeight="medium">{customer.name}</Typography>
-                          {customer.tier && (
-                            <Chip 
-                              label={customer.tier}
-                              size="small"
-                              sx={{ 
-                                fontSize: '0.7rem',
-                                height: 18,
-                                backgroundColor: customer.tier === 'Platinum' ? '#E5E4E2' : 
-                                               customer.tier === 'Gold' ? '#FFD700' :
-                                               customer.tier === 'Silver' ? '#C0C0C0' : '#CD7F32',
-                                color: 'black',
-                                fontWeight: 'bold'
-                              }}
-                            />
-                          )}
+                          <Typography variant="caption" color="textSecondary">
+                            ID: {customer.id}
+                          </Typography>
                         </Box>
                       </Box>
                     </TableCell>
                     <TableCell>
                       <Box>
                         <Typography variant="body2">{customer.email}</Typography>
-                        <Typography variant="body2" color="textSecondary">{customer.phone}</Typography>
+                        <Typography variant="caption" color="textSecondary">
+                          {customer.phone || 'No phone'}
+                        </Typography>
                       </Box>
                     </TableCell>
                     <TableCell>
                       <Box display="flex" flexDirection="column" gap={0.5}>
+                        {customer.tier && (
+                          <Chip 
+                            label={customer.tier}
+                            size="small"
+                            sx={{ 
+                              fontSize: '0.7rem',
+                              height: 18,
+                              backgroundColor: customer.tier === 'Platinum' ? '#E5E4E2' : 
+                                             customer.tier === 'Gold' ? '#FFD700' :
+                                             customer.tier === 'Silver' ? '#C0C0C0' : '#CD7F32',
+                              color: 'black',
+                              fontWeight: 'bold'
+                            }}
+                          />
+                        )}
                         <Chip 
-                          label={customer.status ?? 'N/A'} 
-                          color={getStatusColor(customer.status) as any}
+                          label={customer.status ?? 'Active'} 
+                          color={customer.status === 'VIP' ? 'warning' : 'success'}
                           size="small"
                         />
-                        {customer.engagementScore && (
-                          <Box display="flex" alignItems="center" gap={0.5}>
-                            <LinearProgress
-                              variant="determinate"
-                              value={customer.engagementScore}
-                              sx={{ width: 40, height: 4, borderRadius: 2 }}
-                            />
-                            <Typography variant="caption" color="textSecondary">
-                              {customer.engagementScore}%
-                            </Typography>
-                          </Box>
-                        )}
                       </Box>
                     </TableCell>
                     <TableCell>
@@ -584,19 +625,19 @@ const CustomerManagementPage: React.FC = () => {
                             {customer.totalOrders || 0} orders
                           </Typography>
                         </Box>
-                        {customer.averageOrderValue && (
+                        {customer.averageOrderValue > 0 && (
                           <Box display="flex" alignItems="center" gap={0.5}>
                             <AttachMoney sx={{ fontSize: 14, color: 'success.main' }} />
                             <Typography variant="caption" color="textSecondary">
-                              Avg: ${customer.averageOrderValue}
+                              Avg: ${customer.averageOrderValue.toFixed(2)}
                             </Typography>
                           </Box>
                         )}
                       </Box>
                     </TableCell>
                     <TableCell>
-                      <Typography variant="h6" fontWeight="bold" color="primary">
-                        ${customer.value?.toLocaleString() || '0'}
+                      <Typography variant="h6" fontWeight="bold" color={customer.value > 0 ? 'primary' : 'textSecondary'}>
+                        ${customer.value?.toLocaleString() || '0.00'}
                       </Typography>
                     </TableCell>
                     <TableCell>
@@ -604,25 +645,76 @@ const CustomerManagementPage: React.FC = () => {
                         {customer.engagementScore && customer.engagementScore >= 80 ? (
                           <Star sx={{ fontSize: 16, color: 'warning.main' }} />
                         ) : null}
-                        <Typography variant="body2">
-                          {customer.lastVisit || 'N/A'}
-                        </Typography>
+                        <Box display="flex" flexDirection="column" gap={0.5}>
+                          <LinearProgress
+                            variant="determinate"
+                            value={customer.engagementScore || 0}
+                            sx={{ width: 60, height: 4, borderRadius: 2 }}
+                          />
+                          <Typography variant="caption" color="textSecondary">
+                            {customer.engagementScore || 0}%
+                          </Typography>
+                        </Box>
                       </Box>
                     </TableCell>
                     <TableCell>
-                      <IconButton size="small">
-                        <MoreVert />
-                      </IconButton>
+                      <Box display="flex" gap={1}>
+                        <IconButton 
+                          size="small" 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCustomerClick(customer);
+                          }}
+                        >
+                          <Visibility />
+                        </IconButton>
+                        <IconButton 
+                          size="small" 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditCustomer(customer);
+                          }}
+                        >
+                          <Edit />
+                        </IconButton>
+                        <IconButton 
+                          size="small" 
+                          color="error"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteCustomer(customer);
+                          }}
+                        >
+                          <Delete />
+                        </IconButton>
+                      </Box>
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </TableContainer>
+
+          {/* Pagination Controls */}
+          {pagination && (
+            <Box display="flex" justifyContent="space-between" alignItems="center" p={2}>
+              <Typography variant="body2" color="textSecondary">
+                Showing {((page - 1) * pageSize) + 1} to {Math.min(page * pageSize, pagination.total)} of {pagination.total} customers
+              </Typography>
+              <Pagination
+                count={pagination.pages}
+                page={page}
+                onChange={handlePageChange}
+                color="primary"
+                showFirstButton
+                showLastButton
+              />
+            </Box>
+          )}
         </TabPanel>
 
         {/* Leads Tab */}
-        <TabPanel value={tabValue} index={1}>
+        <TabPanel value={value} index={1}>
           <TableContainer>
             <Table>
               <TableHead>
@@ -681,7 +773,7 @@ const CustomerManagementPage: React.FC = () => {
         </TabPanel>
 
         {/* Appointments Tab */}
-        <TabPanel value={tabValue} index={2}>
+        <TabPanel value={value} index={2}>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
             <Typography variant="h6" fontWeight="bold">
               Appointments
@@ -750,7 +842,7 @@ const CustomerManagementPage: React.FC = () => {
         </TabPanel>
 
         {/* Measurements Tab */}
-        <TabPanel value={tabValue} index={3}>
+        <TabPanel value={value} index={3}>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
             <Typography variant="h6" fontWeight="bold">
               Measurements
@@ -815,6 +907,100 @@ const CustomerManagementPage: React.FC = () => {
           </TableContainer>
         </TabPanel>
       </Card>
+
+      {/* Customer Detail Modal */}
+      <Dialog
+        open={showCustomerDetail}
+        onClose={() => setShowCustomerDetail(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box display="flex" alignItems="center" gap={2}>
+            <Avatar sx={{ bgcolor: 'primary.main' }}>
+              {selectedCustomer?.name?.charAt(0) ?? '?'}
+            </Avatar>
+            <Box>
+              <Typography variant="h6">{selectedCustomer?.name}</Typography>
+              <Typography variant="caption" color="textSecondary">
+                Customer ID: {selectedCustomer?.id}
+              </Typography>
+            </Box>
+            {selectedCustomer?.tier && (
+              <Chip 
+                label={selectedCustomer.tier}
+                sx={{ 
+                  backgroundColor: selectedCustomer.tier === 'Platinum' ? '#E5E4E2' : 
+                                 selectedCustomer.tier === 'Gold' ? '#FFD700' :
+                                 selectedCustomer.tier === 'Silver' ? '#C0C0C0' : '#CD7F32',
+                  color: 'black',
+                  fontWeight: 'bold'
+                }}
+              />
+            )}
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          {selectedCustomer && (
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <Typography variant="h6" gutterBottom>Contact Information</Typography>
+                <Box mb={2}>
+                  <Typography variant="body2" color="textSecondary">Email</Typography>
+                  <Typography variant="body1">{selectedCustomer.email}</Typography>
+                </Box>
+                <Box mb={2}>
+                  <Typography variant="body2" color="textSecondary">Phone</Typography>
+                  <Typography variant="body1">{selectedCustomer.phone || 'Not provided'}</Typography>
+                </Box>
+                <Box mb={2}>
+                  <Typography variant="body2" color="textSecondary">Address</Typography>
+                  <Typography variant="body1">
+                    {[selectedCustomer.address, selectedCustomer.city, selectedCustomer.state, selectedCustomer.zipCode]
+                      .filter(Boolean).join(', ') || 'Not provided'}
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <Typography variant="h6" gutterBottom>Purchase Analytics</Typography>
+                <Box mb={2}>
+                  <Typography variant="body2" color="textSecondary">Total Spent</Typography>
+                  <Typography variant="h5" color="primary">${selectedCustomer.value?.toLocaleString() || '0.00'}</Typography>
+                </Box>
+                <Box mb={2}>
+                  <Typography variant="body2" color="textSecondary">Total Orders</Typography>
+                  <Typography variant="body1">{selectedCustomer.totalOrders || 0}</Typography>
+                </Box>
+                <Box mb={2}>
+                  <Typography variant="body2" color="textSecondary">Average Order Value</Typography>
+                  <Typography variant="body1">${selectedCustomer.averageOrderValue?.toFixed(2) || '0.00'}</Typography>
+                </Box>
+                <Box mb={2}>
+                  <Typography variant="body2" color="textSecondary">Engagement Score</Typography>
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <LinearProgress
+                      variant="determinate"
+                      value={selectedCustomer.engagementScore || 0}
+                      sx={{ width: 100, height: 6, borderRadius: 3 }}
+                    />
+                    <Typography variant="body1">{selectedCustomer.engagementScore || 0}%</Typography>
+                  </Box>
+                </Box>
+              </Grid>
+            </Grid>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowCustomerDetail(false)}>Close</Button>
+          <Button 
+            variant="outlined" 
+            startIcon={<Edit />}
+            onClick={() => handleEditCustomer(selectedCustomer!)}
+          >
+            Edit Customer
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
