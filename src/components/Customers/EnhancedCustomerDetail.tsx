@@ -180,6 +180,20 @@ const EnhancedCustomerDetail: React.FC<EnhancedCustomerDetailProps> = ({
     joinDate: customer?.createdAt || new Date().toISOString(),
     lastPurchase: customer?.profile?.lastPurchaseDate || new Date().toISOString(),
     purchaseHistory: [], // Mock data
+    sizeProfile: {      // Mock data for size tab
+      jacketSize: '42R',
+      shirtSize: '16/34',
+      pantsSize: '34W/32L',
+      shoeSize: '10',
+      confidence: 85
+    },
+    insights: {         // Mock data for insights tab
+      favoriteCategories: ['Blazers', 'Tuxedos'],
+      favoriteColors: ['Navy', 'Black'],
+      customerJourney: 'loyal',
+      spendingTrend: 'stable'
+    },
+    recommendations: [] // Mock data for recommendations tab
   };
 
   const getInitials = (name: string) => {
