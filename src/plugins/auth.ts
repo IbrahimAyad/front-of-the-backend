@@ -17,7 +17,7 @@ const authPlugin: FastifyPluginAsync = async (fastify) => {
   fastify.decorate('authenticate', async (request: any, reply: any) => {
     try {
       // Skip authentication for public endpoints
-      if (request.url?.includes('/public') || request.url?.includes('/test')) {
+      if (request.url?.includes('/public') || request.url?.includes('/test') || request.url?.includes('/analytics')) {
         return;
       }
       
