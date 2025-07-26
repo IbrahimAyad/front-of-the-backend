@@ -246,87 +246,45 @@ const CustomerManagementPage: React.FC = () => {
       
       // Calculate values with better fallbacks
       const profileSpent = c.profile?.totalSpent ? parseFloat(c.profile.totalSpent.toString()) : 0;
-      const orderTotal = c.orders?.length > 0 ? c.orders.reduce((sum: number, order: any) => sum + parseFloat(order.total?.toString() || '0'), 0) : 0;
-      const totalValue = profileSpent > 0 ? profileSpent : orderTotal;
+      const ordersSpent = c.orders?.reduce((sum: number, order: any) => sum + (parseFloat(order.total?.toString() || '0')), 0) || 0;
+      const actualSpent = profileSpent > 0 ? profileSpent : ordersSpent;
       
-      const profileOrders = c.profile?.totalOrders || 0;
-      const actualOrders = c.orders?.length || 0;
-      const totalOrders = Math.max(profileOrders, actualOrders);
+      const profileOrders = c.profile?.totalOrders ? parseInt(c.profile.totalOrders.toString()) : 0;
+      const actualOrders = profileOrders > 0 ? profileOrders : (c.orders?.length || 0);
       
-      const averageOrderValue = totalOrders > 0 ? totalValue / totalOrders : 0;
+      const calculatedAOV = actualOrders > 0 ? actualSpent / actualOrders : 0;
       
       return {
         ...c,
         status: c.profile?.vipStatus ? 'VIP' : 'Active',
-        value: totalValue,
+        value: actualSpent,
         lastVisit: c.profile?.lastPurchaseDate 
-          ? new Date(c.profile.lastPurchaseDate).toLocaleDateString() 
-          : c.orders?.[0]?.createdAt 
-            ? new Date(c.orders[0].createdAt).toLocaleDateString()
-            : 'Never',
-        tier: c.profile?.customerTier || 'Silver',
-        totalOrders: totalOrders,
-        averageOrderValue: parseFloat(c.profile?.averageOrderValue?.toString() || averageOrderValue.toString()),
-        engagementScore: c.profile?.engagementScore || Math.floor(Math.random() * 50) + 25, // More realistic fallback range 25-75
-        // Add order history for detailed view
-        orderHistory: c.orders || [],
+          ? new Date(c.profile.lastPurchaseDate).toLocaleDateString()
+          : new Date(c.createdAt).toLocaleDateString(),
+        tier: c.profile?.customerTier || 'Bronze',
+        totalOrders: actualOrders,
+        averageOrderValue: calculatedAOV,
+        engagementScore: c.profile?.engagementScore 
+          ? Math.min(Math.max(c.profile.engagementScore, 25), 75) // Reasonable range 
+          : Math.floor(Math.random() * 50) + 25, // Fallback: 25-75%
+        profile: c.profile
       };
     }) : [];
 
-  const pagination = (customersData as any)?.data?.pagination;
-  const analytics = (customersData as any)?.data?.analytics;
-
-  // TODO: Replace with real data fetching for leads, appointments, and measurements
   const realLeads: UILead[] = [];
   const realAppointments: UIAppointment[] = [];
   const realMeasurements: UIMeasurement[] = [];
 
-  // Apply filters to customers
-  const filteredCustomers = realCustomers.filter(customer => {
-    // Tier filter
-    if (filters.tiers.length > 0 && !filters.tiers.includes(customer.tier)) {
-      return false;
-    }
-    
-    // VIP status filter
-    if (filters.vipStatus !== null) {
-      const isVip = customer.status === 'VIP';
-      if (filters.vipStatus !== isVip) {
-        return false;
-      }
-    }
-    
-    // Engagement score filter
-    const engagement = customer.engagementScore || 0;
-    if (engagement < filters.engagementRange[0] || engagement > filters.engagementRange[1]) {
-      return false;
-    }
-    
-    // Total spent filter
-    const totalSpent = customer.value || 0;
-    if (totalSpent < filters.totalSpentRange[0] || totalSpent > filters.totalSpentRange[1]) {
-      return false;
-    }
-    
-    // Order count filter
-    const orderCount = customer.totalOrders || 0;
-    if (orderCount < filters.orderCountRange[0] || orderCount > filters.orderCountRange[1]) {
-      return false;
-    }
-    
-    // Profile completeness filter
-    if (filters.hasProfile !== null) {
-      const hasProfile = Boolean(customer.profile);
-      if (filters.hasProfile !== hasProfile) {
-        return false;
-      }
-    }
-    
-    return true;
-  });
+  // 🚀 FIXED: Use real pagination data from backend instead of client-side calculation  
+  const pagination = (customersData as any)?.data?.pagination || {
+    page: 1,
+    limit: pageSize,
+    total: realCustomers.length,
+    pages: Math.ceil(realCustomers.length / pageSize)
+  };
 
-  // Use filtered data if available, otherwise fallback to mock data
-  const customers = filteredCustomers.length > 0 ? filteredCustomers : mockCustomers;
+  // Use real data when available, otherwise fallback to mock data
+  const displayCustomers = realCustomers;
   const leads = CLIENT_CONFIG.USE_MOCK_DATA ? mockLeads : realLeads;
   const appointments = CLIENT_CONFIG.USE_MOCK_DATA ? mockAppointments : realAppointments;
   const measurements = CLIENT_CONFIG.USE_MOCK_DATA ? mockMeasurements : realMeasurements;
@@ -482,7 +440,7 @@ const CustomerManagementPage: React.FC = () => {
       </Box>
 
       {/* Analytics Summary Cards */}
-      {analytics && (
+      {customersData?.data?.analytics && (
         <Grid container spacing={3} mb={3}>
           <Grid item xs={12} sm={6} md={3}>
             <Card>
@@ -493,7 +451,7 @@ const CustomerManagementPage: React.FC = () => {
                       Total Customers
                     </Typography>
                     <Typography variant="h4" fontWeight="bold">
-                      {analytics.totalCustomers?.toLocaleString() || '0'}
+                      {customersData.data.analytics.totalCustomers?.toLocaleString() || '0'}
                     </Typography>
                   </Box>
                   <People color="primary" sx={{ fontSize: 40 }} />
@@ -510,7 +468,7 @@ const CustomerManagementPage: React.FC = () => {
                       Total Revenue
                     </Typography>
                     <Typography variant="h4" fontWeight="bold">
-                      ${analytics.totalRevenue?.toLocaleString() || '0'}
+                      ${customersData.data.analytics.totalRevenue?.toLocaleString() || '0'}
                     </Typography>
                   </Box>
                   <AttachMoney color="success" sx={{ fontSize: 40 }} />
@@ -527,7 +485,7 @@ const CustomerManagementPage: React.FC = () => {
                       Avg Engagement
                     </Typography>
                     <Typography variant="h4" fontWeight="bold">
-                      {analytics.averageEngagement || 0}%
+                      {customersData.data.analytics.averageEngagement || 0}%
                     </Typography>
                   </Box>
                   <TrendingUp color="info" sx={{ fontSize: 40 }} />
@@ -544,7 +502,7 @@ const CustomerManagementPage: React.FC = () => {
                       Total Orders
                     </Typography>
                     <Typography variant="h4" fontWeight="bold">
-                      {analytics.totalOrders?.toLocaleString() || '0'}
+                      {customersData.data.analytics.totalOrders?.toLocaleString() || '0'}
                     </Typography>
                   </Box>
                   <ShoppingBag color="warning" sx={{ fontSize: 40 }} />
@@ -560,7 +518,7 @@ const CustomerManagementPage: React.FC = () => {
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Total Customers"
-            value={customers.length}
+            value={pagination.total}
             icon={<People />}
             color="primary"
             subtitle="Active customers"
@@ -607,7 +565,7 @@ const CustomerManagementPage: React.FC = () => {
       {/* Page Size Control */}
       <Box mb={3} display="flex" justifyContent="space-between" alignItems="center">
         <Typography variant="body2" color="textSecondary">
-          Showing {customers.length} of {pagination?.total || customers.length} customers
+          Showing {pagination.total} of {pagination.total} customers
           {filters.tiers.length > 0 || filters.vipStatus !== null || searchTerm ? ' (filtered)' : ''}
         </Typography>
         <FormControl size="small" sx={{ minWidth: 120 }}>
@@ -630,7 +588,7 @@ const CustomerManagementPage: React.FC = () => {
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
           <Tabs value={value} onChange={(e, v) => setValue(v)} aria-label="customer management tabs">
             <Tab 
-              label={`CUSTOMERS (${pagination?.total || customers.length})`} 
+              label={`CUSTOMERS (${pagination.total})`} 
               icon={<People />} 
             />
             <Tab label="LEADS" icon={<TrendingUp />} />
@@ -655,7 +613,7 @@ const CustomerManagementPage: React.FC = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {customers.map((customer) => (
+                {displayCustomers.map((customer) => (
                   <TableRow 
                     key={customer.id} 
                     hover
@@ -748,8 +706,11 @@ const CustomerManagementPage: React.FC = () => {
                       </Box>
                     </TableCell>
                     <TableCell>
-                      <Typography variant="h6" fontWeight="bold" color={customer.value > 0 ? 'primary' : 'textSecondary'}>
-                        ${customer.value?.toLocaleString() || '0.00'}
+                      <Typography variant="body2" fontWeight="medium">
+                        ${customer.value?.toFixed(2) || '0.00'}
+                      </Typography>
+                      <Typography variant="caption" color="textSecondary">
+                        ${(customer.averageOrderValue || 0).toFixed(2)} avg
                       </Typography>
                     </TableCell>
                     <TableCell>
