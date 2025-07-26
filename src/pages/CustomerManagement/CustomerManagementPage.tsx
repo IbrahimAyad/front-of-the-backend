@@ -39,6 +39,7 @@ import {
   TrendingUp,
   Event,
   Rule,
+  Straighten,
   Star,
   DiamondOutlined,
   LocalOffer,
