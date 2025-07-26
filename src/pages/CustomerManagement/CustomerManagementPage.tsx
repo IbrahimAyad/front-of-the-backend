@@ -63,6 +63,7 @@ import LoadingSpinner from '../../components/Loading/LoadingSpinner';
 import CustomerEditModal from '../../components/Customers/CustomerEditModal';
 import CustomerDeleteDialog from '../../components/Customers/CustomerDeleteDialog';
 import CustomerSearchAndFilters from '../../components/Customers/CustomerSearchAndFilters';
+import EnhancedCustomerDetail from '../../components/Customers/EnhancedCustomerDetail';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -215,11 +216,14 @@ const CustomerManagementPage: React.FC = () => {
     hasProfile: null,
   });
   
-  // Modal states
+  // Customer action state
   const [selectedCustomer, setSelectedCustomer] = useState<UICustomer | null>(null);
   const [showCustomerDetail, setShowCustomerDetail] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  
+  // 🚀 Enhanced customer detail modal state
+  const [showEnhancedDetail, setShowEnhancedDetail] = useState(false);
 
   // Real data fetching with enhanced customer analytics
   const { data: customersData, isLoading: customersLoading, error: customersError } = useCustomers({ 
@@ -317,6 +321,17 @@ const CustomerManagementPage: React.FC = () => {
 
   const handleCloseDetailModal = () => {
     setShowCustomerDetail(false);
+    setSelectedCustomer(null);
+  };
+
+  // 🚀 Enhanced customer detail handlers
+  const handleShowEnhancedDetail = (customer: UICustomer) => {
+    setSelectedCustomer(customer);
+    setShowEnhancedDetail(true);
+  };
+
+  const handleCloseEnhancedDetail = () => {
+    setShowEnhancedDetail(false);
     setSelectedCustomer(null);
   };
 
@@ -616,9 +631,12 @@ const CustomerManagementPage: React.FC = () => {
                 {displayCustomers.map((customer) => (
                   <TableRow 
                     key={customer.id} 
-                    hover
-                    sx={{ cursor: 'pointer' }}
-                    onClick={() => handleCustomerClick(customer)}
+                    hover 
+                    sx={{ 
+                      cursor: 'pointer',
+                      '&:hover': { bgcolor: 'action.hover' }
+                    }}
+                    onClick={() => handleShowEnhancedDetail(customer)}
                   >
                     <TableCell>
                       <Box display="flex" alignItems="center" gap={2}>
@@ -1150,6 +1168,13 @@ const CustomerManagementPage: React.FC = () => {
         </DialogActions>
       </Dialog>
 
+      {/* Enhanced Customer Detail Modal */}
+      <EnhancedCustomerDetail
+        open={showEnhancedDetail}
+        onClose={handleCloseEnhancedDetail}
+        customer={selectedCustomer}
+      />
+      
       {/* Customer Edit Modal */}
       <CustomerEditModal
         open={showEditModal}
