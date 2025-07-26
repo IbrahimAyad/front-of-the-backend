@@ -449,13 +449,29 @@ const CustomerManagementPage: React.FC = () => {
   return (
     <Box sx={{ flexGrow: 1, p: 3 }}>
       {/* Header */}
-      <Box mb={3}>
-        <Typography variant="h4" fontWeight="bold" gutterBottom>
+      <Box mb={3} display="flex" justifyContent="space-between" alignItems="center">
+        <Typography variant="h4" fontWeight="bold">
           Customer Management
         </Typography>
-        <Typography variant="body1" color="textSecondary">
-          Manage customers, leads, appointments, and measurements
-        </Typography>
+        <Box display="flex" gap={1}>
+          <Button
+            variant="outlined"
+            onClick={() => {
+              console.log('🔍 Test button clicked - opening modal with first customer');
+              const testCustomer = displayCustomers[0];
+              if (testCustomer) {
+                handleShowEnhancedDetail(testCustomer);
+              } else {
+                console.log('🔍 No customers available for test');
+              }
+            }}
+          >
+            🔍 Test Modal
+          </Button>
+          <Button variant="contained" startIcon={<Add />} onClick={() => setShowAddCustomer(true)}>
+            New Customer
+          </Button>
+        </Box>
       </Box>
 
       {/* Analytics Summary Cards */}
