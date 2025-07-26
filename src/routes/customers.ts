@@ -2,6 +2,97 @@ import { FastifyPluginAsync } from 'fastify';
 import { createCustomerSchema, updateCustomerSchema } from '../schemas/customer';
 
 const customersRoutes: FastifyPluginAsync = async (fastify) => {
+  // Production customer analytics endpoint (optimized for dashboard)
+  fastify.get('/analytics', async (request: any, reply) => {
+    try {
+      const { page = 1, limit = 100, search } = request.query;
+      const skip = (page - 1) * limit;
+
+      const where: any = {};
+      if (search) {
+        where.OR = [
+          { name: { contains: search, mode: 'insensitive' } },
+          { email: { contains: search, mode: 'insensitive' } },
+          { phone: { contains: search } },
+        ];
+      }
+
+      // Get customers with profiles and calculate analytics
+      const [customers, total, analytics] = await Promise.all([
+        fastify.prisma.customer.findMany({
+          where,
+          skip,
+          take: parseInt(limit),
+          orderBy: { createdAt: 'desc' },
+          include: {
+            profile: {
+              select: {
+                customerTier: true,
+                engagementScore: true,
+                vipStatus: true,
+                totalSpent: true,
+                totalOrders: true,
+                averageOrderValue: true,
+                lastPurchaseDate: true,
+                daysSinceLastPurchase: true,
+              }
+            },
+            orders: {
+              select: { id: true, total: true, status: true },
+              take: 1,
+              orderBy: { createdAt: 'desc' }
+            }
+          },
+        }),
+        fastify.prisma.customer.count({ where }),
+        fastify.prisma.customerProfile.aggregate({
+          _count: { id: true },
+          _avg: { engagementScore: true, totalSpent: true },
+          _sum: { totalSpent: true, totalOrders: true },
+        })
+      ]);
+
+      // Calculate tier distribution
+      const tierDistribution = await fastify.prisma.customerProfile.groupBy({
+        by: ['customerTier'],
+        _count: { customerTier: true },
+      });
+
+      reply.send({
+        success: true,
+        data: {
+          customers,
+          pagination: {
+            page: parseInt(page),
+            limit: parseInt(limit),
+            total,
+            pages: Math.ceil(total / limit),
+          },
+          analytics: {
+            totalCustomers: total,
+            averageEngagement: Math.round(analytics._avg.engagementScore || 0),
+            totalRevenue: parseFloat(analytics._sum.totalSpent?.toString() || '0'),
+            averageOrderValue: parseFloat(analytics._avg.totalSpent?.toString() || '0'),
+            totalOrders: analytics._sum.totalOrders || 0,
+            tierDistribution: tierDistribution.reduce((acc, tier) => {
+              acc[tier.customerTier] = tier._count.customerTier;
+              return acc;
+            }, {} as Record<string, number>)
+          }
+        },
+        cached: false, // Real-time data
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      fastify.log.error('Customer analytics error:', error);
+      reply.code(500).send({
+        success: false,
+        error: 'Failed to fetch customer analytics',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Test endpoint to verify route registration
   fastify.get('/test', async (request: any, reply) => {
     reply.send({ success: true, message: 'Customer routes are working!', timestamp: new Date() });

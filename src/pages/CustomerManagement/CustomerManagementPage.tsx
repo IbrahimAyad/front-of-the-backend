@@ -24,6 +24,7 @@ import {
   alpha,
   Tooltip,
   LinearProgress,
+  Paper,
 } from '@mui/material';
 import {
   People,
@@ -44,6 +45,7 @@ import { useNavigate } from 'react-router-dom';
 import { CLIENT_CONFIG } from '../../config/client';
 import { useCustomers } from '../../hooks/useCustomers';
 import { Customer } from '../../types';
+import LoadingSpinner from '../../components/Loading/LoadingSpinner';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -168,8 +170,10 @@ const CustomerManagementPage: React.FC = () => {
   const [showAddMeasurement, setShowAddMeasurement] = useState(false);
   const [showAddAppointment, setShowAddAppointment] = useState(false);
 
-  // Real data fetching with enhanced customer profiles
-  const { data: customersData, isLoading: customersLoading } = useCustomers({ limit: 100 });
+  // Real data fetching with enhanced customer analytics
+  const { data: customersData, isLoading: customersLoading, error: customersError } = useCustomers({ limit: 100 });
+  
+  // Enhanced data processing with analytics
   const realCustomers: UICustomer[] = (customersData as any)?.data?.customers ? 
     (customersData as any).data.customers.map((c: any) => ({
       ...c,
@@ -181,6 +185,10 @@ const CustomerManagementPage: React.FC = () => {
       averageOrderValue: parseFloat(c.profile?.averageOrderValue || '0'),
       engagementScore: c.profile?.engagementScore || 0,
     })) : [];
+
+  // Get analytics summary
+  const analytics = (customersData as any)?.data?.analytics;
+
   // TODO: Replace with real data fetching for leads, appointments, and measurements
   const realLeads: UILead[] = [];
   const realAppointments: UIAppointment[] = [];
@@ -247,43 +255,127 @@ const CustomerManagementPage: React.FC = () => {
   );
 
       // Always use real customer data now that we have enhanced customers imported
+    // Use real data if available, otherwise fallback to mock data
     const customers = realCustomers.length > 0 ? realCustomers : mockCustomers;
   const leads = CLIENT_CONFIG.USE_MOCK_DATA ? mockLeads : realLeads;
   const appointments = CLIENT_CONFIG.USE_MOCK_DATA ? mockAppointments : realAppointments;
   const measurements = CLIENT_CONFIG.USE_MOCK_DATA ? mockMeasurements : realMeasurements;
 
+  // Loading state
+  if (customersLoading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+        <LoadingSpinner />
+        <Typography variant="h6" sx={{ ml: 2 }}>Loading customer analytics...</Typography>
+      </Box>
+    );
+  }
+
+  // Error state
+  if (customersError) {
+    return (
+      <Paper sx={{ p: 3, textAlign: 'center' }}>
+        <Typography variant="h6" color="error" gutterBottom>
+          Failed to load customer data
+        </Typography>
+        <Typography variant="body2" color="textSecondary" gutterBottom>
+          {customersError instanceof Error ? customersError.message : 'Please try refreshing the page'}
+        </Typography>
+        <Button variant="outlined" onClick={() => window.location.reload()}>
+          Retry
+        </Button>
+      </Paper>
+    );
+  }
+
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ flexGrow: 1, p: 3 }}>
       {/* Header */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
-        <Box>
-          <Typography variant="h4" fontWeight="bold" gutterBottom>
-            Customer Management
-          </Typography>
-          <Typography variant="body1" color="textSecondary">
-            Manage customers, leads, appointments, and measurements in one place
-          </Typography>
-        </Box>
-        <Box display="flex" gap={2}>
-          <Button
-            variant="outlined"
-            startIcon={<Add />}
-            onClick={() => navigate('/leads/new')}
-          >
-            New Lead
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={() => navigate('/customers')}
-          >
-            New Customer
-          </Button>
-        </Box>
+      <Box mb={3}>
+        <Typography variant="h4" fontWeight="bold" gutterBottom>
+          Customer Management
+        </Typography>
+        <Typography variant="body1" color="textSecondary">
+          Manage customers, leads, appointments, and measurements
+        </Typography>
       </Box>
 
-      {/* Stats Overview */}
-      <Grid container spacing={3} mb={4}>
+      {/* Analytics Summary Cards */}
+      {analytics && (
+        <Grid container spacing={3} mb={3}>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card>
+              <CardContent>
+                <Box display="flex" alignItems="center" justifyContent="space-between">
+                  <Box>
+                    <Typography color="textSecondary" gutterBottom>
+                      Total Customers
+                    </Typography>
+                    <Typography variant="h4" fontWeight="bold">
+                      {analytics.totalCustomers?.toLocaleString() || '0'}
+                    </Typography>
+                  </Box>
+                  <People color="primary" sx={{ fontSize: 40 }} />
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card>
+              <CardContent>
+                <Box display="flex" alignItems="center" justifyContent="space-between">
+                  <Box>
+                    <Typography color="textSecondary" gutterBottom>
+                      Total Revenue
+                    </Typography>
+                    <Typography variant="h4" fontWeight="bold">
+                      ${analytics.totalRevenue?.toLocaleString() || '0'}
+                    </Typography>
+                  </Box>
+                  <AttachMoney color="success" sx={{ fontSize: 40 }} />
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card>
+              <CardContent>
+                <Box display="flex" alignItems="center" justifyContent="space-between">
+                  <Box>
+                    <Typography color="textSecondary" gutterBottom>
+                      Avg Engagement
+                    </Typography>
+                    <Typography variant="h4" fontWeight="bold">
+                      {analytics.averageEngagement || 0}%
+                    </Typography>
+                  </Box>
+                  <TrendingUp color="info" sx={{ fontSize: 40 }} />
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card>
+              <CardContent>
+                <Box display="flex" alignItems="center" justifyContent="space-between">
+                  <Box>
+                    <Typography color="textSecondary" gutterBottom>
+                      Total Orders
+                    </Typography>
+                    <Typography variant="h4" fontWeight="bold">
+                      {analytics.totalOrders?.toLocaleString() || '0'}
+                    </Typography>
+                  </Box>
+                  <ShoppingBag color="warning" sx={{ fontSize: 40 }} />
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+      )}
+
+      {/* Statistics Cards */}
+      <Grid container spacing={3} mb={3}>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
             title="Total Customers"

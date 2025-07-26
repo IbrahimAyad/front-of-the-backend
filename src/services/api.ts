@@ -179,6 +179,16 @@ export const customerAPI = {
     return response.data;
   },
 
+  // Production customer analytics endpoint
+  getCustomerAnalytics: async (params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+  }): Promise<any> => {
+    const response = await api.get('/customers/analytics', { params });
+    return response.data;
+  },
+
   getCustomer: async (id: string): Promise<ApiResponse<Customer>> => {
     const response = await api.get(`/customers/${id}`);
     return response.data;

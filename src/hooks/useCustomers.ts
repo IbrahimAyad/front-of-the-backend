@@ -20,9 +20,10 @@ export const useCustomers = (params?: {
 }) => {
   return useQuery({
     queryKey: customerKeys.list(params),
-    queryFn: () => customerAPI.getCustomersPublic(params),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: 3,
+    queryFn: () => customerAPI.getCustomerAnalytics(params),
+    staleTime: 2 * 60 * 1000, // 2 minutes for production
+    retry: 2,
+    refetchOnWindowFocus: false,
   });
 };
 
