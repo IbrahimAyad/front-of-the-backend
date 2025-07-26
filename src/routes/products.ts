@@ -366,11 +366,11 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
         allKeys: Object.keys(updateData)
       });
 
-      // Remove computed fields but keep images and variants for nested updates
-      const { id: productId, availableVariants, primaryImage, isShirt, isSuit, isTie, isDressShirt, smartSummary, createdAt, updatedAt, ...productData } = updateData;
-      
-      // Extract images and variants for proper handling
-      const { images, variants, ...basicProductData } = productData;
+      // FIRST: Extract images and variants to preserve them
+      const { images, variants } = updateData;
+
+      // THEN: Remove computed fields and id
+      const { id: productId, availableVariants, primaryImage, isShirt, isSuit, isTie, isDressShirt, smartSummary, createdAt, updatedAt, images: _images, variants: _variants, ...basicProductData } = updateData;
 
       // Convert arrays to proper format for Prisma
       if (basicProductData.occasions && Array.isArray(basicProductData.occasions)) {
