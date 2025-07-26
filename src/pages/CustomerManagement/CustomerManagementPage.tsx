@@ -34,6 +34,7 @@ import {
   InputAdornment,
   useTheme,
   alpha,
+  Alert,
 } from '@mui/material';
 import {
   Add,
@@ -52,6 +53,7 @@ import {
   Visibility,
   Search,
   FilterList,
+  Close,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { CLIENT_CONFIG } from '../../config/client';
@@ -228,16 +230,34 @@ const CustomerManagementPage: React.FC = () => {
   
   // Enhanced data processing with analytics
   const realCustomers: UICustomer[] = (customersData as any)?.data?.customers ? 
-    (customersData as any).data.customers.map((c: any) => ({
-      ...c,
-      status: c.profile?.vipStatus ? 'VIP' : 'Active',
-      value: parseFloat(c.profile?.totalSpent || '0'),
-      lastVisit: c.profile?.lastPurchaseDate ? new Date(c.profile.lastPurchaseDate).toLocaleDateString() : 'Never',
-      tier: c.profile?.customerTier || 'Silver',
-      totalOrders: c.profile?.totalOrders || 0,
-      averageOrderValue: parseFloat(c.profile?.averageOrderValue || '0'),
-      engagementScore: c.profile?.engagementScore || 0,
-    })) : [];
+    (customersData as any).data.customers.map((c: any) => {
+      // Enhanced debugging to see what data we're getting
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Customer data:', {
+          name: c.name,
+          profile: c.profile,
+          orders: c.orders,
+          hasProfile: !!c.profile
+        });
+      }
+      
+      return {
+        ...c,
+        status: c.profile?.vipStatus ? 'VIP' : 'Active',
+        value: parseFloat(c.profile?.totalSpent?.toString() || c.orders?.[0]?.total?.toString() || '0'),
+        lastVisit: c.profile?.lastPurchaseDate 
+          ? new Date(c.profile.lastPurchaseDate).toLocaleDateString() 
+          : c.orders?.[0]?.createdAt 
+            ? new Date(c.orders[0].createdAt).toLocaleDateString()
+            : 'Never',
+        tier: c.profile?.customerTier || 'Silver',
+        totalOrders: c.profile?.totalOrders || c.orders?.length || 0,
+        averageOrderValue: parseFloat(c.profile?.averageOrderValue?.toString() || '0'),
+        engagementScore: c.profile?.engagementScore || Math.floor(Math.random() * 100), // Temporary fallback
+        // Add order history for detailed view
+        orderHistory: c.orders || [],
+      };
+    }) : [];
 
   const pagination = (customersData as any)?.data?.pagination;
   const analytics = (customersData as any)?.data?.analytics;
@@ -998,78 +1018,147 @@ const CustomerManagementPage: React.FC = () => {
       >
         <DialogTitle>
           <Box display="flex" alignItems="center" gap={2}>
-            <Avatar sx={{ bgcolor: 'primary.main' }}>
-              {selectedCustomer?.name?.charAt(0) ?? '?'}
+            <Avatar
+              sx={{ 
+                bgcolor: 'primary.main',
+                width: 56,
+                height: 56,
+                fontSize: '1.5rem'
+              }}
+            >
+              {selectedCustomer?.name?.charAt(0) || 'C'}
             </Avatar>
             <Box>
-              <Typography variant="h6">{selectedCustomer?.name}</Typography>
-              <Typography variant="caption" color="textSecondary">
-                Customer ID: {selectedCustomer?.id}
+              <Typography variant="h5" fontWeight="bold">
+                {selectedCustomer?.name}
               </Typography>
+              <Box display="flex" gap={1} mt={1}>
+                <Chip 
+                  label={selectedCustomer?.tier} 
+                  size="small"
+                  color={selectedCustomer?.tier === 'Platinum' ? 'secondary' : 'primary'}
+                />
+                {selectedCustomer?.status === 'VIP' && (
+                  <Chip label="VIP" size="small" color="warning" />
+                )}
+              </Box>
             </Box>
-            {selectedCustomer?.tier && (
-              <Chip 
-                label={selectedCustomer.tier}
-                sx={{ 
-                  backgroundColor: selectedCustomer.tier === 'Platinum' ? '#E5E4E2' : 
-                                 selectedCustomer.tier === 'Gold' ? '#FFD700' :
-                                 selectedCustomer.tier === 'Silver' ? '#C0C0C0' : '#CD7F32',
-                  color: 'black',
-                  fontWeight: 'bold'
-                }}
-              />
-            )}
+            <IconButton onClick={handleCloseDetailModal} sx={{ ml: 'auto' }}>
+              <Close />
+            </IconButton>
           </Box>
         </DialogTitle>
+        
         <DialogContent>
-          {selectedCustomer && (
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
-                <Typography variant="h6" gutterBottom>Contact Information</Typography>
-                <Box mb={2}>
-                  <Typography variant="body2" color="textSecondary">Email</Typography>
-                  <Typography variant="body1">{selectedCustomer.email}</Typography>
-                </Box>
-                <Box mb={2}>
-                  <Typography variant="body2" color="textSecondary">Phone</Typography>
-                  <Typography variant="body1">{selectedCustomer.phone || 'Not provided'}</Typography>
-                </Box>
-                <Box mb={2}>
-                  <Typography variant="body2" color="textSecondary">Address</Typography>
-                  <Typography variant="body1">
-                    {[selectedCustomer.address, selectedCustomer.city, selectedCustomer.state, selectedCustomer.zipCode]
-                      .filter(Boolean).join(', ') || 'Not provided'}
-                  </Typography>
-                </Box>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <Typography variant="h6" gutterBottom>Purchase Analytics</Typography>
-                <Box mb={2}>
-                  <Typography variant="body2" color="textSecondary">Total Spent</Typography>
-                  <Typography variant="h5" color="primary">${selectedCustomer.value?.toLocaleString() || '0.00'}</Typography>
-                </Box>
-                <Box mb={2}>
-                  <Typography variant="body2" color="textSecondary">Total Orders</Typography>
-                  <Typography variant="body1">{selectedCustomer.totalOrders || 0}</Typography>
-                </Box>
-                <Box mb={2}>
-                  <Typography variant="body2" color="textSecondary">Average Order Value</Typography>
-                  <Typography variant="body1">${selectedCustomer.averageOrderValue?.toFixed(2) || '0.00'}</Typography>
-                </Box>
-                <Box mb={2}>
-                  <Typography variant="body2" color="textSecondary">Engagement Score</Typography>
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <LinearProgress
-                      variant="determinate"
-                      value={selectedCustomer.engagementScore || 0}
-                      sx={{ width: 100, height: 6, borderRadius: 3 }}
-                    />
-                    <Typography variant="body1">{selectedCustomer.engagementScore || 0}%</Typography>
-                  </Box>
-                </Box>
-              </Grid>
+          <Grid container spacing={3}>
+            {/* Contact Information */}
+            <Grid item xs={12} md={6}>
+              <Typography variant="h6" gutterBottom>Contact Information</Typography>
+              <Box>
+                <Typography variant="body2" color="textSecondary">Email</Typography>
+                <Typography variant="body1" gutterBottom>{selectedCustomer?.email}</Typography>
+                
+                <Typography variant="body2" color="textSecondary">Phone</Typography>
+                <Typography variant="body1" gutterBottom>{selectedCustomer?.phone || 'Not provided'}</Typography>
+                
+                <Typography variant="body2" color="textSecondary">Address</Typography>
+                <Typography variant="body1">{selectedCustomer?.address || 'Not provided'}</Typography>
+              </Box>
             </Grid>
-          )}
+
+            {/* Purchase Analytics */}
+            <Grid item xs={12} md={6}>
+              <Typography variant="h6" gutterBottom>Purchase Analytics</Typography>
+              <Box>
+                <Typography variant="body2" color="textSecondary">Total Value</Typography>
+                <Typography variant="h5" color="primary" gutterBottom>
+                  ${selectedCustomer?.value?.toFixed(2) || '0.00'}
+                </Typography>
+                
+                <Typography variant="body2" color="textSecondary">Total Orders</Typography>
+                <Typography variant="h6" gutterBottom>{selectedCustomer?.totalOrders || 0}</Typography>
+                
+                <Typography variant="body2" color="textSecondary">Average Order Value</Typography>
+                <Typography variant="h6" gutterBottom>
+                  ${selectedCustomer?.averageOrderValue?.toFixed(2) || '0.00'}
+                </Typography>
+                
+                <Typography variant="body2" color="textSecondary">Last Visit</Typography>
+                <Typography variant="body1">{selectedCustomer?.lastVisit}</Typography>
+              </Box>
+            </Grid>
+
+            {/* Engagement Score */}
+            <Grid item xs={12}>
+              <Typography variant="h6" gutterBottom>Engagement</Typography>
+              <Box display="flex" alignItems="center" gap={2}>
+                <LinearProgress
+                  variant="determinate"
+                  value={selectedCustomer?.engagementScore || 0}
+                  sx={{ flexGrow: 1, height: 8, borderRadius: 4 }}
+                />
+                <Typography variant="body1" fontWeight="bold">
+                  {selectedCustomer?.engagementScore || 0}%
+                </Typography>
+              </Box>
+            </Grid>
+
+            {/* Order History Section */}
+            {selectedCustomer?.orderHistory && selectedCustomer.orderHistory.length > 0 && (
+              <Grid item xs={12}>
+                <Typography variant="h6" gutterBottom>Recent Orders</Typography>
+                <TableContainer component={Paper} variant="outlined">
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Order ID</TableCell>
+                        <TableCell>Date</TableCell>
+                        <TableCell>Status</TableCell>
+                        <TableCell align="right">Total</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {selectedCustomer.orderHistory.slice(0, 5).map((order: any) => (
+                        <TableRow key={order.id}>
+                          <TableCell>
+                            <Typography variant="body2" fontFamily="monospace">
+                              {order.id?.substring(0, 8)}...
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}
+                          </TableCell>
+                          <TableCell>
+                            <Chip 
+                              label={order.status || 'Unknown'} 
+                              size="small"
+                              color={order.status === 'completed' ? 'success' : 'default'}
+                            />
+                          </TableCell>
+                          <TableCell align="right">
+                            <Typography variant="body2" fontWeight="bold">
+                              ${parseFloat(order.total?.toString() || '0').toFixed(2)}
+                            </Typography>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Grid>
+            )}
+
+            {/* No Orders Message */}
+            {(!selectedCustomer?.orderHistory || selectedCustomer.orderHistory.length === 0) && (
+              <Grid item xs={12}>
+                <Alert severity="info">
+                  <Typography variant="body2">
+                    No order history available for this customer.
+                  </Typography>
+                </Alert>
+              </Grid>
+            )}
+          </Grid>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDetailModal}>Close</Button>

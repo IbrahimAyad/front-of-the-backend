@@ -20,7 +20,7 @@ export const useCustomers = (params?: {
 }) => {
   return useQuery({
     queryKey: customerKeys.list(params),
-    queryFn: () => customerAPI.getCustomersPublic(params),
+    queryFn: () => customerAPI.getCustomerAnalytics(params), // Switch to analytics endpoint for richer data
     staleTime: 2 * 60 * 1000, // 2 minutes for production
     retry: 2,
     refetchOnWindowFocus: false,

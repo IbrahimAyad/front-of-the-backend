@@ -128,7 +128,7 @@ const CustomerSearchAndFilters: React.FC<CustomerSearchAndFiltersProps> = ({
     <Box>
       {/* Enhanced Search Bar */}
       <Grid container spacing={2} alignItems="center" mb={3}>
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12} md={8}>
           <Autocomplete
             freeSolo
             options={searchSuggestions}
@@ -176,7 +176,7 @@ const CustomerSearchAndFilters: React.FC<CustomerSearchAndFiltersProps> = ({
           />
         </Grid>
 
-        <Grid item xs={6} md={3}>
+        <Grid item xs={6} md={2}>
           <Badge badgeContent={activeFiltersCount()} color="primary">
             <Button
               variant="outlined"
@@ -190,7 +190,7 @@ const CustomerSearchAndFilters: React.FC<CustomerSearchAndFiltersProps> = ({
           </Badge>
         </Grid>
 
-        <Grid item xs={6} md={3}>
+        <Grid item xs={6} md={2}>
           {activeFiltersCount() > 0 && (
             <Button
               variant="text"
