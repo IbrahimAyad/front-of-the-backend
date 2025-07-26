@@ -73,21 +73,29 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    // Enhanced error logging
-    console.error('🚨 API Error:', {
-      'URL': error.config?.url,
-      'Method': error.config?.method?.toUpperCase(),
-      'Status': error.response?.status,
-      'Status Text': error.response?.statusText,
-      'Base URL': error.config?.baseURL,
-      'Full URL': `${error.config?.baseURL}${error.config?.url}`,
-      'Error Message': error.message,
-      'Response Data': error.response?.data
-    });
+    // Enhanced error logging but don't log auth failures as errors for public endpoints
+    const isAuthEndpoint = error.config?.url?.includes('/auth/');
+    const isPublicEndpoint = error.config?.url?.includes('/public') || 
+                           error.config?.url?.includes('/analytics') || 
+                           error.config?.url?.includes('/test');
+    
+    if (!isPublicEndpoint || error.response?.status !== 401) {
+      console.error('🚨 API Error:', {
+        'URL': error.config?.url,
+        'Method': error.config?.method?.toUpperCase(),
+        'Status': error.response?.status,
+        'Status Text': error.response?.statusText,
+        'Base URL': error.config?.baseURL,
+        'Full URL': `${error.config?.baseURL}${error.config?.url}`,
+        'Error Message': error.message,
+        'Response Data': error.response?.data
+      });
+    }
 
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Only handle auth for authenticated endpoints
+    if (error.response?.status === 401 && !originalRequest._retry && isAuthEndpoint) {
       originalRequest._retry = true;
 
       const refreshToken = localStorage.getItem('refreshToken');
@@ -103,14 +111,11 @@ api.interceptors.response.use(
           originalRequest.headers.Authorization = `Bearer ${accessToken}`;
           return api(originalRequest);
         } catch (refreshError) {
-          console.error('🚨 Token refresh failed:', refreshError);
+          console.warn('🔄 Token refresh failed - user needs to login again');
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
-          window.location.href = '/login';
+          // Don't redirect automatically - let the user stay on the page
         }
-      } else {
-        // No refresh token available, redirect to login
-        window.location.href = '/login';
       }
     }
 

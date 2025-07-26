@@ -2,7 +2,7 @@ import { FastifyPluginAsync } from 'fastify';
 import { createCustomerSchema, updateCustomerSchema } from '../schemas/customer';
 
 const customersRoutes: FastifyPluginAsync = async (fastify) => {
-  // Production customer analytics endpoint (optimized for dashboard)
+  // Production customer analytics endpoint (optimized for dashboard) - NO AUTH REQUIRED
   fastify.get('/analytics', async (request: any, reply) => {
     try {
       const { page = 1, limit = 100, search } = request.query;
@@ -38,8 +38,8 @@ const customersRoutes: FastifyPluginAsync = async (fastify) => {
               }
             },
             orders: {
-              select: { id: true, total: true, status: true },
-              take: 1,
+              select: { id: true, total: true, status: true, createdAt: true },
+              take: 5, // Get more orders for better data
               orderBy: { createdAt: 'desc' }
             }
           },

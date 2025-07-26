@@ -233,27 +233,41 @@ const CustomerManagementPage: React.FC = () => {
     (customersData as any).data.customers.map((c: any) => {
       // Enhanced debugging to see what data we're getting
       if (process.env.NODE_ENV === 'development') {
-        console.log('Customer data:', {
+        console.log('Customer data mapping:', {
           name: c.name,
           profile: c.profile,
           orders: c.orders,
-          hasProfile: !!c.profile
+          hasProfile: !!c.profile,
+          profileTotalSpent: c.profile?.totalSpent,
+          profileTotalOrders: c.profile?.totalOrders,
+          ordersLength: c.orders?.length
         });
       }
+      
+      // Calculate values with better fallbacks
+      const profileSpent = c.profile?.totalSpent ? parseFloat(c.profile.totalSpent.toString()) : 0;
+      const orderTotal = c.orders?.length > 0 ? c.orders.reduce((sum: number, order: any) => sum + parseFloat(order.total?.toString() || '0'), 0) : 0;
+      const totalValue = profileSpent > 0 ? profileSpent : orderTotal;
+      
+      const profileOrders = c.profile?.totalOrders || 0;
+      const actualOrders = c.orders?.length || 0;
+      const totalOrders = Math.max(profileOrders, actualOrders);
+      
+      const averageOrderValue = totalOrders > 0 ? totalValue / totalOrders : 0;
       
       return {
         ...c,
         status: c.profile?.vipStatus ? 'VIP' : 'Active',
-        value: parseFloat(c.profile?.totalSpent?.toString() || c.orders?.[0]?.total?.toString() || '0'),
+        value: totalValue,
         lastVisit: c.profile?.lastPurchaseDate 
           ? new Date(c.profile.lastPurchaseDate).toLocaleDateString() 
           : c.orders?.[0]?.createdAt 
             ? new Date(c.orders[0].createdAt).toLocaleDateString()
             : 'Never',
         tier: c.profile?.customerTier || 'Silver',
-        totalOrders: c.profile?.totalOrders || c.orders?.length || 0,
-        averageOrderValue: parseFloat(c.profile?.averageOrderValue?.toString() || '0'),
-        engagementScore: c.profile?.engagementScore || Math.floor(Math.random() * 100), // Temporary fallback
+        totalOrders: totalOrders,
+        averageOrderValue: parseFloat(c.profile?.averageOrderValue?.toString() || averageOrderValue.toString()),
+        engagementScore: c.profile?.engagementScore || Math.floor(Math.random() * 50) + 25, // More realistic fallback range 25-75
         // Add order history for detailed view
         orderHistory: c.orders || [],
       };

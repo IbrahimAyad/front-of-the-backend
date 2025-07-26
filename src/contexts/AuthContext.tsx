@@ -54,10 +54,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           localStorage.removeItem('refreshToken');
         }
       }
-    } catch (error) {
-      console.error('Auth initialization error:', error);
+    } catch (error: any) {
+      console.warn('Auth initialization failed (normal for logged out users):', error?.response?.status);
+      // Don't log this as an error since it's normal for logged out users
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
+      // Don't break the app - just continue as unauthenticated user
     } finally {
       setLoading(false);
     }
