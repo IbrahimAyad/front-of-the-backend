@@ -103,6 +103,12 @@ model Customer {
   profile       CustomerProfile?
   savedOutfits  SavedOutfit[]
 
+  // 🚀 Enhanced Customer Relations (Phase 1)
+  purchaseHistory     CustomerPurchaseHistory[]
+  sizeAnalysis        CustomerSizeAnalysis?
+  insights            CustomerInsights?
+  recommendations     ProductRecommendations[]
+
   @@map("customers")
 }
 
@@ -740,6 +746,160 @@ model EventProfile {
   createdAt       DateTime @default(now())
   
   @@map("event_profiles")
+}
+
+// ====================================
+// 🚀 ENHANCED CUSTOMER DATA MODELS
+// ====================================
+// Added: Phase 1 Enhanced Customer System
+// These tables extend existing Customer functionality
+// with rich purchase history and analytics
+
+model CustomerPurchaseHistory {
+  id                String   @id @default(cuid())
+  customerId        String
+  customer          Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  
+  // Product Information
+  productName       String
+  productCategory   String?  // "Blazer", "Tuxedo", "Suit", "Accessories"
+  productType       String?  // "Casual", "Formal", "Prom", "Wedding"
+  color             String?
+  size              String?
+  
+  // Order Information  
+  orderDate         DateTime
+  paidDate          DateTime?
+  orderTotal        Float
+  itemPrice         Float?
+  quantity          Int      @default(1)
+  
+  // Occasion & Context
+  occasion          String?  // "wedding", "prom", "business", "general"
+  isGroupOrder      Boolean  @default(false)
+  groupOrderId      String?  // Link related group purchases
+  
+  // Metadata
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@map("customer_purchase_history")
+}
+
+model CustomerSizeAnalysis {
+  id                    String   @id @default(cuid())
+  customerId            String   @unique
+  customer              Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  
+  // Extracted Size Data (from actual purchases)
+  jacketSizeExtracted   String?
+  vestSizeExtracted     String?
+  shirtSizeExtracted    String?
+  pantsSizeExtracted    String?
+  shoeSizeExtracted     String?
+  
+  // Size Confidence (based on purchase frequency)
+  jacketSizeConfidence  Float?   // 0.0 - 1.0
+  vestSizeConfidence    Float?
+  shirtSizeConfidence   Float?
+  pantsSizeConfidence   Float?
+  shoeSizeConfidence    Float?
+  
+  // Size Consistency Analysis
+  sizeConsistency       Float?   // How consistent are their size purchases
+  sizeVariations        Json?    // Array of different sizes purchased
+  
+  // Size Profile Completeness (calculated from actual purchases)
+  profileCompleteness   Float    @default(0.0)
+  
+  // Analysis Metadata
+  lastAnalyzed          DateTime @default(now())
+  purchaseDataPoints    Int      @default(0) // Number of purchases analyzed
+  
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  
+  @@map("customer_size_analysis")
+}
+
+model CustomerInsights {
+  id                    String   @id @default(cuid())
+  customerId            String   @unique
+  customer              Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  
+  // Purchase Pattern Analysis
+  favoriteCategories    Json?    // ["Blazer", "Tuxedo"] with frequency
+  favoriteColors        Json?    // ["Navy", "Black", "Royal Blue"] with frequency
+  favoriteOccasions     Json?    // ["wedding", "prom"] with frequency
+  
+  // Seasonal & Timing Insights
+  purchaseSeasonality   Json?    // Spring/Summer/Fall/Winter preferences
+  averageDaysBetween    Int?     // Days between purchases
+  preferredDays         Json?    // Day of week preferences
+  preferredTimes        Json?    // Time of day preferences
+  
+  // Financial Insights
+  averageOrderValue     Float?
+  totalLifetimeValue    Float?
+  pricePointPreference  String?  // "budget", "mid-range", "premium", "luxury"
+  spendingTrend         String?  // "increasing", "stable", "decreasing"
+  
+  // Group Purchase Insights
+  isGroupOrderCustomer  Boolean  @default(false)
+  groupOrderCount       Int      @default(0)
+  typicalGroupSize      Int?
+  
+  // Recommendation Factors
+  recommendationTags    Json?    // Tags for recommendation engine
+  crossSellOpportunity  Json?    // Products they haven't bought but should consider
+  
+  // Customer Journey
+  customerJourneyStage  String?  // "new", "returning", "loyal", "at-risk", "champion"
+  riskScore            Float?    // 0.0-1.0, higher = more likely to churn
+  loyaltyScore         Float?    // 0.0-1.0, higher = more loyal
+  
+  // Insights Metadata
+  lastCalculated       DateTime @default(now())
+  dataQualityScore     Float?   // How reliable these insights are
+  
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  
+  @@map("customer_insights")
+}
+
+model ProductRecommendations {
+  id                String   @id @default(cuid())
+  customerId        String
+  customer          Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  
+  // Recommendation Details
+  recommendedProduct String
+  productCategory   String?
+  recommendationType String  // "cross-sell", "upsell", "repurchase", "occasion-based"
+  
+  // Recommendation Logic
+  reason            String?  // Why this was recommended
+  confidenceScore   Float    // 0.0-1.0, how confident we are
+  basedOnPurchases  Json?    // Which past purchases influenced this
+  
+  // Recommendation Status
+  isActive          Boolean  @default(true)
+  wasViewed         Boolean  @default(false)
+  wasPurchased      Boolean  @default(false)
+  wasIgnored        Boolean  @default(false)
+  
+  // Priority & Timing
+  priority          Int      @default(5) // 1-10, higher = more important
+  validUntil        DateTime? // Expiration date
+  occasionTiming    String?  // "immediate", "seasonal", "event-based"
+  
+  // Metadata
+  generatedAt       DateTime @default(now())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@map("product_recommendations")
 }
 
 
