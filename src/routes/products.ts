@@ -364,30 +364,14 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.put('/:id', async (request: any, reply) => {
     try {
       const { id } = request.params;
-      const updateData = request.body;
+      const updateData = request.body || {};
 
-      // Version check - v5 with error handling
-      fastify.log.info(`🚀 Product update v5 - ${new Date().toISOString()}`);
+      // Version check - v6 minimal
+      fastify.log.info(`🚀 Product update v6 starting for ${id}`);
 
-      try {
-        // Debug: Log the raw body size and images
-        fastify.log.info(`📦 Request body size: ${JSON.stringify(updateData).length} bytes`);
-        
-        // Check if images exist in the payload
-        if (updateData.images) {
-          fastify.log.info(`🖼️ Images in payload: ${updateData.images.length} images`);
-          updateData.images.forEach((img: any, idx: number) => {
-            fastify.log.info(`  Image ${idx + 1}: ${img.url?.substring(0, 50)}...`);
-          });
-        } else {
-          fastify.log.info(`❌ No images field in update data`);
-        }
-      } catch (logError) {
-        fastify.log.error(`❌ Error logging request data:`, logError);
-      }
-
-      // FIRST: Extract images and variants to preserve them
-      const { images, variants } = updateData;
+      // Safe extraction with defaults
+      const images = updateData.images || [];
+      const variants = updateData.variants || [];
 
       // THEN: Remove computed fields and id
       const { id: productId, availableVariants, primaryImage, isShirt, isSuit, isTie, isDressShirt, smartSummary, createdAt, updatedAt, images: _images, variants: _variants, ...basicProductData } = updateData;

@@ -55,6 +55,8 @@ import { CLIENT_CONFIG } from '../../config/client';
 import { useCustomers } from '../../hooks/useCustomers';
 import { Customer } from '../../types';
 import LoadingSpinner from '../../components/Loading/LoadingSpinner';
+import CustomerEditModal from '../../components/Customers/CustomerEditModal';
+import CustomerDeleteDialog from '../../components/Customers/CustomerDeleteDialog';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -182,8 +184,12 @@ const CustomerManagementPage: React.FC = () => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Modal states
   const [selectedCustomer, setSelectedCustomer] = useState<UICustomer | null>(null);
   const [showCustomerDetail, setShowCustomerDetail] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   // Real data fetching with enhanced customer analytics
   const { data: customersData, isLoading: customersLoading, error: customersError } = useCustomers({ 
@@ -226,13 +232,28 @@ const CustomerManagementPage: React.FC = () => {
   };
 
   const handleEditCustomer = (customer: UICustomer) => {
-    console.log('Edit customer:', customer);
-    // TODO: Open edit modal
+    setSelectedCustomer(customer);
+    setShowEditModal(true);
   };
 
   const handleDeleteCustomer = (customer: UICustomer) => {
-    console.log('Delete customer:', customer);
-    // TODO: Show confirmation dialog and delete
+    setSelectedCustomer(customer);
+    setShowDeleteDialog(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setShowEditModal(false);
+    setSelectedCustomer(null);
+  };
+
+  const handleCloseDeleteDialog = () => {
+    setShowDeleteDialog(false);
+    setSelectedCustomer(null);
+  };
+
+  const handleCloseDetailModal = () => {
+    setShowCustomerDetail(false);
+    setSelectedCustomer(null);
   };
 
   const handlePageChange = (event: React.ChangeEvent<unknown>, newPage: number) => {
@@ -911,7 +932,7 @@ const CustomerManagementPage: React.FC = () => {
       {/* Customer Detail Modal */}
       <Dialog
         open={showCustomerDetail}
-        onClose={() => setShowCustomerDetail(false)}
+        onClose={handleCloseDetailModal}
         maxWidth="md"
         fullWidth
       >
@@ -991,16 +1012,33 @@ const CustomerManagementPage: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowCustomerDetail(false)}>Close</Button>
+          <Button onClick={handleCloseDetailModal}>Close</Button>
           <Button 
             variant="outlined" 
             startIcon={<Edit />}
-            onClick={() => handleEditCustomer(selectedCustomer!)}
+            onClick={() => {
+              handleCloseDetailModal();
+              handleEditCustomer(selectedCustomer!);
+            }}
           >
             Edit Customer
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Customer Edit Modal */}
+      <CustomerEditModal
+        open={showEditModal}
+        onClose={handleCloseEditModal}
+        customer={selectedCustomer}
+      />
+
+      {/* Customer Delete Dialog */}
+      <CustomerDeleteDialog
+        open={showDeleteDialog}
+        onClose={handleCloseDeleteDialog}
+        customer={selectedCustomer}
+      />
     </Box>
   );
 };
