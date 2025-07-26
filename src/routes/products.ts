@@ -8,6 +8,14 @@ import {
 } from '../services/cache/productCache';
 
 const productsRoutes: FastifyPluginAsync = async (fastify) => {
+  // Version check endpoint
+  fastify.get('/version', async (request, reply) => {
+    return reply.send({
+      version: 'v4-diagnostics',
+      timestamp: new Date().toISOString(),
+      message: 'Product routes with comprehensive image diagnostics'
+    });
+  });
   // Get products with enhanced filtering - PUBLIC ROUTE (no auth required for admin dashboard)
   fastify.get('/', async (request: any, reply) => {
     try {
@@ -358,20 +366,24 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
       const { id } = request.params;
       const updateData = request.body;
 
-      // Version check - v4 simplified
-      fastify.log.info(`🚀 Product update v4 - ${new Date().toISOString()}`);
+      // Version check - v5 with error handling
+      fastify.log.info(`🚀 Product update v5 - ${new Date().toISOString()}`);
 
-      // Debug: Log the raw body size and images
-      fastify.log.info(`📦 Request body size: ${JSON.stringify(updateData).length} bytes`);
-      
-      // Check if images exist in the payload
-      if (updateData.images) {
-        fastify.log.info(`🖼️ Images in payload: ${updateData.images.length} images`);
-        updateData.images.forEach((img: any, idx: number) => {
-          fastify.log.info(`  Image ${idx + 1}: ${img.url?.substring(0, 50)}...`);
-        });
-      } else {
-        fastify.log.info(`❌ No images field in update data`);
+      try {
+        // Debug: Log the raw body size and images
+        fastify.log.info(`📦 Request body size: ${JSON.stringify(updateData).length} bytes`);
+        
+        // Check if images exist in the payload
+        if (updateData.images) {
+          fastify.log.info(`🖼️ Images in payload: ${updateData.images.length} images`);
+          updateData.images.forEach((img: any, idx: number) => {
+            fastify.log.info(`  Image ${idx + 1}: ${img.url?.substring(0, 50)}...`);
+          });
+        } else {
+          fastify.log.info(`❌ No images field in update data`);
+        }
+      } catch (logError) {
+        fastify.log.error(`❌ Error logging request data:`, logError);
       }
 
       // FIRST: Extract images and variants to preserve them
@@ -420,18 +432,24 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
           images: images.map(img => ({ url: img.url, isPrimary: img.isPrimary }))
         });
         
-        // Store images for separate handling after product update
-        imagesToUpdate = images.map((img: any, index: number) => ({
-          productId: id,
-          url: img.url,
-          altText: img.altText || img.alt || `Product image ${index + 1}`,
-          caption: img.caption || null,
-          isPrimary: img.isPrimary || index === 0,
-          position: img.position !== undefined ? img.position : index,
-          width: img.width ? parseInt(img.width) : null,
-          height: img.height ? parseInt(img.height) : null,
-          size: img.size ? parseInt(img.size) : null
-        }));
+        // Store images for separate handling after product update - simplified
+        imagesToUpdate = images.map((img: any, index: number) => {
+          const imageData: any = {
+            productId: id,
+            url: img.url || img.imageUrl,  // Support both field names
+            altText: img.altText || img.alt || `Product image ${index + 1}`,
+            isPrimary: Boolean(img.isPrimary || index === 0),
+            position: index
+          };
+          
+          // Only add optional fields if they exist
+          if (img.caption) imageData.caption = img.caption;
+          if (img.width && !isNaN(parseInt(img.width))) imageData.width = parseInt(img.width);
+          if (img.height && !isNaN(parseInt(img.height))) imageData.height = parseInt(img.height);
+          if (img.size && !isNaN(parseInt(img.size))) imageData.size = parseInt(img.size);
+          
+          return imageData;
+        });
       } else {
         fastify.log.info(`⚠️ No images provided for product ${id}`);
       }
