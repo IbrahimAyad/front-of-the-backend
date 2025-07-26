@@ -358,6 +358,14 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
       const { id } = request.params;
       const updateData = request.body;
 
+      // Debug: Log exactly what we received
+      fastify.log.info(`🔍 Raw update data received:`, {
+        hasImages: !!updateData.images,
+        imagesCount: updateData.images?.length || 0,
+        imagesSample: updateData.images?.[0],
+        allKeys: Object.keys(updateData)
+      });
+
       // Remove computed fields but keep images and variants for nested updates
       const { id: productId, availableVariants, primaryImage, isShirt, isSuit, isTie, isDressShirt, smartSummary, createdAt, updatedAt, ...productData } = updateData;
       
