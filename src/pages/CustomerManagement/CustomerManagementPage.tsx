@@ -242,8 +242,8 @@ const CustomerManagementPage: React.FC = () => {
     </Card>
   );
 
-  // In the component logic, use CLIENT_CONFIG.USE_MOCK_DATA to determine data source
-  const customers = CLIENT_CONFIG.USE_MOCK_DATA ? mockCustomers : realCustomers;
+      // Always use real customer data now that we have enhanced customers imported
+    const customers = realCustomers.length > 0 ? realCustomers : mockCustomers;
   const leads = CLIENT_CONFIG.USE_MOCK_DATA ? mockLeads : realLeads;
   const appointments = CLIENT_CONFIG.USE_MOCK_DATA ? mockAppointments : realAppointments;
   const measurements = CLIENT_CONFIG.USE_MOCK_DATA ? mockMeasurements : realMeasurements;
