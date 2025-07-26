@@ -164,7 +164,23 @@ const EnhancedCustomerDetail: React.FC<EnhancedCustomerDetailProps> = ({
     ],
   };
 
-  const displayCustomer = customer || mockCustomer;
+  // Create display customer with safe fallbacks
+  const displayCustomer = {
+    id: customer?.id || '',
+    name: customer?.name || 'Unknown Customer',
+    email: customer?.email || '',
+    phone: customer?.phone || '',
+    tier: customer?.profile?.customerTier || 'Bronze',
+    totalOrders: customer?.profile?.totalOrders || 0,
+    totalSpent: customer?.profile?.totalSpent || 0,
+    vipStatus: customer?.profile?.vipStatus || false,
+    engagementScore: customer?.profile?.engagementScore || 50,
+    loyaltyScore: 85, // Mock data
+    riskScore: 15,    // Mock data
+    joinDate: customer?.createdAt || new Date().toISOString(),
+    lastPurchase: customer?.profile?.lastPurchaseDate || new Date().toISOString(),
+    purchaseHistory: [], // Mock data
+  };
 
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
@@ -232,7 +248,7 @@ const EnhancedCustomerDetail: React.FC<EnhancedCustomerDetailProps> = ({
                   variant="outlined" 
                 />
                 <Chip 
-                  label={`$${displayCustomer.totalSpent.toLocaleString()}`} 
+                  label={`$${(displayCustomer.totalSpent || 0).toLocaleString()}`} 
                   size="small" 
                   color="success" 
                 />

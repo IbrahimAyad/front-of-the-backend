@@ -88,7 +88,10 @@ const CustomerDeleteDialog: React.FC<CustomerDeleteDialogProps> = ({
 
   const isVIP = customer.profile?.vipStatus;
   const hasOrders = (customer.profile?.totalOrders || 0) > 0;
-  const totalSpent = parseFloat(customer.profile?.totalSpent || '0');
+  const totalSpent = (() => {
+    const spent = customer?.profile?.totalSpent || 0;
+    return typeof spent === 'string' ? parseFloat(spent) : spent;
+  })();
   const tier = customer.profile?.customerTier || 'Silver';
 
   return (
