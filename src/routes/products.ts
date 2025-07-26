@@ -359,7 +359,7 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
       const updateData = request.body;
 
       // Remove computed fields but keep images and variants for nested updates
-      const { availableVariants, primaryImage, isShirt, isSuit, isTie, isDressShirt, smartSummary, createdAt, ...productData } = updateData;
+      const { id: productId, availableVariants, primaryImage, isShirt, isSuit, isTie, isDressShirt, smartSummary, createdAt, updatedAt, ...productData } = updateData;
       
       // Extract images and variants for proper handling
       const { images, variants, ...basicProductData } = productData;
@@ -398,20 +398,28 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
       
       // Handle images if provided
       if (images && Array.isArray(images)) {
+        // Debug logging
+        fastify.log.info(`📸 Images received for product ${id}:`, {
+          count: images.length,
+          images: images.map(img => ({ url: img.url, isPrimary: img.isPrimary }))
+        });
+        
         updateDataForPrisma.images = {
           deleteMany: {}, // Delete all existing images
           create: images.map((img: any, index: number) => ({
             url: img.url,
             altText: img.altText || img.alt || `Product image ${index + 1}`,
-            caption: img.caption,
+            caption: img.caption || null,
             isPrimary: img.isPrimary || index === 0,
-            position: img.position || index,
-            width: img.width,
-            height: img.height,
-            size: img.size
+            position: img.position !== undefined ? img.position : index,
+            width: img.width ? parseInt(img.width) : null,
+            height: img.height ? parseInt(img.height) : null,
+            size: img.size ? parseInt(img.size) : null
           }))
         };
-        fastify.log.info(`Updating images for product ${id}:`, images.length);
+        fastify.log.info(`🔄 Preparing to update images for product ${id}:`, images.length);
+      } else {
+        fastify.log.info(`⚠️ No images provided for product ${id}`);
       }
       
       // Handle variants if provided
@@ -430,6 +438,9 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
         };
       }
 
+      // Debug: Log the update data
+      fastify.log.info(`🔍 Update data for Prisma:`, JSON.stringify(updateDataForPrisma, null, 2));
+      
       const product = await fastify.prisma.product.update({
         where: { id },
         data: updateDataForPrisma,
@@ -446,13 +457,23 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
         }
       });
 
+      // Debug: Log what was returned
+      fastify.log.info(`✅ Product updated. Images count: ${product.images?.length || 0}`);
+      if (product.images && product.images.length > 0) {
+        fastify.log.info(`📸 Saved images:`, product.images.map(img => ({ id: img.id, url: img.url })));
+      }
+
       // Invalidate cache after updating product
       await invalidateProductCache(id);
 
-      return reply.send({
+      // Debug: Log the full response structure
+      const response = {
         success: true,
         data: { product }
-      });
+      };
+      fastify.log.info(`📤 Sending response with ${product.images?.length || 0} images`);
+      
+      return reply.send(response);
     } catch (error) {
       fastify.log.error('Error updating product:', error);
       fastify.log.error('Update data:', JSON.stringify(request.body, null, 2));
