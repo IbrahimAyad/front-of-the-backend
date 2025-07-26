@@ -358,16 +358,21 @@ const productsRoutes: FastifyPluginAsync = async (fastify) => {
       const { id } = request.params;
       const updateData = request.body;
 
-      // Version check - v3 with separate image operations
-      fastify.log.info(`🚀 Product update v3 - ${new Date().toISOString()}`);
+      // Version check - v4 simplified
+      fastify.log.info(`🚀 Product update v4 - ${new Date().toISOString()}`);
 
-      // Debug: Log exactly what we received
-      fastify.log.info(`🔍 Raw update data received:`, {
-        hasImages: !!updateData.images,
-        imagesCount: updateData.images?.length || 0,
-        imagesSample: updateData.images?.[0],
-        allKeys: Object.keys(updateData)
-      });
+      // Debug: Log the raw body size and images
+      fastify.log.info(`📦 Request body size: ${JSON.stringify(updateData).length} bytes`);
+      
+      // Check if images exist in the payload
+      if (updateData.images) {
+        fastify.log.info(`🖼️ Images in payload: ${updateData.images.length} images`);
+        updateData.images.forEach((img: any, idx: number) => {
+          fastify.log.info(`  Image ${idx + 1}: ${img.url?.substring(0, 50)}...`);
+        });
+      } else {
+        fastify.log.info(`❌ No images field in update data`);
+      }
 
       // FIRST: Extract images and variants to preserve them
       const { images, variants } = updateData;
