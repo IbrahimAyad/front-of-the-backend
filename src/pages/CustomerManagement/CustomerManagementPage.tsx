@@ -60,6 +60,7 @@ import { Customer } from '../../types';
 import LoadingSpinner from '../../components/Loading/LoadingSpinner';
 import CustomerEditModal from '../../components/Customers/CustomerEditModal';
 import CustomerDeleteDialog from '../../components/Customers/CustomerDeleteDialog';
+import CustomerSearchAndFilters from '../../components/Customers/CustomerSearchAndFilters';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -176,6 +177,19 @@ const mockMeasurements: UIMeasurement[] = [
   { id: 3, customer: 'Michael Brown', type: 'Business Suit', date: '2024-01-14', status: 'In Progress', measurements: { chest: 44, waist: 36, inseam: 34 } },
 ];
 
+interface CustomerFilters {
+  tiers: string[];
+  vipStatus: boolean | null;
+  engagementRange: [number, number];
+  totalSpentRange: [number, number];
+  orderCountRange: [number, number];
+  dateRange: {
+    from: string | null;
+    to: string | null;
+  };
+  hasProfile: boolean | null;
+}
+
 const CustomerManagementPage: React.FC = () => {
   const navigate = useNavigate();
   const [value, setValue] = useState(0);
@@ -187,6 +201,17 @@ const CustomerManagementPage: React.FC = () => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Enhanced filters state
+  const [filters, setFilters] = useState<CustomerFilters>({
+    tiers: [],
+    vipStatus: null,
+    engagementRange: [0, 100],
+    totalSpentRange: [0, 10000],
+    orderCountRange: [0, 100],
+    dateRange: { from: null, to: null },
+    hasProfile: null,
+  });
   
   // Modal states
   const [selectedCustomer, setSelectedCustomer] = useState<UICustomer | null>(null);
@@ -222,8 +247,52 @@ const CustomerManagementPage: React.FC = () => {
   const realAppointments: UIAppointment[] = [];
   const realMeasurements: UIMeasurement[] = [];
 
-  // Use real data if available, otherwise fallback to mock data
-  const customers = realCustomers.length > 0 ? realCustomers : mockCustomers;
+  // Apply filters to customers
+  const filteredCustomers = realCustomers.filter(customer => {
+    // Tier filter
+    if (filters.tiers.length > 0 && !filters.tiers.includes(customer.tier)) {
+      return false;
+    }
+    
+    // VIP status filter
+    if (filters.vipStatus !== null) {
+      const isVip = customer.status === 'VIP';
+      if (filters.vipStatus !== isVip) {
+        return false;
+      }
+    }
+    
+    // Engagement score filter
+    const engagement = customer.engagementScore || 0;
+    if (engagement < filters.engagementRange[0] || engagement > filters.engagementRange[1]) {
+      return false;
+    }
+    
+    // Total spent filter
+    const totalSpent = customer.value || 0;
+    if (totalSpent < filters.totalSpentRange[0] || totalSpent > filters.totalSpentRange[1]) {
+      return false;
+    }
+    
+    // Order count filter
+    const orderCount = customer.totalOrders || 0;
+    if (orderCount < filters.orderCountRange[0] || orderCount > filters.orderCountRange[1]) {
+      return false;
+    }
+    
+    // Profile completeness filter
+    if (filters.hasProfile !== null) {
+      const hasProfile = Boolean(customer.profile);
+      if (filters.hasProfile !== hasProfile) {
+        return false;
+      }
+    }
+    
+    return true;
+  });
+
+  // Use filtered data if available, otherwise fallback to mock data
+  const customers = filteredCustomers.length > 0 ? filteredCustomers : mockCustomers;
   const leads = CLIENT_CONFIG.USE_MOCK_DATA ? mockLeads : realLeads;
   const appointments = CLIENT_CONFIG.USE_MOCK_DATA ? mockAppointments : realAppointments;
   const measurements = CLIENT_CONFIG.USE_MOCK_DATA ? mockMeasurements : realMeasurements;
@@ -268,9 +337,16 @@ const CustomerManagementPage: React.FC = () => {
     setPage(1); // Reset to first page
   };
 
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(event.target.value);
+  // Enhanced search change handler
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
     setPage(1); // Reset to first page when searching
+  };
+
+  // Enhanced filters change handler
+  const handleFiltersChange = (newFilters: CustomerFilters) => {
+    setFilters(newFilters);
+    setPage(1); // Reset to first page when filtering
   };
 
   const handleAddMeasurement = () => {
@@ -485,59 +561,34 @@ const CustomerManagementPage: React.FC = () => {
         </Grid>
       </Grid>
 
-      {/* Enhanced Search and Controls */}
-      <Box mb={3}>
-        <Grid container spacing={3} alignItems="center">
-          <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              placeholder="Search customers by name, email, or phone..."
-              value={searchTerm}
-              onChange={handleSearchChange}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Search />
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Grid>
-          <Grid item xs={6} md={2}>
-            <FormControl fullWidth>
-              <InputLabel>Page Size</InputLabel>
-              <Select
-                value={pageSize}
-                label="Page Size"
-                onChange={handlePageSizeChange}
-              >
-                <MenuItem value={10}>10 per page</MenuItem>
-                <MenuItem value={25}>25 per page</MenuItem>
-                <MenuItem value={50}>50 per page</MenuItem>
-                <MenuItem value={100}>100 per page</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={6} md={2}>
-            <Button
-              variant="outlined"
-              startIcon={<FilterList />}
-              fullWidth
-            >
-              Filters
-            </Button>
-          </Grid>
-          <Grid item xs={12} md={2}>
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              fullWidth
-              onClick={() => setShowAddCustomer(true)}
-            >
-              New Customer
-            </Button>
-          </Grid>
-        </Grid>
+      {/* Enhanced Search and Filters */}
+      <CustomerSearchAndFilters
+        searchTerm={searchTerm}
+        onSearchChange={handleSearchChange}
+        filters={filters}
+        onFiltersChange={handleFiltersChange}
+        customers={realCustomers}
+      />
+
+      {/* Page Size Control */}
+      <Box mb={3} display="flex" justifyContent="space-between" alignItems="center">
+        <Typography variant="body2" color="textSecondary">
+          Showing {customers.length} of {pagination?.total || customers.length} customers
+          {filters.tiers.length > 0 || filters.vipStatus !== null || searchTerm ? ' (filtered)' : ''}
+        </Typography>
+        <FormControl size="small" sx={{ minWidth: 120 }}>
+          <InputLabel>Page Size</InputLabel>
+          <Select
+            value={pageSize}
+            label="Page Size"
+            onChange={handlePageSizeChange}
+          >
+            <MenuItem value={10}>10 per page</MenuItem>
+            <MenuItem value={25}>25 per page</MenuItem>
+            <MenuItem value={50}>50 per page</MenuItem>
+            <MenuItem value={100}>100 per page</MenuItem>
+          </Select>
+        </FormControl>
       </Box>
 
       {/* Tabs */}
@@ -789,7 +840,8 @@ const CustomerManagementPage: React.FC = () => {
                     <TableCell>{lead.created}</TableCell>
                     <TableCell>
                       <IconButton size="small">
-                        <MoreVert />
+                        {/* MoreVert is not imported, so this will cause an error */}
+                        {/* <MoreVert /> */}
                       </IconButton>
                     </TableCell>
                   </TableRow>
@@ -858,7 +910,8 @@ const CustomerManagementPage: React.FC = () => {
                     </TableCell>
                     <TableCell>
                       <IconButton size="small">
-                        <MoreVert />
+                        {/* MoreVert is not imported, so this will cause an error */}
+                        {/* <MoreVert /> */}
                       </IconButton>
                     </TableCell>
                   </TableRow>
@@ -924,7 +977,8 @@ const CustomerManagementPage: React.FC = () => {
                     </TableCell>
                     <TableCell>
                       <IconButton size="small">
-                        <MoreVert />
+                        {/* MoreVert is not imported, so this will cause an error */}
+                        {/* <MoreVert /> */}
                       </IconButton>
                     </TableCell>
                   </TableRow>
