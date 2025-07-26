@@ -2,18 +2,20 @@ import React from 'react';
 import {
   Box,
   Typography,
-  Timeline,
-  TimelineItem,
-  TimelineSeparator,
-  TimelineConnector,
-  TimelineContent,
-  TimelineDot,
   Card,
   CardContent,
   Chip,
   Avatar,
   Grid,
 } from '@mui/material';
+import {
+  Timeline,
+  TimelineItem,
+  TimelineSeparator,
+  TimelineConnector,
+  TimelineContent,
+  TimelineDot,
+} from '@mui/lab';
 import {
   ShoppingBag,
   Event,
