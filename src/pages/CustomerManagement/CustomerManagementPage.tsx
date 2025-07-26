@@ -297,36 +297,38 @@ const CustomerManagementPage: React.FC = () => {
     }
   };
 
-  const StatCard = ({ title, value, icon, color, subtitle }: any) => (
-    <Card sx={{ height: '100%' }}>
-      <CardContent>
-        <Box display="flex" justifyContent="space-between" alignItems="flex-start">
-          <Box>
-            <Typography color="textSecondary" gutterBottom variant="body2">
-              {title}
-            </Typography>
-            <Typography variant="h4" component="div" fontWeight="bold">
-              {value}
-            </Typography>
-            {subtitle && (
-              <Typography variant="body2" color="textSecondary" mt={1}>
-                {subtitle}
+  const StatCard = ({ title, value, icon, color, subtitle }: any) => {
+    const theme = useTheme();
+    return (
+      <Card sx={{ height: '100%' }}>
+        <CardContent>
+          <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+            <Box>
+              <Typography color="textSecondary" gutterBottom variant="body2">
+                {title}
               </Typography>
-            )}
+              <Typography variant="h4" component="div" fontWeight="bold">
+                {value}
+              </Typography>
+              {subtitle && (
+                <Typography variant="body2" color="textSecondary" mt={1}>
+                  {subtitle}
+                </Typography>
+              )}
+            </Box>
+            <Avatar 
+              sx={{ 
+                bgcolor: alpha(theme.palette[color as keyof typeof theme.palette].main, 0.1),
+                color: theme.palette[color as keyof typeof theme.palette].main,
+                width: 48,
+                height: 48,
+              }}
+            >
+              {icon}
+            </Avatar>
           </Box>
-          <Avatar 
-            sx={{ 
-              bgcolor: alpha(theme.palette[color].main, 0.1),
-              color: theme.palette[color].main,
-              width: 48,
-              height: 48,
-            }}
-          >
-            {icon}
-          </Avatar>
-        </Box>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
     );
   };
 
