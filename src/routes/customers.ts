@@ -2,6 +2,11 @@ import { FastifyPluginAsync } from 'fastify';
 import { createCustomerSchema, updateCustomerSchema } from '../schemas/customer';
 
 const customersRoutes: FastifyPluginAsync = async (fastify) => {
+  // Test endpoint to verify route registration
+  fastify.get('/test', async (request: any, reply) => {
+    reply.send({ success: true, message: 'Customer routes are working!', timestamp: new Date() });
+  });
+
   // Public endpoint for customer data (for development/dashboard)
   fastify.get('/public', async (request: any, reply) => {
     try {
