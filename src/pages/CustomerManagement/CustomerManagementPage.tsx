@@ -231,6 +231,17 @@ const CustomerManagementPage: React.FC = () => {
     limit: pageSize,
     search: searchTerm 
   });
+
+  // 🔍 DEBUG: Log current state and API calls
+  console.log('🔍 CustomerManagement state:', {
+    page,
+    pageSize,
+    searchTerm,
+    customersDataPages: (customersData as any)?.data?.pagination?.pages,
+    customersDataTotal: (customersData as any)?.data?.pagination?.total,
+    customersLoading,
+    customersError
+  });
   
   // Enhanced data processing with analytics
   const realCustomers: UICustomer[] = (customersData as any)?.data?.customers ? 

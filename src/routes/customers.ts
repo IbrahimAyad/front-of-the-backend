@@ -8,6 +8,14 @@ const customersRoutes: FastifyPluginAsync = async (fastify) => {
       const { page = 1, limit = 100, search } = request.query;
       const skip = (page - 1) * limit;
 
+      console.log('🔍 BACKEND: /analytics called with:', {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        search,
+        skip,
+        queryParams: request.query
+      });
+
       const where: any = {};
       if (search) {
         where.OR = [
@@ -16,6 +24,8 @@ const customersRoutes: FastifyPluginAsync = async (fastify) => {
           { phone: { contains: search } },
         ];
       }
+
+      console.log('🔍 BACKEND: Prisma where clause:', where);
 
       // Get customers with profiles and calculate analytics
       const [customers, total, analytics] = await Promise.all([

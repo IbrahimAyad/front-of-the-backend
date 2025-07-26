@@ -190,7 +190,13 @@ export const customerAPI = {
     limit?: number;
     search?: string;
   }): Promise<any> => {
+    console.log('🔍 API: getCustomerAnalytics called with params:', params);
     const response = await api.get('/customers/analytics', { params });
+    console.log('🔍 API: getCustomerAnalytics response:', {
+      customersCount: response.data?.data?.customers?.length,
+      pagination: response.data?.data?.pagination,
+      success: response.data?.success
+    });
     return response.data;
   },
 
