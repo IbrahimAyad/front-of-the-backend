@@ -68,7 +68,10 @@ const EnhancedCustomerDetail: React.FC<EnhancedCustomerDetailProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState(0);
 
+  console.log('🔍 EnhancedCustomerDetail render:', { open, customer: customer?.name || 'No customer' });
+
   if (!customer) {
+    console.log('🔍 No customer provided to EnhancedCustomerDetail');
     return null;
   }
 

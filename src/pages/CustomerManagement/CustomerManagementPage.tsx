@@ -326,11 +326,15 @@ const CustomerManagementPage: React.FC = () => {
 
   // 🚀 Enhanced customer detail handlers
   const handleShowEnhancedDetail = (customer: UICustomer) => {
+    console.log('🔍 Customer row clicked:', customer.name, customer.id);
+    console.log('🔍 About to open enhanced detail modal');
     setSelectedCustomer(customer);
     setShowEnhancedDetail(true);
+    console.log('🔍 Enhanced detail state set to true');
   };
 
   const handleCloseEnhancedDetail = () => {
+    console.log('🔍 Closing enhanced detail modal');
     setShowEnhancedDetail(false);
     setSelectedCustomer(null);
   };
