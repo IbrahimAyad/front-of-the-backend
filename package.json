@@ -58,6 +58,7 @@
     "@types/node-fetch": "^2.6.12",
     "axios": "^1.10.0",
     "bcryptjs": "^2.4.3",
+    "csv-parser": "^3.2.0",
     "date-fns": "^4.1.0",
     "dotenv": "^16.3.1",
     "express": "^5.1.0",
