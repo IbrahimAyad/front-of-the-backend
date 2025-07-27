@@ -380,7 +380,7 @@ const suppliersRoutes: FastifyPluginAsync = async (fastify) => {
 
       // Process received items
       for (const receivedItem of items) {
-        const poItem = purchaseOrder.items.find(item => item.id === receivedItem.id);
+        const poItem = purchaseOrder.items.find((item: any) => item.id === receivedItem.id);
         if (!poItem) continue;
 
         const quantityReceived = receivedItem.quantityReceived;
@@ -445,7 +445,7 @@ const suppliersRoutes: FastifyPluginAsync = async (fastify) => {
       }
 
       // Update purchase order status
-      const allItemsReceived = purchaseOrder.items.every(item => 
+      const allItemsReceived = purchaseOrder.items.every((item: any) => 
         item.quantityReceived >= item.quantity
       );
 

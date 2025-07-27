@@ -653,7 +653,7 @@ const restoreRoutes: FastifyPluginAsync = async (fastify) => {
         }
       });
 
-      const deletedIds = mockProducts.map(p => p.id);
+      const deletedIds = mockProducts.map((p: any) => p.id);
 
       if (deletedIds.length === 0) {
         return reply.send({
