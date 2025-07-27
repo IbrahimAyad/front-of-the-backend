@@ -34,8 +34,12 @@ async function start() {
     // Set up error handler
     app.setErrorHandler(errorHandler);
 
-    // Initialize Redis
-    await connectRedis();
+    // Initialize Redis (optional - don't fail if Redis is unavailable)
+    try {
+      await connectRedis();
+    } catch (error) {
+      logger.warn('Redis connection failed, continuing without caching:', error);
+    }
 
     // Security middleware (rate limiting, headers, etc.)
     await setupSecurity(app);

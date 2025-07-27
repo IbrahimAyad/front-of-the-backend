@@ -23,13 +23,18 @@ export class CacheService {
 
   constructor(fastify: FastifyInstance) {
     this.fastify = fastify;
-    this.redisClient = fastify.redis;
+    this.redisClient = (fastify as any).redis || null;
   }
 
   /**
    * Get a value from cache with automatic JSON parsing
    */
   async get<T>(key: string): Promise<T | null> {
+    if (!this.redisClient) {
+      this.recordMiss(key);
+      return null;
+    }
+    
     try {
       const value = await this.redisClient.get(key);
       
@@ -50,6 +55,10 @@ export class CacheService {
    * Set a value in cache with automatic JSON stringification
    */
   async set(key: string, value: any, ttl?: number): Promise<boolean> {
+    if (!this.redisClient) {
+      return false;
+    }
+    
     try {
       const serialized = JSON.stringify(value);
       
@@ -70,6 +79,10 @@ export class CacheService {
    * Delete a value from cache
    */
   async delete(key: string): Promise<boolean> {
+    if (!this.redisClient) {
+      return false;
+    }
+    
     try {
       await this.redisClient.del(key);
       return true;
@@ -83,6 +96,10 @@ export class CacheService {
    * Delete all keys matching a pattern
    */
   async deletePattern(pattern: string): Promise<number> {
+    if (!this.redisClient) {
+      return 0;
+    }
+    
     try {
       const keys = await this.redisClient.keys(pattern);
       
@@ -102,6 +119,10 @@ export class CacheService {
    * Check if a key exists in cache
    */
   async exists(key: string): Promise<boolean> {
+    if (!this.redisClient) {
+      return false;
+    }
+    
     try {
       const exists = await this.redisClient.exists(key);
       return exists === 1;
@@ -207,6 +228,11 @@ export class CacheService {
    * Warm up cache with frequently accessed data
    */
   async warmUp() {
+    if (!this.redisClient) {
+      logger.info('Cache warm-up skipped - Redis not available');
+      return;
+    }
+    
     logger.info('Starting cache warm-up...');
     
     try {

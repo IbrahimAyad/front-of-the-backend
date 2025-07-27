@@ -54,7 +54,8 @@ const redisPlugin: FastifyPluginAsync = async (fastify) => {
 
   } catch (error) {
     logger.error('Failed to initialize Redis plugin', { error: (error as Error).message });
-    throw error;
+    // Don't throw - allow server to start without Redis
+    logger.warn('Continuing without Redis caching');
   }
 };
 
