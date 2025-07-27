@@ -2,10 +2,10 @@
 nixPkgs = ['nodejs_22', 'npm-9_x']
 
 [phases.install]
-cmds = ['npm ci --production=false']
+cmds = ['npm ci']
 
 [phases.build]
-cmds = ['npx prisma generate', 'npm run build:backend']
+cmds = ['npx prisma generate', 'npm run build']
 
 [start]
 cmd = 'npm start'

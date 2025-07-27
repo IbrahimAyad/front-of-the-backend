@@ -64,9 +64,8 @@ async function start() {
     const databasePlugin = await import('./plugins/database');
     await app.register(databasePlugin.default);
 
-    // Redis plugin (must be before cache)
-    const redisPlugin = await import('./plugins/redis');
-    await app.register(redisPlugin.default);
+    // Skip Redis plugin - version mismatch with Fastify 4.x
+    // Redis is handled directly in cacheService
 
     const authPlugin = await import('./plugins/auth');
     await app.register(authPlugin.default);

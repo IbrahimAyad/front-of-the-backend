@@ -1,6 +1,5 @@
-import { FastifyInstance } from 'fastify';
-import { logger } from '../../utils/logger';
-import { getRedisClient } from '../cache/redisClient';
+import { getRedisClient, getRedisClientSync } from '@/lib/redis';
+import { prisma } from '@/lib/prisma';
 
 export interface CacheConfig {
   ttl: number; // Time to live in seconds
@@ -17,27 +16,31 @@ export enum CacheTTL {
 }
 
 export class CacheService {
-  private redisClient: any;
   private hitCount: Map<string, number> = new Map();
   private missCount: Map<string, number> = new Map();
-  private fastify: FastifyInstance;
+  private static instance: CacheService;
 
-  constructor(fastify: FastifyInstance) {
-    this.fastify = fastify;
-    this.redisClient = getRedisClient();
+  private constructor() {}
+
+  static getInstance(): CacheService {
+    if (!CacheService.instance) {
+      CacheService.instance = new CacheService();
+    }
+    return CacheService.instance;
   }
 
   /**
    * Get a value from cache with automatic JSON parsing
    */
   async get<T>(key: string): Promise<T | null> {
-    if (!this.redisClient) {
+    const redisClient = await getRedisClient();
+    if (!redisClient) {
       this.recordMiss(key);
       return null;
     }
     
     try {
-      const value = await this.redisClient.get(key);
+      const value = await redisClient.get(key);
       
       if (value) {
         this.recordHit(key);
@@ -47,7 +50,7 @@ export class CacheService {
       this.recordMiss(key);
       return null;
     } catch (error) {
-      logger.error('Cache get error', { key, error: (error as Error).message });
+      console.error('Cache get error:', { key, error: (error as Error).message });
       return null;
     }
   }
@@ -56,7 +59,8 @@ export class CacheService {
    * Set a value in cache with automatic JSON stringification
    */
   async set(key: string, value: any, ttl?: number): Promise<boolean> {
-    if (!this.redisClient) {
+    const redisClient = await getRedisClient();
+    if (!redisClient) {
       return false;
     }
     
@@ -64,14 +68,14 @@ export class CacheService {
       const serialized = JSON.stringify(value);
       
       if (ttl) {
-        await this.redisClient.setex(key, ttl, serialized);
+        await redisClient.setEx(key, ttl, serialized);
       } else {
-        await this.redisClient.set(key, serialized);
+        await redisClient.set(key, serialized);
       }
       
       return true;
     } catch (error) {
-      logger.error('Cache set error', { key, error: (error as Error).message });
+      console.error('Cache set error:', { key, error: (error as Error).message });
       return false;
     }
   }
@@ -80,15 +84,16 @@ export class CacheService {
    * Delete a value from cache
    */
   async delete(key: string): Promise<boolean> {
-    if (!this.redisClient) {
+    const redisClient = await getRedisClient();
+    if (!redisClient) {
       return false;
     }
     
     try {
-      await this.redisClient.del(key);
+      await redisClient.del(key);
       return true;
     } catch (error) {
-      logger.error('Cache delete error', { key, error: (error as Error).message });
+      console.error('Cache delete error:', { key, error: (error as Error).message });
       return false;
     }
   }
@@ -97,21 +102,22 @@ export class CacheService {
    * Delete all keys matching a pattern
    */
   async deletePattern(pattern: string): Promise<number> {
-    if (!this.redisClient) {
+    const redisClient = await getRedisClient();
+    if (!redisClient) {
       return 0;
     }
     
     try {
-      const keys = await this.redisClient.keys(pattern);
+      const keys = await redisClient.keys(pattern);
       
       if (keys.length === 0) {
         return 0;
       }
       
-      await this.redisClient.del(...keys);
+      await redisClient.del(keys);
       return keys.length;
     } catch (error) {
-      logger.error('Cache delete pattern error', { pattern, error: (error as Error).message });
+      console.error('Cache delete pattern error:', { pattern, error: (error as Error).message });
       return 0;
     }
   }
@@ -120,15 +126,16 @@ export class CacheService {
    * Check if a key exists in cache
    */
   async exists(key: string): Promise<boolean> {
-    if (!this.redisClient) {
+    const redisClient = await getRedisClient();
+    if (!redisClient) {
       return false;
     }
     
     try {
-      const exists = await this.redisClient.exists(key);
+      const exists = await redisClient.exists(key);
       return exists === 1;
     } catch (error) {
-      logger.error('Cache exists error', { key, error: (error as Error).message });
+      console.error('Cache exists error:', { key, error: (error as Error).message });
       return false;
     }
   }
@@ -229,18 +236,19 @@ export class CacheService {
    * Warm up cache with frequently accessed data
    */
   async warmUp() {
-    if (!this.redisClient) {
-      logger.info('Cache warm-up skipped - Redis not available');
+    const redisClient = await getRedisClient();
+    if (!redisClient) {
+      console.log('Cache warm-up skipped - Redis not available');
       return;
     }
     
-    logger.info('Starting cache warm-up...');
+    console.log('Starting cache warm-up...');
     
     try {
       // Warm up product catalog by categories
       const categories = ['suits', 'shirts', 'accessories', 'shoes'];
       for (const category of categories) {
-        const products = await this.fastify.prisma.product.findMany({
+        const products = await prisma.product.findMany({
           where: { 
             category,
             status: 'ACTIVE'
@@ -261,9 +269,9 @@ export class CacheService {
       // Warm up pricing rules (if model exists)
       // Note: Implement when PricingRule model is added to schema
 
-      logger.info('Cache warm-up completed');
+      console.log('Cache warm-up completed');
     } catch (error) {
-      logger.error('Cache warm-up failed', { error: (error as Error).message });
+      console.error('Cache warm-up failed:', (error as Error).message);
     }
   }
 
@@ -300,3 +308,6 @@ export const CacheKeys = {
   outfit: (id: string) => `outfits:${id}`,
   popularSearches: () => 'search:popular',
 };
+
+// Export singleton instance
+export const cacheService = CacheService.getInstance();
