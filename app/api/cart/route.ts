@@ -1,9 +1,9 @@
 import { NextRequest } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { createApiResponse } from '@/lib/utils/api-response';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma/client';
 import { z } from 'zod';
+import { cookies } from 'next/headers';
+import jwt from 'jsonwebtoken';
 
 const cartItemSchema = z.object({
   productId: z.string(),
@@ -21,11 +21,25 @@ const cartSchema = z.object({
   userId: z.string().optional()
 });
 
+async function getUserIdFromToken(): Promise<string | null> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('auth-token')?.value;
+  
+  if (!token) return null;
+  
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as any;
+    return decoded.userId;
+  } catch (error) {
+    return null;
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const userId = await getUserIdFromToken();
     
-    if (!session?.user?.id) {
+    if (!userId) {
       // Return empty cart for unauthenticated users
       return createApiResponse({
         items: [],
@@ -38,7 +52,7 @@ export async function GET(request: NextRequest) {
     
     // Get user's cart from database
     const cart = await prisma.cart.findUnique({
-      where: { userId: session.user.id },
+      where: { userId },
       include: {
         items: {
           include: {
@@ -102,7 +116,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const userId = await getUserIdFromToken();
     const body = await request.json();
     
     const validatedItem = cartItemSchema.parse(body);
@@ -134,7 +148,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Guest cart - return success without DB operation
-    if (!session?.user?.id) {
+    if (!userId) {
       return createApiResponse({
         message: 'Item added to cart',
         stockStatus: availableStock > 10 ? 'in_stock' : 'low_stock',
@@ -144,12 +158,12 @@ export async function POST(request: NextRequest) {
     
     // Get or create user cart
     let cart = await prisma.cart.findUnique({
-      where: { userId: session.user.id }
+      where: { userId }
     });
     
     if (!cart) {
       cart = await prisma.cart.create({
-        data: { userId: session.user.id }
+        data: { userId }
       });
     }
     
@@ -218,11 +232,11 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const sessionUserId = await getUserIdFromToken();
     const body = await request.json();
     
     const validated = cartSchema.parse(body);
-    const userId = validated.userId || session?.user?.id;
+    const userId = validated.userId || sessionUserId;
     
     if (!userId) {
       // Guest cart - just return success
@@ -278,14 +292,14 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const userId = await getUserIdFromToken();
     
-    if (!session?.user?.id) {
+    if (!userId) {
       return createApiResponse({ message: 'Cart cleared' });
     }
     
     const cart = await prisma.cart.findUnique({
-      where: { userId: session.user.id }
+      where: { userId }
     });
     
     if (cart) {

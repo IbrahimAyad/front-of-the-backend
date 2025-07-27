@@ -5,13 +5,9 @@
   "main": "dist/src/server.js",
   "scripts": {
     "dev": "next dev -p 8000",
-    "dev:frontend": "vite --port 3001",
     "build": "next build",
-    "build:backend": "next build",
-    "build:frontend": "vite build",
     "start": "next start -p 8000",
     "start:dev": "next dev -p 8000",
-    "preview": "vite preview",
     "postinstall": "npx prisma generate || echo 'Skipping Prisma generation'",
     "deploy": "prisma migrate deploy && prisma db seed",
     "deploy:vercel": "vercel --prod",
@@ -39,9 +35,6 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
-    "next": "14.2.5",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
     "@date-io/date-fns": "^3.2.1",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
@@ -83,10 +76,13 @@
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.516.0",
     "multer": "^1.4.5-lts.1",
+    "next": "14.2.5",
     "next-auth": "^4.24.7",
     "node-fetch": "^2.7.0",
     "openai": "^5.3.0",
     "pg": "^8.16.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "react-helmet-async": "^2.0.5",
     "react-hook-form": "^7.57.0",
     "react-hot-toast": "^2.5.2",
@@ -97,7 +93,8 @@
     "winston": "^3.17.0",
     "winston-daily-rotate-file": "^5.0.0",
     "ws": "^8.14.2",
-    "yup": "^1.6.1"
+    "yup": "^1.6.1",
+    "zod": "^4.0.10"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.4",
