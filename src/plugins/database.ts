@@ -4,13 +4,13 @@ import fp from 'fastify-plugin';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { DatabasePool, getPool } from '../lib/connection-pool';
-import { getSchemaAwareClient, SchemaAwareClient } from '../../lib/db/schema-aware-client';
+// import { getSchemaAwareClient, SchemaAwareClient } from '../../lib/db/schema-aware-client';
 
 const execAsync = promisify(exec);
 
 declare module 'fastify' {
   interface FastifyInstance {
-    prisma: SchemaAwareClient;
+    prisma: PrismaClient;
     dbPool: DatabasePool;
   }
 }
@@ -157,8 +157,14 @@ const databasePlugin: FastifyPluginAsync = async (fastify) => {
     return;
   }
 
-  // Initialize the schema-aware client
-  const schemaAwareClient = getSchemaAwareClient();
+  // Initialize standard Prisma client
+  const prisma = new PrismaClient({
+    log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error']
+  });
+  
+  // Connect to database
+  await prisma.$connect();
+  fastify.log.info('✅ Database connected successfully');
   
   // Initialize the optimized database pool
   const dbPool = DatabasePool.getInstance();
@@ -166,8 +172,8 @@ const databasePlugin: FastifyPluginAsync = async (fastify) => {
   // Initialize and health check the pool
   await initializeDatabasePool(dbPool);
   
-  // Decorate fastify instance with schema-aware client and dbPool
-  fastify.decorate('prisma', schemaAwareClient);
+  // Decorate fastify instance with prisma and dbPool
+  fastify.decorate('prisma', prisma);
   fastify.decorate('dbPool', dbPool);
 
   // Run migrations and seeding asynchronously after the plugin loads
@@ -175,7 +181,7 @@ const databasePlugin: FastifyPluginAsync = async (fastify) => {
     // Check if database tables exist and run migrations if needed
     try {
       // Test if users table exists
-      await schemaAwareClient.getClient(true).user.findFirst();
+      await prisma.user.findFirst();
       fastify.log.info('✅ Database tables exist, skipping migrations');
     } catch (error: any) {
       if (error.message.includes('does not exist') || error.code === 'P2021') {
@@ -233,7 +239,8 @@ const databasePlugin: FastifyPluginAsync = async (fastify) => {
   });
 
   fastify.addHook('onClose', async (instance) => {
-    fastify.log.info('🔌 Shutting down database pools...');
+    fastify.log.info('🔌 Shutting down database connection...');
+    await instance.prisma.$disconnect();
     await instance.dbPool.shutdown();
   });
 };
