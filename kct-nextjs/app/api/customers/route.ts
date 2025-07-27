@@ -2,14 +2,14 @@ import { NextRequest, NextResponse } from 'next/server'
 import { withAuth, AuthenticatedRequest } from '@/middleware/auth'
 import { CustomerService } from '@/lib/services/customer.service'
 import { createApiResponse } from '@/lib/api/response'
-import { prisma } from '@/lib/prisma'
+import { withQueryRouting, withDatabaseHealth } from '@/middleware/query-routing'
 import { CacheService } from '@/lib/services/cache.service'
 
 const cacheService = new CacheService()
-const customerService = new CustomerService(prisma, cacheService)
+const customerService = new CustomerService({} as any, cacheService)
 
-// GET /api/customers - Protected endpoint (ALL authenticated users)
-export const GET = withAuth(async (request: AuthenticatedRequest) => {
+// GET /api/customers - Protected endpoint with query routing
+export const GET = withAuth(withQueryRouting(withDatabaseHealth(async (request: AuthenticatedRequest) => {
   try {
     const { searchParams } = new URL(request.url)
     
@@ -47,7 +47,7 @@ export const GET = withAuth(async (request: AuthenticatedRequest) => {
       status: 500
     })
   }
-})
+})))
 
 // POST /api/customers - Protected endpoint (ADMIN/STAFF only)
 export const POST = withAuth(async (request: AuthenticatedRequest) => {

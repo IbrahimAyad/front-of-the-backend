@@ -5,16 +5,17 @@ import { OrderService } from '@/lib/services/order.service'
 import { ProductService } from '@/lib/services/product.service'
 import { CustomerService } from '@/lib/services/customer.service'
 import { OrderStatus, PaymentStatus } from '@/lib/types/order.types'
-import { prisma } from '@/lib/prisma'
+import { withQueryRouting, withDatabaseHealth } from '@/middleware/query-routing'
+import { executeRead } from '@/lib/db/schema-aware-client'
 import { CacheService } from '@/lib/services/cache.service'
 
 const cacheService = new CacheService()
-const productService = new ProductService({ prisma, cache: cacheService })
-const customerService = new CustomerService(prisma, cacheService)
-const orderService = new OrderService({ prisma, productService, cache: cacheService })
+const productService = new ProductService({ cache: cacheService })
+const customerService = new CustomerService({} as any, cacheService)
+const orderService = new OrderService({ productService, cache: cacheService })
 
-// GET /api/dashboard - Protected endpoint (ADMIN/STAFF only)
-export const GET = withAuth(async (request: AuthenticatedRequest) => {
+// GET /api/dashboard - Protected endpoint with query routing
+export const GET = withAuth(withQueryRouting(withDatabaseHealth(async (request: AuthenticatedRequest) => {
   try {
     const { searchParams } = new URL(request.url)
     
@@ -54,8 +55,8 @@ export const GET = withAuth(async (request: AuthenticatedRequest) => {
       // Low stock products
       productService.checkLowStock(),
       
-      // Top customers by order count
-      prisma.customer.findMany({
+      // Top customers by order count (using read replica)
+      executeRead(async (client) => client.customer.findMany({
         select: {
           id: true,
           email: true,
@@ -76,16 +77,16 @@ export const GET = withAuth(async (request: AuthenticatedRequest) => {
           }
         },
         take: 5
-      }),
+      })),
       
       // Order metrics
       orderService.getMetrics({ startDate, endDate }),
       
-      // Total products
-      prisma.product.count(),
+      // Total products (using read replica)
+      executeRead(async (client) => client.product.count()),
       
-      // Total customers
-      prisma.customer.count(),
+      // Total customers (using read replica)
+      executeRead(async (client) => client.customer.count()),
       
       // Revenue by period (last 7 days)
       orderService.getRevenueByPeriod('day', {
@@ -103,8 +104,8 @@ export const GET = withAuth(async (request: AuthenticatedRequest) => {
       totalSpent: customer.orders.reduce((sum, order) => sum + order.total, 0)
     }))
     
-    // Calculate additional metrics
-    const todayRevenue = await prisma.order.aggregate({
+    // Calculate additional metrics (using read replica)
+    const todayRevenue = await executeRead(async (client) => client.order.aggregate({
       where: {
         createdAt: {
           gte: new Date(new Date().setHours(0, 0, 0, 0)),
@@ -115,13 +116,13 @@ export const GET = withAuth(async (request: AuthenticatedRequest) => {
       _sum: {
         total: true
       }
-    })
+    }))
     
-    const pendingOrdersCount = await prisma.order.count({
+    const pendingOrdersCount = await executeRead(async (client) => client.order.count({
       where: {
         status: OrderStatus.PENDING
       }
-    })
+    }))
     
     const dashboardData = {
       overview: {
@@ -157,4 +158,4 @@ export const GET = withAuth(async (request: AuthenticatedRequest) => {
       status: 500
     })
   }
-}, { requireRole: 'ADMIN' })
+})), { requireRole: 'ADMIN' })

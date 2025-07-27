@@ -1,3 +1,32 @@
+import { getSchemaAwareClient } from '../db/schema-aware-client'
+import { createCustomerService } from './customer.service'
+import { CacheService } from './cache.service'
+
+// Initialize the schema-aware client
+const schemaAwareClient = getSchemaAwareClient()
+
+// Initialize cache service (if available)
+let cacheService: CacheService | undefined;
+try {
+  cacheService = new CacheService()
+} catch (error) {
+  console.warn('Cache service not available:', error)
+}
+
+// Initialize services with schema-aware client
+export const customerService = createCustomerService({
+  prisma: schemaAwareClient,
+  cache: cacheService
+})
+
+// Export the schema-aware client for direct use if needed
+export { schemaAwareClient as prisma }
+
+// Health check for all schemas
+export const healthCheck = async () => {
+  return await schemaAwareClient.healthCheck()
+}
+
 // Service exports
 export * from './auth.service';
 export * from './product.service';

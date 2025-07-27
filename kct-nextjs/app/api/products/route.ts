@@ -4,14 +4,14 @@ import { ProductService } from '@/lib/services/product.service'
 import { createApiResponse } from '@/lib/api/response'
 import { handleApiError } from '@/lib/error-handler'
 import { withRateLimit, defaultLimiter } from '@/lib/rate-limit'
-import { prisma } from '@/lib/prisma'
+import { withQueryRouting, withDatabaseHealth } from '@/middleware/query-routing'
 import { CacheService } from '@/lib/services/cache.service'
 
 const cacheService = new CacheService()
-const productService = new ProductService({ prisma, cache: cacheService })
+const productService = new ProductService({ cache: cacheService })
 
-// GET /api/products - Public endpoint with caching
-export const GET = withRateLimit(async (request: NextRequest) => {
+// GET /api/products - Public endpoint with caching and query routing
+export const GET = withRateLimit(withQueryRouting(withDatabaseHealth(async (request: NextRequest) => {
   try {
     const { searchParams } = new URL(request.url)
     
@@ -77,7 +77,7 @@ export const GET = withRateLimit(async (request: NextRequest) => {
   } catch (error) {
     return handleApiError(error, 'Products GET')
   }
-}, defaultLimiter, 30) // 30 requests per minute for public endpoint
+})), defaultLimiter, 30) // 30 requests per minute for public endpoint
 
 // POST /api/products - Protected endpoint (ADMIN only)
 export const POST = withAuth(async (request: AuthenticatedRequest) => {

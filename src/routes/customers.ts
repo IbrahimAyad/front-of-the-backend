@@ -29,7 +29,7 @@ const customersRoutes: FastifyPluginAsync = async (fastify) => {
 
       // Get customers with profiles and calculate analytics
       const [customers, total, analytics] = await Promise.all([
-        fastify.prisma.customer.findMany({
+        fastify.prisma.customers.findMany({
           where,
           skip,
           take: parseInt(limit),
@@ -54,8 +54,8 @@ const customersRoutes: FastifyPluginAsync = async (fastify) => {
             }
           },
         }),
-        fastify.prisma.customer.count({ where }),
-        fastify.prisma.customerProfile.aggregate({
+        fastify.prisma.getClient(true).customer.count({ where }),
+        fastify.prisma.getClient(true).customerProfile.aggregate({
           _count: { id: true },
           _avg: { engagementScore: true, totalSpent: true },
           _sum: { totalSpent: true, totalOrders: true },
@@ -63,7 +63,7 @@ const customersRoutes: FastifyPluginAsync = async (fastify) => {
       ]);
 
       // Calculate tier distribution
-      const tierDistribution = await fastify.prisma.customerProfile.groupBy({
+      const tierDistribution = await fastify.prisma.getClient(true).customerProfile.groupBy({
         by: ['customerTier'],
         _count: { customerTier: true },
       });
@@ -124,7 +124,7 @@ const customersRoutes: FastifyPluginAsync = async (fastify) => {
       }
 
       const [customers, total] = await Promise.all([
-        fastify.prisma.customer.findMany({
+        fastify.prisma.customers.findMany({
           where,
           skip,
           take: parseInt(limit),
@@ -133,7 +133,7 @@ const customersRoutes: FastifyPluginAsync = async (fastify) => {
             profile: true, // Include customer profiles for enhanced data
           },
         }),
-        fastify.prisma.customer.count({ where }),
+        fastify.prisma.getClient(true).customer.count({ where }),
       ]);
 
       reply.send({
@@ -175,7 +175,7 @@ const customersRoutes: FastifyPluginAsync = async (fastify) => {
       }
 
       const [customers, total] = await Promise.all([
-        fastify.prisma.customer.findMany({
+        fastify.prisma.customers.findMany({
           where,
           skip,
           take: parseInt(limit),
@@ -184,7 +184,7 @@ const customersRoutes: FastifyPluginAsync = async (fastify) => {
             profile: true, // Include customer profiles for enhanced data
           },
         }),
-        fastify.prisma.customer.count({ where }),
+        fastify.prisma.getClient(true).customer.count({ where }),
       ]);
 
       reply.send({
@@ -222,7 +222,7 @@ const customersRoutes: FastifyPluginAsync = async (fastify) => {
         });
       }
 
-      const customer = await fastify.prisma.customer.create({
+      const customer = await fastify.prisma.customers.create({
         data: value,
       });
 
@@ -262,7 +262,7 @@ const customersRoutes: FastifyPluginAsync = async (fastify) => {
         });
       }
 
-      const customer = await fastify.prisma.customer.findUnique({
+      const customer = await fastify.prisma.customers.findUnique({
         where: { id: id },
         include: {
           orders: {

@@ -1,10 +1,12 @@
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
 }
 
 datasource db {
   provider = "postgresql"
   url = env("DATABASE_URL")
+  schemas = ["public", "tenant_kct", "tenant_shared", "analytics"]
   // For local development, you can use SQLite by changing to:
   // provider = "sqlite"
   // url = "file:./dev.db"
@@ -15,6 +17,8 @@ enum UserRole {
   MANAGER
   STAFF
   CUSTOMER
+
+  @@schema("public")
 }
 
 enum OrderStatus {
@@ -24,6 +28,8 @@ enum OrderStatus {
   COMPLETED
   CANCELLED
   DELIVERED
+
+  @@schema("public")
 }
 
 enum AppointmentStatus {
@@ -33,6 +39,8 @@ enum AppointmentStatus {
   COMPLETED
   CANCELLED
   NO_SHOW
+
+  @@schema("public")
 }
 
 enum AppointmentType {
@@ -41,6 +49,8 @@ enum AppointmentType {
   MEASUREMENT
   DELIVERY
   FOLLOW_UP
+
+  @@schema("public")
 }
 
 enum LeadStatus {
@@ -51,6 +61,8 @@ enum LeadStatus {
   NEGOTIATION
   CLOSED_WON
   CLOSED_LOST
+
+  @@schema("public")
 }
 
 enum LeadSource {
@@ -60,6 +72,8 @@ enum LeadSource {
   ADVERTISING
   WALK_IN
   OTHER
+
+  @@schema("public")
 }
 
 model User {
@@ -76,6 +90,7 @@ model User {
   updatedAt    DateTime @updatedAt
 
   @@map("users")
+  @@schema("public")
 }
 
 model Customer {
@@ -110,6 +125,7 @@ model Customer {
   recommendations     ProductRecommendations[]
 
   @@map("customers")
+  @@schema("tenant_kct")
 }
 
 model Product {
@@ -207,6 +223,7 @@ model Product {
   @@index([tags])
   @@index([colorFamily])
   @@map("products")
+  @@schema("tenant_shared")
 }
 
 // Smart Collections System
@@ -234,6 +251,7 @@ model Collection {
   updatedAt   DateTime @updatedAt
 
   @@map("collections")
+  @@schema("tenant_shared")
 }
 
 model ProductCollection {
@@ -247,6 +265,7 @@ model ProductCollection {
   @@id([productId, collectionId])
   @@index([collectionId])
   @@map("product_collections")
+  @@schema("tenant_shared")
 }
 
 model ProductVariant {
@@ -291,6 +310,7 @@ model ProductVariant {
   inventoryLogs InventoryLog[]
 
   @@map("product_variants")
+  @@schema("tenant_shared")
 }
 
 model ProductImage {
@@ -310,6 +330,7 @@ model ProductImage {
   product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@map("product_images")
+  @@schema("tenant_shared")
 }
 
 model Supplier {
@@ -348,6 +369,7 @@ model Supplier {
   purchaseOrders PurchaseOrder[]
 
   @@map("suppliers")
+  @@schema("tenant_shared")
 }
 
 model PurchaseOrder {
@@ -376,6 +398,7 @@ model PurchaseOrder {
   items         PurchaseOrderItem[]
 
   @@map("purchase_orders")
+  @@schema("tenant_shared")
 }
 
 model PurchaseOrderItem {
@@ -395,6 +418,7 @@ model PurchaseOrderItem {
   purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
 
   @@map("purchase_order_items")
+  @@schema("tenant_shared")
 }
 
 model InventoryLog {
@@ -416,6 +440,7 @@ model InventoryLog {
   variant     ProductVariant? @relation(fields: [variantId], references: [id])
 
   @@map("inventory_logs")
+  @@schema("tenant_shared")
 }
 
 model StockAlert {
@@ -432,6 +457,7 @@ model StockAlert {
   resolvedAt  DateTime?
 
   @@map("stock_alerts")
+  @@schema("tenant_shared")
 }
 
 model ProductReview {
@@ -454,6 +480,7 @@ model ProductReview {
   product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@map("product_reviews")
+  @@schema("tenant_shared")
 }
 
 model Order {
@@ -473,6 +500,7 @@ model Order {
   items    OrderItem[]
 
   @@map("orders")
+  @@schema("tenant_kct")
 }
 
 model OrderItem {
@@ -490,6 +518,7 @@ model OrderItem {
   variant ProductVariant? @relation(fields: [variantId], references: [id])
 
   @@map("order_items")
+  @@schema("tenant_kct")
 }
 
 model Appointment {
@@ -508,6 +537,7 @@ model Appointment {
   customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
   @@map("appointments")
+  @@schema("tenant_kct")
 }
 
 model Lead {
@@ -524,6 +554,7 @@ model Lead {
   customer Customer? @relation(fields: [customerId], references: [id])
 
   @@map("leads")
+  @@schema("tenant_kct")
 }
 
 model Measurement {
@@ -547,6 +578,7 @@ model Measurement {
   customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
   @@map("measurements")
+  @@schema("tenant_kct")
 }
 
 model AiAction {
@@ -556,6 +588,8 @@ model AiAction {
   output    Json
   status    String
   createdAt DateTime @default(now())
+
+  @@schema("public")
 }
 
 // Customer Profile Extension for rich customer data
@@ -611,6 +645,7 @@ model CustomerProfile {
   purchaseHistory  PurchaseHistory[]
   
   @@map("customer_profiles")
+  @@schema("tenant_kct")
 }
 
 model PurchaseHistory {
@@ -627,6 +662,7 @@ model PurchaseHistory {
   customerProfile CustomerProfile @relation(fields: [customerProfileId], references: [id], onDelete: Cascade)
   
   @@map("purchase_histories")
+  @@schema("tenant_kct")
 }
 
 model CustomerSegment {
@@ -644,6 +680,7 @@ model CustomerSegment {
   updatedAt   DateTime @updatedAt
   
   @@map("customer_segments")
+  @@schema("analytics")
 }
 
 // Outfit Components for custom outfit building
@@ -670,6 +707,7 @@ model OutfitTemplate {
   savedOutfits SavedOutfit[]
   
   @@map("outfit_templates")
+  @@schema("tenant_kct")
 }
 
 model OutfitComponent {
@@ -686,6 +724,7 @@ model OutfitComponent {
   product       Product        @relation(fields: [productId], references: [id])
   
   @@map("outfit_components")
+  @@schema("tenant_kct")
 }
 
 model SavedOutfit {
@@ -707,6 +746,7 @@ model SavedOutfit {
   template      OutfitTemplate? @relation(fields: [templateId], references: [id])
   
   @@map("saved_outfits")
+  @@schema("tenant_kct")
 }
 
 // Smart color system
@@ -726,6 +766,7 @@ model ColorPalette {
   createdAt       DateTime @default(now())
   
   @@map("color_palettes")
+  @@schema("tenant_shared")
 }
 
 // Event configuration for smart filtering
@@ -746,6 +787,7 @@ model EventProfile {
   createdAt       DateTime @default(now())
   
   @@map("event_profiles")
+  @@schema("tenant_shared")
 }
 
 // ====================================
@@ -784,6 +826,7 @@ model CustomerPurchaseHistory {
   updatedAt         DateTime @updatedAt
   
   @@map("customer_purchase_history")
+  @@schema("analytics")
 }
 
 model CustomerSizeAnalysis {
@@ -820,6 +863,7 @@ model CustomerSizeAnalysis {
   updatedAt            DateTime @updatedAt
   
   @@map("customer_size_analysis")
+  @@schema("analytics")
 }
 
 model CustomerInsights {
@@ -866,6 +910,7 @@ model CustomerInsights {
   updatedAt           DateTime @updatedAt
   
   @@map("customer_insights")
+  @@schema("analytics")
 }
 
 model ProductRecommendations {
@@ -900,6 +945,7 @@ model ProductRecommendations {
   updatedAt         DateTime @updatedAt
   
   @@map("product_recommendations")
+  @@schema("analytics")
 }
 
 

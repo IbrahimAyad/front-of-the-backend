@@ -1,4 +1,4 @@
-import winston from 'winston';
+import * as winston from 'winston';
 
 // Create logger configuration
 const loggerConfig: winston.LoggerOptions = {

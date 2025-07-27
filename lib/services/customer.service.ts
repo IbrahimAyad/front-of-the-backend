@@ -59,25 +59,22 @@ export interface CustomerPreferences {
 
 export interface CustomerServiceDependencies {
   prisma: {
-    customer: {
+    customers: {
       findMany: (args?: any) => Promise<Customer[]>;
       findUnique: (args: any) => Promise<Customer | null>;
       create: (args: any) => Promise<Customer>;
       update: (args: any) => Promise<Customer>;
       delete: (args: any) => Promise<Customer>;
-      count: (args?: any) => Promise<number>;
     };
-    address: {
-      findMany: (args?: any) => Promise<Address[]>;
-      create: (args: any) => Promise<Address>;
-      update: (args: any) => Promise<Address>;
-      delete: (args: any) => Promise<Address>;
-    };
-    order: {
+    orders: {
       findMany: (args?: any) => Promise<any[]>;
-      aggregate: (args?: any) => Promise<any>;
+      findUnique: (args: any) => Promise<any>;
+      create: (args: any) => Promise<any>;
+      update: (args: any) => Promise<any>;
+      delete: (args: any) => Promise<any>;
     };
-    $transaction: (fn: any) => Promise<any>;
+    getClient: (readonly?: boolean) => any;
+    query: (sql: string, params?: any[], schema?: string) => Promise<any[]>;
   };
   orderService?: OrderService;
   cache?: CacheService;
@@ -137,10 +134,11 @@ export class CustomerService {
       }
     }
 
-    const customer = await this.prisma.customer.findUnique({
+    const customer = await this.prisma.customers.findUnique({
       where: { id },
       include: {
-        addresses: true,
+        profile: true,
+        orders: true,
       },
     });
 
@@ -158,10 +156,11 @@ export class CustomerService {
   }
 
   async findByEmail(email: string): Promise<Customer | null> {
-    const customer = await this.prisma.customer.findUnique({
+    const customer = await this.prisma.customers.findUnique({
       where: { email },
       include: {
-        addresses: true,
+        profile: true,
+        orders: true,
       },
     });
 
@@ -192,16 +191,17 @@ export class CustomerService {
     }
 
     const [customers, total] = await Promise.all([
-      this.prisma.customer.findMany({
+      this.prisma.customers.findMany({
         where,
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
         include: {
-          addresses: true,
+          profile: true,
+          orders: true,
         },
       }),
-      this.prisma.customer.count({ where }),
+      this.prisma.getClient(true).customer.count({ where }),
     ]);
 
     // Apply post-fetch filters based on order data
@@ -242,7 +242,7 @@ export class CustomerService {
     dateOfBirth?: Date;
     address?: Omit<Address, 'id' | 'customerId'>;
   }): Promise<Customer> {
-    const customer = await this.prisma.$transaction(async (tx: any) => {
+    const customer = await this.prisma.getClient(false).$transaction(async (tx: any) => {
       const newCustomer = await tx.customer.create({
         data: {
           email: data.email,
@@ -277,7 +277,7 @@ export class CustomerService {
   async update(id: string, data: Partial<Customer>): Promise<Customer> {
     const { addresses, measurements, preferences, ...customerData } = data;
 
-    await this.prisma.customer.update({
+    await this.prisma.customers.update({
       where: { id },
       data: {
         ...customerData,
@@ -295,7 +295,7 @@ export class CustomerService {
   }
 
   async updateMeasurements(id: string, measurements: CustomerMeasurements): Promise<Customer> {
-    await this.prisma.customer.update({
+    await this.prisma.customers.update({
       where: { id },
       data: {
         measurements: {
@@ -321,7 +321,7 @@ export class CustomerService {
     const currentPreferences = customer.preferences || {};
     const updatedPreferences = { ...currentPreferences, ...preferences };
 
-    await this.prisma.customer.update({
+    await this.prisma.customers.update({
       where: { id },
       data: {
         preferences: updatedPreferences as any,
@@ -335,54 +335,11 @@ export class CustomerService {
     return this.findById(id) as Promise<Customer>;
   }
 
-  async addAddress(customerId: string, address: Omit<Address, 'id' | 'customerId'>): Promise<Address> {
-    // If this is set as default, unset other defaults
-    if (address.isDefault) {
-      await this.prisma.address.updateMany({
-        where: { customerId, type: address.type },
-        data: { isDefault: false },
-      });
-    }
-
-    const newAddress = await this.prisma.address.create({
-      data: {
-        customerId,
-        ...address,
-      },
-    });
-
-    if (this.cache) {
-      await this.cache.invalidate(`customer:${customerId}`);
-    }
-
-    return newAddress;
-  }
-
-  async updateAddress(addressId: string, data: Partial<Address>): Promise<Address> {
-    const address = await this.prisma.address.update({
-      where: { id: addressId },
-      data,
-    });
-
-    if (this.cache && address.customerId) {
-      await this.cache.invalidate(`customer:${address.customerId}`);
-    }
-
-    return address;
-  }
-
-  async deleteAddress(addressId: string): Promise<void> {
-    const address = await this.prisma.address.delete({
-      where: { id: addressId },
-    });
-
-    if (this.cache && address.customerId) {
-      await this.cache.invalidate(`customer:${address.customerId}`);
-    }
-  }
+  // Address management moved to separate address service
+  // since addresses may be in a different schema
 
   async getPurchaseHistory(customerId: string, limit: number = 10): Promise<any[]> {
-    const orders = await this.prisma.order.findMany({
+    const orders = await this.prisma.orders.findMany({
       where: { customerId },
       orderBy: { createdAt: 'desc' },
       take: limit,
@@ -401,7 +358,7 @@ export class CustomerService {
 
   async getAnalytics(customerId: string): Promise<CustomerAnalytics> {
     const [orders, customer] = await Promise.all([
-      this.prisma.order.findMany({
+      this.prisma.orders.findMany({
         where: { customerId },
         include: {
           items: {
@@ -552,7 +509,7 @@ export class CustomerService {
       throw new Error('Customer not found');
     }
 
-    await this.prisma.customer.update({
+    await this.prisma.customers.update({
       where: { id: customerId },
       data: {
         loyaltyPoints: (customer.loyaltyPoints || 0) + points,
@@ -567,7 +524,7 @@ export class CustomerService {
   }
 
   private async enrichCustomerData(customer: any): Promise<Customer> {
-    const orderStats = await this.prisma.order.aggregate({
+    const orderStats = await this.prisma.getClient(true).order.aggregate({
       where: { customerId: customer.id },
       _sum: { total: true },
       _count: true,
