@@ -1,10 +1,5 @@
 {
   "version": 2,
   "buildCommand": "npm run build",
-  "framework": "nextjs",
-  "env": {
-    "DATABASE_URL": "@database-url",
-    "JWT_SECRET": "@jwt-secret",
-    "REDIS_URL": "@redis-url"
-  }
+  "framework": "nextjs"
 }
