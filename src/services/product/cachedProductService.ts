@@ -241,11 +241,11 @@ export class CachedProductService {
         include: {
           variants: {
             take: 1,
-            orderBy: { displayOrder: 'asc' }
+            orderBy: { createdAt: 'asc' }
           },
           images: {
             take: 1,
-            orderBy: { displayOrder: 'asc' }
+            orderBy: { position: 'asc' }
           }
         },
         take: limit,

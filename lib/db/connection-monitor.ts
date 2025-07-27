@@ -361,24 +361,22 @@ ${this.getProblematicQueries(5)
 
 // Connection monitoring middleware
 export function createConnectionMonitoringMiddleware(monitor: ConnectionMonitor) {
-  return {
-    async $allOperations(params: any, next: (params: any) => Promise<any>) {
-      const start = Date.now();
-      monitor.trackConnection();
+  return async (params: any, next: (params: any) => Promise<any>) => {
+    const start = Date.now();
+    monitor.trackConnection();
 
-      try {
-        const result = await next(params);
-        const duration = Date.now() - start;
-        monitor.trackQuery(params.action, duration);
-        return result;
-      } catch (error) {
-        const duration = Date.now() - start;
-        monitor.trackQuery(params.action, duration, error as Error);
-        monitor.trackConnectionError(error as Error);
-        throw error;
-      } finally {
-        monitor.trackDisconnection();
-      }
+    try {
+      const result = await next(params);
+      const duration = Date.now() - start;
+      monitor.trackQuery(params.action, duration);
+      return result;
+    } catch (error) {
+      const duration = Date.now() - start;
+      monitor.trackQuery(params.action, duration, error as Error);
+      monitor.trackConnectionError(error as Error);
+      throw error;
+    } finally {
+      monitor.trackDisconnection();
     }
   };
 }

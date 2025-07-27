@@ -105,7 +105,7 @@ export class CachedPricingService {
         const productPrices = products.map((product, index) => ({
           id: product.id,
           quantity: quantities[index],
-          basePrice: product.price * quantities[index]
+          basePrice: Number(product.price) * quantities[index]
         }));
 
         const baseTotal = productPrices.reduce((sum, p) => sum + p.basePrice, 0);
@@ -180,7 +180,7 @@ export class CachedPricingService {
         }
 
         const rules = await this.getActivePricingRules();
-        const basePrice = product.price * quantity;
+        const basePrice = Number(product.price) * quantity;
         let discount = 0;
         const appliedRules: string[] = [];
 
