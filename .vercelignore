@@ -4,8 +4,13 @@ src/routes/
 src/plugins/
 src/schemas/
 dist/
-prisma/
 railway.toml
+
+# Prisma files to ignore (but keep schema.prisma)
+prisma/migrations/
+prisma/*.ts
+prisma/*.js
+!prisma/schema.prisma
 
 # Database
 *.db
