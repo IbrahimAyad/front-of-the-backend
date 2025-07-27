@@ -85,7 +85,7 @@ export class CacheService {
         args.push('XX');
       }
       
-      const result = await this.redis.set(...args);
+      const result = await this.redis.set(...args as [string, any, ...any[]]);
       return result === 'OK';
     } catch (error) {
       console.error(`Cache setWithOptions error for key ${key}:`, error);

@@ -25,12 +25,7 @@ export {
   type QueryMetrics
 } from './connection-monitor';
 
-// Circuit breaker exports (if needed for other services)
-export {
-  createCircuitBreaker,
-  CircuitState,
-  type CircuitBreakerOptions
-} from './serverless-circuit-breaker';
+// Circuit breaker exports removed - requires @vercel/kv
 
 // Usage example for Next.js API routes:
 /*

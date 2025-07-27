@@ -50,7 +50,7 @@ export class AuthService {
   generateToken(payload: TokenPayload): string {
     try {
       const token = jwt.sign(payload, this.jwtSecret, {
-        expiresIn: this.jwtExpiresIn,
+        expiresIn: this.jwtExpiresIn as any,
       });
       return token;
     } catch (error) {

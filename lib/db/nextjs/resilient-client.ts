@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { CircuitBreaker, CircuitBreakerFactory } from '../circuit-breaker';
-import { ConnectionRetry, databaseRetry } from '../connection-retry';
+import { ConnectionRetry, RETRYABLE_POSTGRES_ERRORS } from '../connection-retry';
 import { ConnectionMonitor } from './connection-monitor';
 
 // Singleton instance for Next.js
@@ -79,7 +79,7 @@ export class ResilientPrismaClient {
       maxDelay: 5000,
       factor: 2,
       jitter: true,
-      retryableErrors: databaseRetry.defaultOptions.retryableErrors
+      retryableErrors: RETRYABLE_POSTGRES_ERRORS
     });
 
     // Initialize monitoring only in production

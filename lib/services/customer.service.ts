@@ -114,9 +114,9 @@ export interface CustomerAnalytics {
 }
 
 export class CustomerService {
-  private readonly prisma: CustomerServiceDependencies['prisma'];
-  private readonly orderService?: OrderService;
-  private readonly cache?: CacheService;
+  protected readonly prisma: CustomerServiceDependencies['prisma'];
+  protected readonly orderService?: OrderService;
+  protected readonly cache?: CacheService;
 
   constructor(dependencies: CustomerServiceDependencies) {
     this.prisma = dependencies.prisma;
