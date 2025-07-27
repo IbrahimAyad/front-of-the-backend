@@ -7,6 +7,7 @@ import { SERVER_CONFIG } from '../config/server';
 declare module 'fastify' {
   interface FastifyInstance {
     authenticate: (request: any, reply: any) => Promise<void>;
+    requireRole: (roles: string[]) => (request: any, reply: any) => Promise<void>;
     hashPassword: (password: string) => Promise<string>;
     comparePassword: (password: string, hash: string) => Promise<boolean>;
     generateTokens: (userId: string) => { accessToken: string; refreshToken: string };
@@ -68,6 +69,20 @@ const authPlugin: FastifyPluginAsync = async (fastify) => {
     const accessToken = jwt.sign({ userId }, SERVER_CONFIG.JWT_SECRET, { expiresIn: '15m' });
     const refreshToken = jwt.sign({ userId }, SERVER_CONFIG.JWT_REFRESH_SECRET, { expiresIn: '7d' });
     return { accessToken, refreshToken };
+  });
+
+  fastify.decorate('requireRole', (roles: string[]) => {
+    return async (request: any, reply: any) => {
+      if (!request.user) {
+        reply.code(401).send({ success: false, error: 'Authentication required' });
+        return;
+      }
+
+      if (!roles.includes(request.user.role)) {
+        reply.code(403).send({ success: false, error: 'Insufficient permissions' });
+        return;
+      }
+    };
   });
 };
 

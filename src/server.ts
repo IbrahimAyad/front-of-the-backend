@@ -60,8 +60,20 @@ async function start() {
     const databasePlugin = await import('./plugins/database');
     await app.register(databasePlugin.default);
 
+    // Redis plugin (must be before cache)
+    const redisPlugin = await import('./plugins/redis');
+    await app.register(redisPlugin.default);
+
     const authPlugin = await import('./plugins/auth');
     await app.register(authPlugin.default);
+
+    // Cache plugin (depends on database and redis)
+    const cachePlugin = await import('./plugins/cache');
+    await app.register(cachePlugin.default);
+
+    // Performance monitoring plugin
+    const performancePlugin = await import('./plugins/performance');
+    await app.register(performancePlugin.default);
 
     const websocketPlugin = await import('./plugins/websocket');
     await app.register(websocketPlugin.default);
@@ -87,6 +99,10 @@ async function start() {
 
     const productsRoutes = await import('./routes/products');
     await app.register(productsRoutes.default, { prefix: '/api/products' });
+    
+    // Cached product routes
+    const cachedProductRoutes = await import('./routes/products/cached');
+    await app.register(cachedProductRoutes.default, { prefix: '/api/cached/products' });
 
     const suppliersRoutes = await import('./routes/suppliers');
     await app.register(suppliersRoutes.default, { prefix: '/api/suppliers' });
@@ -122,6 +138,11 @@ async function start() {
     // Import and register Health routes
     const healthRoutes = await import('./routes/health');
     await app.register(healthRoutes.default);
+    
+    // Register cache invalidation hooks
+    const { registerCacheInvalidationHooks, setupDatabaseCacheInvalidation } = await import('./hooks/cacheInvalidation');
+    registerCacheInvalidationHooks(app);
+    setupDatabaseCacheInvalidation(app);
 
     // Additional health check for database
     app.get('/health/db', async (request: FastifyRequest, reply: FastifyReply) => {
