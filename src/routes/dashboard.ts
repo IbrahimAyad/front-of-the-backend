@@ -11,7 +11,7 @@ const dashboardRoutes: FastifyPluginAsync = async (fastify) => {
       let totalOrders = 0;
       let totalLeads = 0;
       let pendingAppointments = 0;
-      let recentOrders = [];
+      let recentOrders: any[] = [];
 
       try {
         totalCustomers = await fastify.prisma.customer.count();
@@ -88,9 +88,9 @@ const dashboardRoutes: FastifyPluginAsync = async (fastify) => {
     preHandler: fastify.authenticate,
   }, async (request, reply) => {
     try {
-      let recentOrders = [];
-      let recentLeads = [];
-      let recentAppointments = [];
+      let recentOrders: any[] = [];
+      let recentLeads: any[] = [];
+      let recentAppointments: any[] = [];
 
       try {
         recentOrders = await fastify.prisma.order.findMany({
