@@ -7,7 +7,7 @@
     "dev": "nodemon --exec tsx src/server.ts",
     "dev:frontend": "vite --port 3001",
     "build": "prisma generate && tsc --project tsconfig.server.json",
-    "build:backend": "prisma generate && tsc --project tsconfig.server.json",
+    "build:backend": "tsc --project tsconfig.server.json",
     "build:frontend": "vite build",
     "start": "node dist/src/server.js",
     "start:dev": "tsx src/server.ts",
