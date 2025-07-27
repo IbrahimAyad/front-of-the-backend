@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start -p 8000",
     "start:dev": "next dev -p 8000",
-    "postinstall": "npx prisma generate || echo 'Skipping Prisma generation'",
+    "postinstall": "prisma generate || true",
     "deploy": "prisma migrate deploy && prisma db seed",
     "deploy:vercel": "vercel --prod",
     "deploy:netlify": "netlify deploy --prod --dir=dist",
