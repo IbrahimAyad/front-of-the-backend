@@ -24,7 +24,13 @@
     "seed:customers": "tsx prisma/seed-customers.ts",
     "seed:profiles": "tsx prisma/populate-customer-profiles.ts",
     "db:migrate": "prisma migrate dev",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
+    "test:watch": "vitest --watch",
+    "test:compare": "tsx tests/api-comparison/run-comparison.ts",
+    "test:compare:watch": "nodemon --exec tsx tests/api-comparison/run-comparison.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -55,6 +61,7 @@
     "@sentry/node": "^9.42.0",
     "@sentry/profiling-node": "^9.42.0",
     "@tanstack/react-query": "^5.80.7",
+    "@types/ioredis": "^4.28.10",
     "@types/node-fetch": "^2.6.12",
     "axios": "^1.10.0",
     "bcryptjs": "^2.4.3",
@@ -65,6 +72,7 @@
     "fastify": "^4.29.1",
     "fastify-plugin": "^4.5.1",
     "form-data": "^4.0.4",
+    "ioredis": "^5.6.1",
     "joi": "^17.11.0",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.516.0",
@@ -79,28 +87,38 @@
     "react-router-dom": "^6.30.1",
     "recharts": "^2.15.3",
     "redis": "^4.6.10",
+    "resend": "^4.7.0",
     "winston": "^3.17.0",
     "winston-daily-rotate-file": "^5.0.0",
     "ws": "^8.14.2",
     "yup": "^1.6.1"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.6.4",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/bcryptjs": "^2.4.6",
-    "@types/jsonwebtoken": "^9.0.5",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^1.4.11",
     "@types/node": "^20.19.9",
+    "@types/nodemailer": "^6.4.17",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "@types/ws": "^8.5.8",
     "@vitejs/plugin-react": "^4.5.2",
+    "@vitest/ui": "^3.2.4",
     "csv-parse": "^6.1.0",
+    "jsdom": "^26.1.0",
+    "nodemailer": "^7.0.5",
     "nodemon": "^3.0.1",
     "prisma": "^5.6.0",
     "ts-node": "^10.9.1",
     "tsconfig-paths": "^4.2.0",
     "tsx": "^4.20.3",
     "typescript": "5.8.3",
-    "vite": "^6.3.5"
+    "vite": "^6.3.5",
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^3.2.4"
   },
   "overrides": {
     "react-helmet-async": {

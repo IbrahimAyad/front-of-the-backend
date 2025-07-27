@@ -1,0 +1,905 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+  // For local development, you can use SQLite by changing to:
+  // provider = "sqlite"
+  // url = "file:./dev.db"
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  STAFF
+  CUSTOMER
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  DELIVERED
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum AppointmentType {
+  CONSULTATION
+  FITTING
+  MEASUREMENT
+  DELIVERY
+  FOLLOW_UP
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  PROPOSAL
+  NEGOTIATION
+  CLOSED_WON
+  CLOSED_LOST
+}
+
+enum LeadSource {
+  WEBSITE
+  REFERRAL
+  SOCIAL_MEDIA
+  ADVERTISING
+  WALK_IN
+  OTHER
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String   // Changed from 'password' to 'passwordHash'
+  firstName    String
+  lastName     String
+  name         String?  // Added for compatibility
+  role         UserRole @default(CUSTOMER)
+  isActive     Boolean  @default(true)
+  refreshToken String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Customer {
+  id          String   @id @default(cuid())
+  name        String   // Added 'name' field as expected by backend
+  firstName   String?
+  lastName    String?
+  email       String   @unique
+  phone       String?
+  address     String?
+  city        String?
+  state       String?
+  zipCode     String?
+  country     String?
+  dateOfBirth DateTime?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  orders        Order[]
+  appointments  Appointment[]
+  measurements  Measurement[]
+  leads         Lead[]
+  profile       CustomerProfile?
+  savedOutfits  SavedOutfit[]
+
+  // 🚀 Enhanced Customer Relations (Phase 1)
+  purchaseHistory     CustomerPurchaseHistory[]
+  sizeAnalysis        CustomerSizeAnalysis?
+  insights            CustomerInsights?
+  recommendations     ProductRecommendations[]
+
+  @@map("customers")
+}
+
+model Product {
+  id            String     @id @default(cuid())
+  name          String
+  description   String?
+  longDescription String?
+  category      String
+  subcategory   String?
+  price         Decimal
+  compareAtPrice Decimal?   // Original price for showing discounts
+  costPrice     Decimal?    // Cost for profit calculations
+  sku           String     @unique
+  barcode       String?
+  slug          String?    @unique // SEO-friendly URL slug
+  brand         String?
+  fabric        String?
+  pattern       String?
+  season        String?    // Spring/Summer, Fall/Winter
+  occasions     String[]   // Wedding, Business, Casual, etc.
+  styleAttributes String[] // Classic, Modern, Slim, etc.
+  care          String?    // Care instructions
+  
+  // Smart Product Attributes
+  smartAttributes   Json?    // Flexible storage for formality, conservative rating, etc.
+  fabricMarketing   String?  // "Performance Fabric", "All-Day Comfort", etc.
+  fabricCare        String?  // "Machine washable", "Dry clean only"
+  fabricBenefits    String[] // ["wrinkle-resistant", "breathable", "stretch"]
+  
+  // Color Intelligence
+  colorFamily       String?  // "Blues", "Greys", "Earth Tones"
+  hexPrimary        String?  // Primary color hex
+  hexSecondary      String?  // Accent color hex
+  
+  // Event & Occasion
+  primaryOccasion   String?  // Main use case
+  occasionTags      String[] // All suitable occasions
+  trendingFor       String[] // ["prom2025", "spring-wedding"]
+  
+  // Outfit Building Helpers
+  outfitRole        String?  // "base", "accent", "versatile"
+  pairsWellWith     String[] // ["navy-pants", "white-shirt"]
+  styleNotes        String?  // Styling tips
+  
+  // Local SEO
+  localKeywords     String[]
+  targetLocation    String?
+  
+  // Inventory Management
+  trackStock    Boolean    @default(true)
+  totalStock    Int        @default(0)
+  availableStock Int       @default(0)
+  reservedStock Int        @default(0)
+  minimumStock  Int        @default(5)
+  maximumStock  Int?       // Maximum stock level
+  reorderPoint  Int        @default(10)
+  reorderQuantity Int      @default(50)
+  
+  // Status & Visibility
+  status        String     @default("ACTIVE") // ACTIVE, INACTIVE, DISCONTINUED
+  isPublished   Boolean    @default(false)
+  isFeatured    Boolean    @default(false)
+  isOnSale      Boolean    @default(false)
+  
+  // SEO & Marketing
+  metaTitle     String?
+  metaDescription String?
+  tags          String[]   // For search and filtering
+  weight        Decimal?   // For shipping calculations
+  dimensions    String?    // Length x Width x Height
+  
+  // Supplier Information
+  supplierId    String?
+  supplierSku   String?
+  leadTime      Int?       // Days to restock
+  
+  // Timestamps
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  publishedAt   DateTime?
+  discontinuedAt DateTime?
+
+  // Relations
+  variants      ProductVariant[]
+  images        ProductImage[]
+  orderItems    OrderItem[]
+  inventoryLogs InventoryLog[]
+  supplier      Supplier?        @relation(fields: [supplierId], references: [id])
+  reviews       ProductReview[]
+  outfitComponents OutfitComponent[]
+  collections   ProductCollection[]
+
+  // Performance indexes for collection filtering
+  @@index([category, status, isPublished])
+  @@index([tags])
+  @@index([colorFamily])
+  @@map("products")
+}
+
+// Smart Collections System
+model Collection {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  heroImage   String?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+
+  // Collection rules stored as JSON
+  // e.g., { "ties": { "colorFamily": ["pastels"] }, "suits": { "colors": ["Light Grey"] } }
+  rules       Json?    
+
+  // SEO fields
+  metaTitle       String?
+  metaDescription String?
+
+  // Relationships
+  products    ProductCollection[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("collections")
+}
+
+model ProductCollection {
+  productId    String
+  collectionId String
+  position     Int      @default(0)
+
+  product      Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+
+  @@id([productId, collectionId])
+  @@index([collectionId])
+  @@map("product_collections")
+}
+
+model ProductVariant {
+  id          String   @id @default(cuid())
+  productId   String
+  name        String   // e.g., "Navy Blue - 42R"
+  sku         String   @unique
+  barcode     String?
+  
+  // Variant Attributes
+  size        String?  // 38R, 40L, XL, etc.
+  color       String?  // Navy, Black, Charcoal
+  material    String?  // Wool, Cotton, Silk
+  fit         String?  // Slim, Regular, Classic
+  
+  // Variant-specific image
+  imageUrl    String?
+  imageAlt    String?
+  
+  // Pricing
+  price       Decimal?
+  compareAtPrice Decimal?
+  costPrice   Decimal?
+  
+  // Inventory
+  stock       Int      @default(0)
+  reservedStock Int    @default(0)
+  minimumStock Int     @default(2)
+  reorderPoint Int     @default(5)
+  weight      Decimal?
+  
+  // Status
+  isActive    Boolean  @default(true)
+  position    Int      @default(0) // For ordering variants
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orderItems  OrderItem[]
+  inventoryLogs InventoryLog[]
+
+  @@map("product_variants")
+}
+
+model ProductImage {
+  id          String   @id @default(cuid())
+  productId   String
+  url         String
+  altText     String?
+  caption     String?
+  isPrimary   Boolean  @default(false)
+  position    Int      @default(0)
+  width       Int?
+  height      Int?
+  size        Int?     // File size in bytes
+  createdAt   DateTime @default(now())
+
+  // Relations
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_images")
+}
+
+model Supplier {
+  id            String   @id @default(cuid())
+  name          String
+  contactName   String?
+  email         String?
+  phone         String?
+  address       String?
+  city          String?
+  state         String?
+  country       String?
+  zipCode       String?
+  website       String?
+  
+  // Business Details
+  taxId         String?
+  terms         String?  // Payment terms
+  leadTime      Int?     // Default lead time in days
+  minimumOrder  Decimal? // Minimum order amount
+  
+  // Performance Metrics
+  rating        Decimal? // Supplier rating 1-5
+  onTimeDelivery Decimal? // Percentage
+  qualityRating Decimal? // Quality rating 1-5
+  
+  // Status
+  isActive      Boolean  @default(true)
+  isPreferred   Boolean  @default(false)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  products      Product[]
+  purchaseOrders PurchaseOrder[]
+
+  @@map("suppliers")
+}
+
+model PurchaseOrder {
+  id            String   @id @default(cuid())
+  supplierId    String
+  orderNumber   String   @unique
+  status        String   @default("PENDING") // PENDING, CONFIRMED, SHIPPED, RECEIVED, CANCELLED
+  totalAmount   Decimal
+  currency      String   @default("USD")
+  
+  // Dates
+  orderDate     DateTime @default(now())
+  expectedDate  DateTime?
+  receivedDate  DateTime?
+  
+  // Additional Info
+  notes         String?
+  shippingCost  Decimal?
+  taxAmount     Decimal?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  supplier      Supplier @relation(fields: [supplierId], references: [id])
+  items         PurchaseOrderItem[]
+
+  @@map("purchase_orders")
+}
+
+model PurchaseOrderItem {
+  id              String   @id @default(cuid())
+  purchaseOrderId String
+  productId       String?
+  variantId       String?
+  description     String
+  quantity        Int
+  unitCost        Decimal
+  totalCost       Decimal
+  quantityReceived Int     @default(0)
+  
+  createdAt       DateTime @default(now())
+
+  // Relations
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+
+  @@map("purchase_order_items")
+}
+
+model InventoryLog {
+  id          String   @id @default(cuid())
+  productId   String?
+  variantId   String?
+  type        String   // SALE, PURCHASE, ADJUSTMENT, RETURN, DAMAGE, TRANSFER
+  quantity    Int      // Positive for additions, negative for reductions
+  previousStock Int
+  newStock    Int
+  reason      String?
+  reference   String?  // Order ID, PO ID, etc.
+  userId      String?  // Who made the change
+  
+  createdAt   DateTime @default(now())
+
+  // Relations
+  product     Product?        @relation(fields: [productId], references: [id])
+  variant     ProductVariant? @relation(fields: [variantId], references: [id])
+
+  @@map("inventory_logs")
+}
+
+model StockAlert {
+  id          String   @id @default(cuid())
+  productId   String?
+  variantId   String?
+  type        String   // LOW_STOCK, OUT_OF_STOCK, OVERSTOCK, REORDER
+  message     String
+  isRead      Boolean  @default(false)
+  isResolved  Boolean  @default(false)
+  priority    String   @default("MEDIUM") // LOW, MEDIUM, HIGH, CRITICAL
+  
+  createdAt   DateTime @default(now())
+  resolvedAt  DateTime?
+
+  @@map("stock_alerts")
+}
+
+model ProductReview {
+  id          String   @id @default(cuid())
+  productId   String
+  customerId  String?
+  customerName String? // For guest reviews
+  email       String?
+  rating      Int      // 1-5 stars
+  title       String?
+  content     String?
+  isVerified  Boolean  @default(false) // Verified purchase
+  isPublished Boolean  @default(false)
+  isHelpful   Int      @default(0) // Helpful votes
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_reviews")
+}
+
+model Order {
+  id            String      @id @default(cuid())
+  customerId    String
+  total         Decimal     // Changed from 'totalAmount' to 'total'
+  totalAmount   Decimal?    // Keep both for compatibility
+  status        OrderStatus @default(PENDING)
+  paymentStatus String?     // Added paymentStatus field
+  dueDate       DateTime?
+  notes         String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  // Relations
+  customer Customer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  items    OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id             String  @id @default(cuid())
+  orderId        String
+  productId      String?
+  variantId      String?
+  quantity       Int
+  price          Decimal
+  customizations String?
+
+  // Relations
+  order   Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product?        @relation(fields: [productId], references: [id])
+  variant ProductVariant? @relation(fields: [variantId], references: [id])
+
+  @@map("order_items")
+}
+
+model Appointment {
+  id         String            @id @default(cuid())
+  customerId String
+  date       DateTime          // Changed from 'startTime' to 'date'
+  startTime  DateTime?         // Keep both for compatibility
+  endTime    DateTime?
+  type       AppointmentType
+  status     AppointmentStatus @default(SCHEDULED)
+  notes      String?
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  // Relations
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@map("appointments")
+}
+
+model Lead {
+  id         String     @id @default(cuid())
+  customerId String?
+  source     LeadSource
+  status     LeadStatus @default(NEW)
+  value      Decimal?
+  notes      String?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  // Relations
+  customer Customer? @relation(fields: [customerId], references: [id])
+
+  @@map("leads")
+}
+
+model Measurement {
+  id           String   @id @default(cuid())
+  customerId   String
+  dateRecorded DateTime // Added dateRecorded field as expected by backend
+  chest        Decimal?
+  waist        Decimal?
+  hips         Decimal?
+  inseam       Decimal?
+  outseam      Decimal?
+  shoulders    Decimal?
+  armLength    Decimal?
+  neckSize     Decimal?
+  jacketLength Decimal?
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@map("measurements")
+}
+
+model AiAction {
+  id        String   @id @default(cuid())
+  agent     String
+  input     Json
+  output    Json
+  status    String
+  createdAt DateTime @default(now())
+}
+
+// Customer Profile Extension for rich customer data
+model CustomerProfile {
+  id              String   @id @default(cuid())
+  customerId      String   @unique
+  
+  // Tier and Status
+  customerTier    String   @default("Silver") // Prospect, Silver, Gold, Platinum
+  engagementScore Int      @default(0)        // 0-100
+  vipStatus       Boolean  @default(false)
+  
+  // Size Profile
+  jacketSize      String?
+  jacketSizeConfidence Float?
+  vestSize        String?
+  vestSizeConfidence   Float?
+  shirtSize       String?
+  shirtSizeConfidence  Float?
+  shoeSize        String?
+  shoeSizeConfidence   Float?
+  pantsSize       String?
+  pantsSizeConfidence  Float?
+  sizeProfileCompleteness Float @default(0)
+  
+  // Purchase Analytics
+  totalSpent      Decimal  @default(0)
+  totalOrders     Int      @default(0)
+  averageOrderValue Decimal @default(0)
+  repeatCustomer  Boolean  @default(false)
+  highValueFirstOrder Boolean @default(false)
+  
+  // Occasions and Preferences
+  primaryOccasion String?  // wedding, prom, business, general, formal
+  preferredStyles String[] // Classic, Modern, Trendy, etc.
+  preferredColors String[]
+  
+  // Marketing
+  acceptsEmailMarketing Boolean @default(true)
+  acceptsSmsMarketing   Boolean @default(false)
+  marketingTags         String[]
+  
+  // Important Dates
+  firstPurchaseDate  DateTime?
+  lastPurchaseDate   DateTime?
+  daysSinceLastPurchase Int?
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  // Relations
+  customer         Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  purchaseHistory  PurchaseHistory[]
+  
+  @@map("customer_profiles")
+}
+
+model PurchaseHistory {
+  id              String   @id @default(cuid())
+  customerProfileId String
+  
+  orderId         String?
+  orderDate       DateTime
+  paidDate        DateTime?
+  productNames    String[]
+  orderTotal      Decimal
+  
+  // Relations
+  customerProfile CustomerProfile @relation(fields: [customerProfileId], references: [id], onDelete: Cascade)
+  
+  @@map("purchase_histories")
+}
+
+model CustomerSegment {
+  id          String   @id @default(cuid())
+  name        String   @unique // "High Value", "Frequent Buyer", "Wedding Party", etc.
+  description String?
+  criteria    Json     // Segmentation rules
+  
+  // Stats
+  customerCount Int @default(0)
+  avgOrderValue Decimal @default(0)
+  totalRevenue  Decimal @default(0)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("customer_segments")
+}
+
+// Outfit Components for custom outfit building
+model OutfitTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  category    String   // "Wedding", "Business", "Formal", "Casual"
+  season      String?  // "Spring/Summer", "Fall/Winter", "All Season"
+  
+  // Pricing
+  basePrice   Decimal  @default(0)
+  discount    Decimal? // Percentage discount for bundle
+  
+  // Visibility
+  isActive    Boolean  @default(true)
+  isFeatured  Boolean  @default(false)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  components  OutfitComponent[]
+  savedOutfits SavedOutfit[]
+  
+  @@map("outfit_templates")
+}
+
+model OutfitComponent {
+  id            String   @id @default(cuid())
+  outfitId      String
+  productId     String
+  componentType String   // "JACKET", "PANTS", "SHIRT", "TIE", "VEST", "ACCESSORY"
+  quantity      Int      @default(1)
+  isRequired    Boolean  @default(true)
+  position      Int      @default(0)
+  
+  // Relations
+  outfit        OutfitTemplate @relation(fields: [outfitId], references: [id], onDelete: Cascade)
+  product       Product        @relation(fields: [productId], references: [id])
+  
+  @@map("outfit_components")
+}
+
+model SavedOutfit {
+  id            String   @id @default(cuid())
+  customerId    String
+  templateId    String?
+  name          String
+  notes         String?
+  totalPrice    Decimal
+  
+  // Customizations
+  customizations Json?   // Store product variants, sizes, colors
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  customer      Customer        @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  template      OutfitTemplate? @relation(fields: [templateId], references: [id])
+  
+  @@map("saved_outfits")
+}
+
+// Smart color system
+model ColorPalette {
+  id              String   @id @default(cuid())
+  name            String   @unique // "Navy Blue", "Charcoal"
+  slug            String   @unique
+  family          String   // "Blues", "Greys"
+  hexCode         String
+  displayOrder    Int      @default(0)
+  
+  // Quick reference for smart matching
+  formalityScore  Int      @default(3) // 1-5
+  versatilityScore Int     @default(3) // 1-5
+  seasonality     String[] // ["fall", "winter"]
+  
+  createdAt       DateTime @default(now())
+  
+  @@map("color_palettes")
+}
+
+// Event configuration for smart filtering
+model EventProfile {
+  id              String   @id @default(cuid())
+  name            String   @unique // "Wedding", "Prom", "Business"
+  slug            String   @unique
+  description     String?
+  formalityRange  Int[]    // [4, 5] for formal events
+  seasonalPeak    String[] // ["spring", "summer"]
+  typicalAge      String?  // "18-25", "25-45"
+  
+  // Smart recommendations
+  essentialItems  String[] // ["suit", "shirt", "tie"]
+  popularColors   String[] // ["navy", "charcoal"]
+  trendingStyles  String[] // ["slim-fit", "modern"]
+  
+  createdAt       DateTime @default(now())
+  
+  @@map("event_profiles")
+}
+
+// ====================================
+// 🚀 ENHANCED CUSTOMER DATA MODELS
+// ====================================
+// Added: Phase 1 Enhanced Customer System
+// These tables extend existing Customer functionality
+// with rich purchase history and analytics
+
+model CustomerPurchaseHistory {
+  id                String   @id @default(cuid())
+  customerId        String
+  customer          Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  
+  // Product Information
+  productName       String
+  productCategory   String?  // "Blazer", "Tuxedo", "Suit", "Accessories"
+  productType       String?  // "Casual", "Formal", "Prom", "Wedding"
+  color             String?
+  size              String?
+  
+  // Order Information  
+  orderDate         DateTime
+  paidDate          DateTime?
+  orderTotal        Float
+  itemPrice         Float?
+  quantity          Int      @default(1)
+  
+  // Occasion & Context
+  occasion          String?  // "wedding", "prom", "business", "general"
+  isGroupOrder      Boolean  @default(false)
+  groupOrderId      String?  // Link related group purchases
+  
+  // Metadata
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@map("customer_purchase_history")
+}
+
+model CustomerSizeAnalysis {
+  id                    String   @id @default(cuid())
+  customerId            String   @unique
+  customer              Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  
+  // Extracted Size Data (from actual purchases)
+  jacketSizeExtracted   String?
+  vestSizeExtracted     String?
+  shirtSizeExtracted    String?
+  pantsSizeExtracted    String?
+  shoeSizeExtracted     String?
+  
+  // Size Confidence (based on purchase frequency)
+  jacketSizeConfidence  Float?   // 0.0 - 1.0
+  vestSizeConfidence    Float?
+  shirtSizeConfidence   Float?
+  pantsSizeConfidence   Float?
+  shoeSizeConfidence    Float?
+  
+  // Size Consistency Analysis
+  sizeConsistency       Float?   // How consistent are their size purchases
+  sizeVariations        Json?    // Array of different sizes purchased
+  
+  // Size Profile Completeness (calculated from actual purchases)
+  profileCompleteness   Float    @default(0.0)
+  
+  // Analysis Metadata
+  lastAnalyzed          DateTime @default(now())
+  purchaseDataPoints    Int      @default(0) // Number of purchases analyzed
+  
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  
+  @@map("customer_size_analysis")
+}
+
+model CustomerInsights {
+  id                    String   @id @default(cuid())
+  customerId            String   @unique
+  customer              Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  
+  // Purchase Pattern Analysis
+  favoriteCategories    Json?    // ["Blazer", "Tuxedo"] with frequency
+  favoriteColors        Json?    // ["Navy", "Black", "Royal Blue"] with frequency
+  favoriteOccasions     Json?    // ["wedding", "prom"] with frequency
+  
+  // Seasonal & Timing Insights
+  purchaseSeasonality   Json?    // Spring/Summer/Fall/Winter preferences
+  averageDaysBetween    Int?     // Days between purchases
+  preferredDays         Json?    // Day of week preferences
+  preferredTimes        Json?    // Time of day preferences
+  
+  // Financial Insights
+  averageOrderValue     Float?
+  totalLifetimeValue    Float?
+  pricePointPreference  String?  // "budget", "mid-range", "premium", "luxury"
+  spendingTrend         String?  // "increasing", "stable", "decreasing"
+  
+  // Group Purchase Insights
+  isGroupOrderCustomer  Boolean  @default(false)
+  groupOrderCount       Int      @default(0)
+  typicalGroupSize      Int?
+  
+  // Recommendation Factors
+  recommendationTags    Json?    // Tags for recommendation engine
+  crossSellOpportunity  Json?    // Products they haven't bought but should consider
+  
+  // Customer Journey
+  customerJourneyStage  String?  // "new", "returning", "loyal", "at-risk", "champion"
+  riskScore            Float?    // 0.0-1.0, higher = more likely to churn
+  loyaltyScore         Float?    // 0.0-1.0, higher = more loyal
+  
+  // Insights Metadata
+  lastCalculated       DateTime @default(now())
+  dataQualityScore     Float?   // How reliable these insights are
+  
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  
+  @@map("customer_insights")
+}
+
+model ProductRecommendations {
+  id                String   @id @default(cuid())
+  customerId        String
+  customer          Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  
+  // Recommendation Details
+  recommendedProduct String
+  productCategory   String?
+  recommendationType String  // "cross-sell", "upsell", "repurchase", "occasion-based"
+  
+  // Recommendation Logic
+  reason            String?  // Why this was recommended
+  confidenceScore   Float    // 0.0-1.0, how confident we are
+  basedOnPurchases  Json?    // Which past purchases influenced this
+  
+  // Recommendation Status
+  isActive          Boolean  @default(true)
+  wasViewed         Boolean  @default(false)
+  wasPurchased      Boolean  @default(false)
+  wasIgnored        Boolean  @default(false)
+  
+  // Priority & Timing
+  priority          Int      @default(5) // 1-10, higher = more important
+  validUntil        DateTime? // Expiration date
+  occasionTiming    String?  // "immediate", "seasonal", "event-based"
+  
+  // Metadata
+  generatedAt       DateTime @default(now())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@map("product_recommendations")
+}
+
+

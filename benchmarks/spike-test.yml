@@ -1,0 +1,83 @@
+# Artillery Spike Test Configuration
+# Tests system resilience to sudden traffic spikes
+
+config:
+  target: 'http://localhost:3000'
+  phases:
+    # Normal baseline load
+    - duration: 120
+      arrivalRate: 10
+      name: "Baseline load"
+    
+    # Sudden spike
+    - duration: 60
+      arrivalRate: 100
+      name: "Traffic spike"
+    
+    # Return to normal
+    - duration: 120
+      arrivalRate: 10
+      name: "Return to baseline"
+    
+    # Another larger spike
+    - duration: 60
+      arrivalRate: 200
+      name: "Larger spike"
+    
+    # Recovery period
+    - duration: 180
+      arrivalRate: 10
+      name: "Recovery period"
+  
+  defaults:
+    headers:
+      'Content-Type': 'application/json'
+  
+  processor: "./artillery-processor.js"
+  
+  # Faster timeout for spike tests
+  timeout: 10
+
+scenarios:
+  # Focus on most common user journeys during spikes
+  - name: "Product Browsing Spike"
+    weight: 50
+    flow:
+      - get:
+          url: "/api/products"
+      - get:
+          url: "/api/products?page={{ $randomInt(1, 5) }}&limit=20"
+      - think: 2
+      - get:
+          url: "/api/products?search={{ searchTerm }}"
+
+  - name: "Authentication Spike"
+    weight: 30
+    flow:
+      - function: "generateTestData"
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "user@example.com"
+            password: "password123"
+          capture:
+            - json: "$.token"
+              as: "token"
+      - get:
+          url: "/api/auth/me"
+          headers:
+            Authorization: "Bearer {{ token }}"
+            
+  - name: "Search Spike"
+    weight: 20
+    flow:
+      - function: "generateTestData"
+      - get:
+          url: "/api/products/search?q={{ searchTerm }}"
+      - get:
+          url: "/api/products?category={{ category }}&sort=price"
+
+# Spike test expectations
+ensure:
+  - p95: 1000    # Response times during spikes
+  - maxErrorRate: 5  # Some errors acceptable during spikes

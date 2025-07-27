@@ -240,7 +240,11 @@ const CustomerManagementPage: React.FC = () => {
     customersDataPages: (customersData as any)?.data?.pagination?.pages,
     customersDataTotal: (customersData as any)?.data?.pagination?.total,
     customersLoading,
-    customersError
+    customersError,
+    displayCustomersCount: displayCustomers.length,
+    firstCustomerName: displayCustomers[0]?.name,
+    lastCustomerName: displayCustomers[displayCustomers.length - 1]?.name,
+    customerNames: displayCustomers.slice(0, 5).map(c => c.name) // First 5 customer names
   });
   
   // Enhanced data processing with analytics
@@ -461,9 +465,15 @@ const CustomerManagementPage: React.FC = () => {
     <Box sx={{ flexGrow: 1, p: 3 }}>
       {/* Header */}
       <Box mb={3} display="flex" justifyContent="space-between" alignItems="center">
-        <Typography variant="h4" fontWeight="bold">
-          Customer Management
-        </Typography>
+        <Box>
+          <Typography variant="h4" fontWeight="bold">
+            Customer Management
+          </Typography>
+          <Typography variant="body2" color="primary" sx={{ mt: 0.5 }}>
+            📍 Page {page} of {pagination?.pages || 1} • Showing {displayCustomers.length} customers • Total: {pagination?.total || 0}
+            {searchTerm && ` • Searching: "${searchTerm}"`}
+          </Typography>
+        </Box>
         <Box display="flex" gap={1}>
           <Button
             variant="outlined"
@@ -478,6 +488,26 @@ const CustomerManagementPage: React.FC = () => {
             }}
           >
             🔍 Test Modal
+          </Button>
+          <Button
+            variant="outlined"
+            color="secondary"
+            onClick={() => {
+              console.log('🔍 Test pagination: changing page to', page === 1 ? 2 : 1);
+              setPage(page === 1 ? 2 : 1);
+            }}
+          >
+            🔍 Test Page {page === 1 ? '→2' : '→1'}
+          </Button>
+          <Button
+            variant="outlined"
+            color="warning"
+            onClick={() => {
+              console.log('🔍 Test search: setting search term');
+              setSearchTerm(searchTerm === '' ? 'test' : '');
+            }}
+          >
+            🔍 Test Search {searchTerm === '' ? 'ON' : 'OFF'}
           </Button>
           <Button variant="contained" startIcon={<Add />} onClick={() => setShowAddCustomer(true)}>
             New Customer
@@ -819,9 +849,11 @@ const CustomerManagementPage: React.FC = () => {
 
           {/* Pagination Controls */}
           {pagination && (
-            <Box display="flex" justifyContent="space-between" alignItems="center" p={2}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" p={2} 
+                 sx={{ bgcolor: 'grey.50', borderRadius: 1, border: '1px solid', borderColor: 'grey.200' }}>
               <Typography variant="body2" color="textSecondary">
-                Showing {((page - 1) * pageSize) + 1} to {Math.min(page * pageSize, pagination.total)} of {pagination.total} customers
+                📍 Showing {((page - 1) * pageSize) + 1} to {Math.min(page * pageSize, pagination.total)} of {pagination.total} customers
+                <strong> • Current Page: {page}</strong>
               </Typography>
               <Pagination
                 count={pagination.pages}
@@ -830,6 +862,15 @@ const CustomerManagementPage: React.FC = () => {
                 color="primary"
                 showFirstButton
                 showLastButton
+                size="large"
+                sx={{
+                  '& .Mui-selected': {
+                    bgcolor: 'primary.main',
+                    color: 'white',
+                    fontWeight: 'bold',
+                    transform: 'scale(1.1)'
+                  }
+                }}
               />
             </Box>
           )}

@@ -1,0 +1,149 @@
+# Artillery Endurance Test Configuration
+# Tests system stability over extended periods
+
+config:
+  target: 'http://localhost:3000'
+  phases:
+    # 2-hour endurance test with sustained moderate load
+    - duration: 1800  # 30 minutes warm-up
+      arrivalRate: 5
+      rampTo: 20
+      name: "Warm-up phase"
+    
+    - duration: 5400  # 90 minutes sustained load
+      arrivalRate: 20
+      name: "Endurance phase - sustained load"
+    
+    - duration: 1800  # 30 minutes cool-down
+      arrivalRate: 20
+      rampTo: 5
+      name: "Cool-down phase"
+  
+  defaults:
+    headers:
+      'Content-Type': 'application/json'
+  
+  processor: "./artillery-processor.js"
+  
+  # Conservative settings for long-running test
+  timeout: 30
+  pool: 25
+
+scenarios:
+  # Realistic user behavior patterns over time
+  - name: "Typical User Session"
+    weight: 40
+    flow:
+      - function: "authenticateUser"
+      - loop:
+          # Browse products
+          - get:
+              url: "/api/products"
+          - think: 3
+          
+          # View specific product
+          - get:
+              url: "/api/products/{{ productId }}"
+          - think: 5
+          
+          # Search for something
+          - function: "generateTestData"
+          - get:
+              url: "/api/products?search={{ searchTerm }}"
+          - think: 2
+          
+          # Check profile occasionally
+          - get:
+              url: "/api/auth/me"
+              headers:
+                Authorization: "Bearer {{ userToken }}"
+          - think: 10
+        count: 3
+
+  - name: "Admin Monitoring"
+    weight: 20
+    flow:
+      - function: "authenticateAdmin"
+      - loop:
+          # Regular admin checks
+          - get:
+              url: "/api/customers/stats"
+              headers:
+                Authorization: "Bearer {{ adminToken }}"
+          - think: 30
+          
+          - get:
+              url: "/api/products/stats"
+              headers:
+                Authorization: "Bearer {{ adminToken }}"
+          - think: 30
+          
+          - get:
+              url: "/api/orders/stats"
+              headers:
+                Authorization: "Bearer {{ adminToken }}"
+          - think: 30
+          
+          # Check recent orders
+          - get:
+              url: "/api/orders?page=1&limit=10"
+              headers:
+                Authorization: "Bearer {{ adminToken }}"
+          - think: 60
+        count: 2
+
+  - name: "Customer Data Access"
+    weight: 20
+    flow:
+      - function: "authenticateAdmin"
+      - loop:
+          # Customer management tasks
+          - get:
+              url: "/api/customers?page={{ $randomInt(1, 3) }}&limit=20"
+              headers:
+                Authorization: "Bearer {{ adminToken }}"
+          - think: 15
+          
+          # Search customers
+          - get:
+              url: "/api/customers/search?q=test"
+              headers:
+                Authorization: "Bearer {{ adminToken }}"
+          - think: 10
+        count: 4
+
+  - name: "Public API Usage"
+    weight: 15
+    flow:
+      - loop:
+          # Unauthenticated browsing
+          - get:
+              url: "/api/products"
+          - think: 5
+          
+          - get:
+              url: "/api/products?category=Suits&page={{ $randomInt(1, 3) }}"
+          - think: 8
+          
+          - function: "generateTestData"
+          - get:
+              url: "/api/products?search={{ searchTerm }}&sort=price"
+          - think: 12
+        count: 5
+
+  - name: "System Health Checks"
+    weight: 5
+    flow:
+      - loop:
+          # Health endpoint monitoring
+          - get:
+              url: "/health"
+          - think: 120  # Check every 2 minutes
+        count: 30  # For the duration of the test
+
+# Endurance test expectations
+ensure:
+  - p95: 800     # Consistent performance over time
+  - p99: 2000    # No major degradation
+  - median: 300  # Stable median response time
+  - maxErrorRate: 2  # Very low error rate for stability

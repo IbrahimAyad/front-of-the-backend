@@ -1,0 +1,145 @@
+# Artillery Load Test Configuration
+# Tests various API endpoints with increasing load patterns
+
+config:
+  target: 'http://localhost:3000'
+  phases:
+    - duration: 60
+      arrivalRate: 5
+      name: "Warm up"
+    - duration: 120
+      arrivalRate: 10
+      rampTo: 25
+      name: "Ramp up load"
+    - duration: 300
+      arrivalRate: 25
+      name: "Sustained load"
+    - duration: 120
+      arrivalRate: 25
+      rampTo: 50
+      name: "Peak load"
+    - duration: 60
+      arrivalRate: 50
+      rampTo: 5
+      name: "Cool down"
+  
+  defaults:
+    headers:
+      'Content-Type': 'application/json'
+      'User-Agent': 'Artillery Load Test'
+  
+  processor: "./artillery-processor.js"
+  
+  variables:
+    adminEmail: 'admin@example.com'
+    adminPassword: 'admin123'
+    userEmail: 'user@example.com'
+    userPassword: 'password123'
+
+# Test scenarios
+scenarios:
+  # Public API endpoints (no auth required)
+  - name: "Public Product Browsing"
+    weight: 40
+    flow:
+      - get:
+          url: "/api/products"
+          capture:
+            - json: "$.products[0].id"
+              as: "productId"
+      - get:
+          url: "/api/products/{{ productId }}"
+      - get:
+          url: "/api/products?search=wool&category=Suits"
+      - get:
+          url: "/api/products?page=2&limit=20"
+
+  # Authentication flow
+  - name: "User Authentication"
+    weight: 20
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "{{ userEmail }}"
+            password: "{{ userPassword }}"
+          capture:
+            - json: "$.token"
+              as: "userToken"
+      - get:
+          url: "/api/auth/me"
+          headers:
+            Authorization: "Bearer {{ userToken }}"
+      - post:
+          url: "/api/auth/logout"
+          headers:
+            Authorization: "Bearer {{ userToken }}"
+
+  # Customer operations (admin required)
+  - name: "Customer Management"
+    weight: 15
+    flow:
+      - function: "authenticateAdmin"
+      - get:
+          url: "/api/customers"
+          headers:
+            Authorization: "Bearer {{ adminToken }}"
+      - get:
+          url: "/api/customers?search=test&page=1&limit=10"
+          headers:
+            Authorization: "Bearer {{ adminToken }}"
+      - get:
+          url: "/api/customers/stats"
+          headers:
+            Authorization: "Bearer {{ adminToken }}"
+
+  # Order operations
+  - name: "Order Processing"
+    weight: 15
+    flow:
+      - function: "authenticateUser"
+      - get:
+          url: "/api/orders"
+          headers:
+            Authorization: "Bearer {{ userToken }}"
+      - get:
+          url: "/api/orders/my-stats"
+          headers:
+            Authorization: "Bearer {{ userToken }}"
+
+  # Admin product operations
+  - name: "Product Administration"
+    weight: 10
+    flow:
+      - function: "authenticateAdmin"
+      - get:
+          url: "/api/products/stats"
+          headers:
+            Authorization: "Bearer {{ adminToken }}"
+      - get:
+          url: "/api/products/best-sellers"
+          headers:
+            Authorization: "Bearer {{ adminToken }}"
+      - get:
+          url: "/api/products/price-distribution"
+          headers:
+            Authorization: "Bearer {{ adminToken }}"
+
+# Performance thresholds
+ensure:
+  # Response time thresholds
+  - p95: 500     # 95% of requests should complete within 500ms
+  - p99: 1000    # 99% of requests should complete within 1000ms
+  - median: 200  # Median response time should be under 200ms
+  
+  # Error rate threshold
+  - maxErrorRate: 1  # Less than 1% error rate
+
+# Metrics to track
+metrics:
+  - name: "response_time"
+    unit: "ms"
+  - name: "error_rate"
+    unit: "percent"
+  - name: "throughput"
+    unit: "requests/second"

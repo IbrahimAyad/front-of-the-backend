@@ -1,0 +1,167 @@
+config:
+  target: "http://localhost:3000"
+  phases:
+    - duration: 30
+      arrivalRate: 1
+      rampTo: 10
+      name: "Warm up"
+    - duration: 60
+      arrivalRate: 10
+      rampTo: 50
+      name: "Ramp up to 50 users/sec"
+    - duration: 120
+      arrivalRate: 50
+      rampTo: 100
+      name: "Ramp up to 100 users/sec"
+    - duration: 120
+      arrivalRate: 100
+      rampTo: 500
+      name: "Ramp up to 500 users/sec"
+    - duration: 60
+      arrivalRate: 500
+      rampTo: 100
+      name: "Scale down"
+    - duration: 30
+      arrivalRate: 100
+      rampTo: 0
+      name: "Cool down"
+  
+  processor: "./artillery-processor.js"
+  
+  variables:
+    productIds:
+      - "1"
+      - "2"
+      - "3"
+      - "4"
+      - "5"
+    categories:
+      - "Suits"
+      - "Ties"
+      - "Shirts"
+      - "Accessories"
+    searchTerms:
+      - "wool"
+      - "silk"
+      - "navy"
+      - "wedding"
+      - "formal"
+  
+  defaults:
+    headers:
+      Content-Type: "application/json"
+
+scenarios:
+  - name: "Browse Products"
+    weight: 40
+    flow:
+      - get:
+          url: "/api/products"
+          capture:
+            - json: "$.products[0].id"
+              as: "firstProductId"
+          expect:
+            - statusCode: 200
+            - contentType: json
+            - hasProperty: "products"
+      
+      - think: 2
+      
+      - get:
+          url: "/api/products/{{ firstProductId }}"
+          expect:
+            - statusCode: 200
+      
+      - think: 1
+      
+      - get:
+          url: "/api/products?page=2&limit=20"
+          expect:
+            - statusCode: 200
+
+  - name: "Search Products"
+    weight: 30
+    flow:
+      - get:
+          url: "/api/products/search?q={{ $randomString(searchTerms) }}"
+          expect:
+            - statusCode: 200
+            - hasProperty: "products"
+      
+      - think: 1
+      
+      - get:
+          url: "/api/products/category/{{ $randomString(categories) }}"
+          expect:
+            - statusCode: 200
+
+  - name: "Authenticated Flow"
+    weight: 20
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            email: "admin@example.com"
+            password: "admin123"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+            - json: "$.accessToken"
+              as: "accessToken"
+          expect:
+            - statusCode: 200
+      
+      - think: 1
+      
+      - get:
+          url: "/api/auth/me"
+          headers:
+            Authorization: "Bearer {{ authToken || accessToken }}"
+          expect:
+            - statusCode: 200
+            - hasProperty: "id"
+            - hasProperty: "email"
+      
+      - think: 2
+      
+      - get:
+          url: "/api/products/stats/dashboard"
+          headers:
+            Authorization: "Bearer {{ authToken || accessToken }}"
+          expect:
+            - statusCode: 200
+
+  - name: "Mixed User Journey"
+    weight: 10
+    flow:
+      # Browse homepage
+      - get:
+          url: "/api/products?featured=true"
+      
+      - think: 3
+      
+      # Search for suits
+      - get:
+          url: "/api/products/search?q=suit"
+          capture:
+            - json: "$.products[0].id"
+              as: "suitId"
+      
+      - think: 2
+      
+      # View suit details
+      - get:
+          url: "/api/products/{{ suitId }}"
+          ifTrue: "suitId"
+      
+      - think: 4
+      
+      # Browse category
+      - get:
+          url: "/api/products/category/Suits?sort=price"
+      
+      - think: 2
+      
+      # Filter products
+      - get:
+          url: "/api/products?minPrice=200&maxPrice=500&category=Suits"

@@ -1,0 +1,122 @@
+# Artillery Stress Test Configuration
+# Tests system limits and breaking points
+
+config:
+  target: 'http://localhost:3000'
+  phases:
+    # Gradual ramp-up to find breaking point
+    - duration: 60
+      arrivalRate: 10
+      name: "Initial load"
+    - duration: 120
+      arrivalRate: 10
+      rampTo: 50
+      name: "Ramp to moderate load"
+    - duration: 180
+      arrivalRate: 50
+      rampTo: 100
+      name: "Ramp to high load"
+    - duration: 300
+      arrivalRate: 100
+      rampTo: 200
+      name: "Stress test - high load"
+    - duration: 180
+      arrivalRate: 200
+      rampTo: 500
+      name: "Breaking point test"
+    - duration: 120
+      arrivalRate: 500
+      rampTo: 50
+      name: "Cool down"
+  
+  defaults:
+    headers:
+      'Content-Type': 'application/json'
+  
+  processor: "./artillery-processor.js"
+  
+  pool: 50  # Connection pool size
+
+scenarios:
+  # Stress test critical endpoints
+  - name: "Database Intensive Operations"
+    weight: 30
+    flow:
+      - function: "authenticateAdmin"
+      - loop:
+          - get:
+              url: "/api/customers"
+              headers:
+                Authorization: "Bearer {{ adminToken }}"
+          - get:
+              url: "/api/products/stats"
+              headers:
+                Authorization: "Bearer {{ adminToken }}"
+          - get:
+              url: "/api/orders/stats"
+              headers:
+                Authorization: "Bearer {{ adminToken }}"
+        count: 5
+
+  - name: "Search and Filter Heavy Load"
+    weight: 25
+    flow:
+      - loop:
+          - get:
+              url: "/api/products?search=wool&category=Suits&sort=price"
+          - get:
+              url: "/api/products?minPrice=100&maxPrice=500&page={{ $randomInt(1, 10) }}"
+          - get:
+              url: "/api/products/search?q=navy&fuzzy=true"
+        count: 8
+
+  - name: "Authentication Stress"
+    weight: 20
+    flow:
+      - function: "generateTestData"
+      - loop:
+          - post:
+              url: "/api/auth/login"
+              json:
+                email: "{{ testEmail }}"
+                password: "testpassword123"
+              expect:
+                - statusCode: [200, 401, 429]  # Expect auth or rate limiting
+          - think: 1  # Small pause between auth attempts
+        count: 10
+
+  - name: "API Rate Limiting Test"
+    weight: 15
+    flow:
+      - function: "authenticateUser"
+      - loop:
+          - get:
+              url: "/api/auth/me"
+              headers:
+                Authorization: "Bearer {{ userToken }}"
+              expect:
+                - statusCode: [200, 401, 429]  # Expect success or rate limiting
+        count: 20
+
+  - name: "Memory Intensive Operations"
+    weight: 10
+    flow:
+      - function: "authenticateAdmin"
+      - get:
+          url: "/api/customers/export?format=csv"
+          headers:
+            Authorization: "Bearer {{ adminToken }}"
+      - get:
+          url: "/api/products/export?format=csv"
+          headers:
+            Authorization: "Bearer {{ adminToken }}"
+      - get:
+          url: "/api/orders/export?format=csv"
+          headers:
+            Authorization: "Bearer {{ adminToken }}"
+
+# Stress test thresholds (more lenient during stress)
+ensure:
+  - p95: 2000    # 95% under 2 seconds during stress
+  - p99: 5000    # 99% under 5 seconds during stress
+  - maxErrorRate: 10  # Up to 10% errors acceptable during stress test
