@@ -3,12 +3,18 @@ const nextConfig = {
   // Use standalone output for Railway deployment
   output: 'standalone',
   
+  // Reduce memory usage during build
+  swcMinify: true,
+  compress: true,
+  
   // Disable static optimization to prevent resource exhaustion
   experimental: {
-    appDir: true,
     serverActions: {
       bodySizeLimit: '2mb',
     },
+    // Reduce worker threads to prevent resource exhaustion
+    workerThreads: false,
+    cpus: 1,
   },
   
   // Force dynamic rendering for all routes
@@ -64,6 +70,10 @@ const nextConfig = {
         'ioredis': 'commonjs ioredis',
       });
     }
+    
+    // Reduce parallelism to prevent resource exhaustion
+    config.parallelism = 1;
+    
     return config;
   },
 };
