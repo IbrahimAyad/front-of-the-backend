@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma/client';
 import { verifyToken } from '@/lib/auth/jwt';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 // GET /api/customers - Get customers with pagination
 export async function GET(request: NextRequest) {
   try {

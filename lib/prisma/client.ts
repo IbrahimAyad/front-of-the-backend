@@ -1,46 +1,23 @@
+import { PrismaClient } from '@prisma/client';
+
 declare global {
-  var prisma: any;
+  var prisma: PrismaClient | undefined;
 }
 
-let PrismaClient: any;
-let prisma: any;
-
-try {
-  // Try to import PrismaClient
-  const prismaModule = require('@prisma/client');
-  PrismaClient = prismaModule.PrismaClient;
-  
-  // Create the Prisma client instance
-  if (process.env.NODE_ENV === 'production') {
-    prisma = new PrismaClient();
-  } else {
-    // In development, use a global variable to prevent multiple instances
-    if (!global.prisma) {
-      global.prisma = new PrismaClient({
-        log: ['query', 'info', 'warn', 'error'],
-      });
-    }
-    prisma = global.prisma;
-  }
-} catch (e) {
-  // If @prisma/client is not available (e.g., during build without DATABASE_URL),
-  // create a mock client
-  console.log('Prisma client not available, using mock');
-  prisma = new Proxy({} as any, {
-    get: (target, prop) => {
-      if (prop === '$connect' || prop === '$disconnect') {
-        return async () => {};
-      }
-      // Return a mock object for any model access
-      return new Proxy({}, {
-        get: () => async () => {
-          console.error('Database operations not available - Prisma client not initialized');
-          return null;
-        }
-      });
-    }
+const prismaClientSingleton = () => {
+  return new PrismaClient({
+    log: process.env.NODE_ENV === 'development' ? ['query', 'info', 'warn', 'error'] : ['error'],
   });
-}
+};
 
-export { prisma };
+type PrismaClientSingleton = ReturnType<typeof prismaClientSingleton>;
+
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClientSingleton | undefined;
+};
+
+export const prisma = globalForPrisma.prisma ?? prismaClientSingleton();
+
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+
 export default prisma;

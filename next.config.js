@@ -3,9 +3,27 @@ const nextConfig = {
   // Use standalone output for Railway deployment
   output: 'standalone',
   
-  // API routes configuration
+  // Disable static optimization to prevent resource exhaustion
+  experimental: {
+    appDir: true,
+    serverActions: {
+      bodySizeLimit: '2mb',
+    },
+  },
+  
+  // Force dynamic rendering for all routes
+  // This prevents the build from trying to statically generate pages
   async headers() {
     return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-store, must-revalidate',
+          },
+        ],
+      },
       {
         source: '/api/:path*',
         headers: [
@@ -35,13 +53,6 @@ const nextConfig = {
   // TypeScript configuration
   typescript: {
     ignoreBuildErrors: true,
-  },
-  
-  // Experimental features
-  experimental: {
-    serverActions: {
-      bodySizeLimit: '2mb',
-    },
   },
   
   // Webpack configuration
