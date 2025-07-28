@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "next dev -p 8000",
     "build": "npx prisma generate && next build",
-    "vercel-build": "npm install --production=false && npx prisma generate && next build",
+    "vercel-build": "node scripts/vercel-prebuild.js && next build",
     "start": "next start -p 8000",
     "start:dev": "next dev -p 8000",
     "deploy": "prisma migrate deploy && prisma db seed",
@@ -115,7 +115,7 @@
     "jsdom": "^26.1.0",
     "nodemailer": "^7.0.5",
     "nodemon": "^3.0.1",
-    "prisma": "^5.6.0",
+    "prisma": "5.6.0",
     "ts-node": "^10.9.1",
     "tsconfig-paths": "^4.2.0",
     "tsx": "^4.20.3",

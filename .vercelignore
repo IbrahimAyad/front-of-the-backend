@@ -5,6 +5,7 @@ src/plugins/
 src/schemas/
 dist/
 railway.toml
+railway.json
 
 # Keep Prisma schema but ignore migrations and seeds
 prisma/migrations/
