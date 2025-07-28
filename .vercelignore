@@ -1,4 +1,4 @@
-# Backend files
+# Backend files (old Fastify structure)
 src/server.ts
 src/routes/
 src/plugins/
@@ -6,11 +6,11 @@ src/schemas/
 dist/
 railway.toml
 
-# Prisma files to ignore (but keep schema.prisma)
+# Keep Prisma schema but ignore migrations and seeds
 prisma/migrations/
 prisma/*.ts
 prisma/*.js
-!prisma/schema.prisma
+# DO NOT IGNORE prisma/schema.prisma
 
 # Database
 *.db
@@ -20,9 +20,6 @@ prisma/*.js
 .env
 .env.local
 .env.production
-
-# Node modules
-node_modules/
 
 # Build artifacts
 build/
@@ -66,9 +63,6 @@ jspm_packages/
 .cache
 .parcel-cache
 
-# next.js build output
-.next
-
 # nuxt.js build output
 .nuxt
 
@@ -85,4 +79,24 @@ jspm_packages/
 .dynamodb/
 
 # TernJS port file
-.tern-port 
+.tern-port
+
+# Test files
+tests/
+*.test.ts
+*.spec.ts
+
+# Documentation
+*.md
+!README.md
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+
+# macOS
+.DS_Store
